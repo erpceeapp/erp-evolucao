@@ -1,0 +1,191 @@
+"use client"
+
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Search, Edit, Eye, ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+
+interface Disciplina {
+  id: string
+  nome: string
+  codigo: string
+  descricao?: string
+  carga_horaria?: number
+  ativo: boolean
+  created_at: string
+}
+
+interface DisciplinasTableProps {
+  disciplinas: Disciplina[]
+  currentPage: number
+  totalPages: number
+  busca: string
+  status: string
+}
+
+export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, status }: DisciplinasTableProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(busca)
+  const [statusFilter, setStatusFilter] = useState(status)
+
+  const handleSearch = () => {
+    const params = new URLSearchParams(searchParams)
+    if (searchTerm) {
+      params.set("busca", searchTerm)
+    } else {
+      params.delete("busca")
+    }
+    params.set("page", "1")
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatusFilter(newStatus)
+    const params = new URLSearchParams(searchParams)
+    if (newStatus !== "todos") {
+      params.set("status", newStatus)
+    } else {
+      params.delete("status")
+    }
+    params.set("page", "1")
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("page", page.toString())
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 flex gap-2">
+          <Input
+            placeholder="Buscar por nome, código ou descrição..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <Button onClick={handleSearch}>
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+        <Select value={statusFilter} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os Status</SelectItem>
+            <SelectItem value="ativo">Ativas</SelectItem>
+            <SelectItem value="inativo">Inativas</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabela */}
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Código</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Carga Horária</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {disciplinas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  Nenhuma disciplina encontrada
+                </TableCell>
+              </TableRow>
+            ) : (
+              disciplinas.map((disciplina) => (
+                <TableRow key={disciplina.id}>
+                  <TableCell>
+                    <div className="font-medium">{disciplina.nome}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{disciplina.codigo}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-xs truncate">{disciplina.descricao || "-"}</div>
+                  </TableCell>
+                  <TableCell>
+                    {disciplina.carga_horaria ? (
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        {disciplina.carga_horaria}h
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={disciplina.ativo ? "default" : "secondary"}>
+                      {disciplina.ativo ? "Ativa" : "Inativa"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/disciplinas/${disciplina.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/disciplinas/${disciplina.id}/editar`}>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-700">
+            Página {currentPage} de {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

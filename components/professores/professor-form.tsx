@@ -1,0 +1,276 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Save, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+
+interface ProfessorData {
+  nome_completo: string
+  cpf: string
+  rg: string
+  data_nascimento: string
+  endereco: string
+  telefone: string
+  email: string
+  formacao: string
+  especializacao: string
+  registro_profissional: string
+  data_admissao: string
+  salario: string
+  ativo: boolean
+}
+
+interface ProfessorFormProps {
+  professor?: ProfessorData & { id: string }
+  isEditing?: boolean
+}
+
+export function ProfessorForm({ professor, isEditing = false }: ProfessorFormProps) {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [formData, setFormData] = useState<ProfessorData>({
+    nome_completo: professor?.nome_completo || "",
+    cpf: professor?.cpf || "",
+    rg: professor?.rg || "",
+    data_nascimento: professor?.data_nascimento || "",
+    endereco: professor?.endereco || "",
+    telefone: professor?.telefone || "",
+    email: professor?.email || "",
+    formacao: professor?.formacao || "",
+    especializacao: professor?.especializacao || "",
+    registro_profissional: professor?.registro_profissional || "",
+    data_admissao: professor?.data_admissao || "",
+    salario: professor?.salario || "",
+    ativo: professor?.ativo ?? true,
+  })
+
+  const handleInputChange = (field: keyof ProfessorData, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    const supabase = createClient()
+
+    try {
+      // Preparar dados para envio
+      const dataToSend = {
+        ...formData,
+        salario: formData.salario ? Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", ".")) : null,
+      }
+
+      if (isEditing && professor) {
+        const { error } = await supabase.from("professores").update(dataToSend).eq("id", professor.id)
+
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from("professores").insert([dataToSend])
+
+        if (error) throw error
+      }
+
+      router.push("/professores")
+    } catch (error: any) {
+      setError(error.message || "Erro ao salvar professor")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatCurrency = (value: string) => {
+    const numericValue = value.replace(/[^\d]/g, "")
+    const formattedValue = (Number.parseInt(numericValue) / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    return formattedValue
+  }
+
+  const handleSalaryChange = (value: string) => {
+    const formatted = formatCurrency(value)
+    handleInputChange("salario", formatted)
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados Pessoais</CardTitle>
+            <CardDescription>Informações básicas do professor</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nome_completo">Nome Completo *</Label>
+                <Input
+                  id="nome_completo"
+                  required
+                  value={formData.nome_completo}
+                  onChange={(e) => handleInputChange("nome_completo", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Input id="cpf" value={formData.cpf} onChange={(e) => handleInputChange("cpf", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rg">RG</Label>
+                <Input id="rg" value={formData.rg} onChange={(e) => handleInputChange("rg", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+                <Input
+                  id="data_nascimento"
+                  type="date"
+                  value={formData.data_nascimento}
+                  onChange={(e) => handleInputChange("data_nascimento", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endereco">Endereço</Label>
+              <Input
+                id="endereco"
+                value={formData.endereco}
+                onChange={(e) => handleInputChange("endereco", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="telefone">Telefone</Label>
+              <Input
+                id="telefone"
+                type="tel"
+                value={formData.telefone}
+                onChange={(e) => handleInputChange("telefone", e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados Profissionais</CardTitle>
+            <CardDescription>Informações acadêmicas e profissionais</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="formacao">Formação</Label>
+              <Input
+                id="formacao"
+                placeholder="Ex: Licenciatura em Matemática"
+                value={formData.formacao}
+                onChange={(e) => handleInputChange("formacao", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="especializacao">Especialização</Label>
+              <Input
+                id="especializacao"
+                placeholder="Ex: Mestrado em Educação Matemática"
+                value={formData.especializacao}
+                onChange={(e) => handleInputChange("especializacao", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="registro_profissional">Registro Profissional</Label>
+              <Input
+                id="registro_profissional"
+                placeholder="Ex: CREA, CRP, etc."
+                value={formData.registro_profissional}
+                onChange={(e) => handleInputChange("registro_profissional", e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_admissao">Data de Admissão</Label>
+                <Input
+                  id="data_admissao"
+                  type="date"
+                  value={formData.data_admissao}
+                  onChange={(e) => handleInputChange("data_admissao", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salario">Salário</Label>
+                <Input
+                  id="salario"
+                  placeholder="R$ 0,00"
+                  value={formData.salario}
+                  onChange={(e) => handleSalaryChange(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Configurações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="ativo"
+                checked={formData.ativo}
+                onCheckedChange={(checked) => handleInputChange("ativo", checked)}
+              />
+              <Label htmlFor="ativo">Professor ativo</Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="flex justify-between">
+          <Button variant="outline" asChild>
+            <Link href="/professores">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Cancelar
+            </Link>
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            <Save className="h-4 w-4 mr-2" />
+            {isLoading ? "Salvando..." : isEditing ? "Atualizar" : "Cadastrar"}
+          </Button>
+        </div>
+      </div>
+    </form>
+  )
+}
