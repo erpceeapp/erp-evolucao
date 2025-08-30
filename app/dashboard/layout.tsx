@@ -53,7 +53,7 @@ export default async function DashboardLayout({
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{profile?.nome_completo || "Usuário"}</p>
                   <p className="text-xs text-gray-600 capitalize">
-                    {profile?.role ? getRoleLabel(profile.role) : "Carregando..."}
+                    {profile?.tipo_usuario ? getRoleLabel(profile.tipo_usuario) : "Carregando..."}
                   </p>
                 </div>
                 <Link href="/perfil">
