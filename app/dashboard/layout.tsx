@@ -52,8 +52,15 @@ export default async function DashboardLayout({
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{profile?.nome_completo || "Usuário"}</p>
-                  <p className="text-xs text-gray-600 capitalize">{getRoleLabel(profile?.role || "professor")}</p>
+                  <p className="text-xs text-gray-600 capitalize">
+                    {profile?.role ? getRoleLabel(profile.role) : "Carregando..."}
+                  </p>
                 </div>
+                <Link href="/perfil">
+                  <Button variant="ghost" size="sm">
+                    Perfil
+                  </Button>
+                </Link>
                 <Link href="/auth/logout">
                   <Button variant="outline" size="sm">
                     Sair
