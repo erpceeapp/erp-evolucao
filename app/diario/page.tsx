@@ -16,7 +16,7 @@ async function getTurmasComDisciplinas() {
       *,
       turmas (id, nome, serie, ano_letivo),
       disciplinas (id, nome, codigo),
-      professores (id, nome)
+      professores!turma_disciplinas_professor_id_fkey (id, nome_completo)
     `)
     .order("turmas(serie)", { ascending: true })
 
@@ -90,7 +90,7 @@ export default async function DiarioPage() {
 
                     <div>
                       <p className="font-medium text-cyan-700">{item.disciplinas?.nome}</p>
-                      <p className="text-sm text-gray-600">Prof. {item.professores?.nome}</p>
+                      <p className="text-sm text-gray-600">Prof. {item.professores?.nome_completo}</p>
                     </div>
 
                     <div className="flex gap-2 pt-2">

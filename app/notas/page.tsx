@@ -16,7 +16,7 @@ async function getTurmasComDisciplinas() {
       *,
       turmas (id, nome, serie, ano_letivo),
       disciplinas (id, nome, codigo),
-      professores (id, nome)
+      professores (id, nome_completo)
     `)
     .order("turmas(serie)", { ascending: true })
 
@@ -84,7 +84,7 @@ export default async function NotasPage() {
 
                     <div>
                       <p className="font-medium text-cyan-700">{item.disciplinas?.nome}</p>
-                      <p className="text-sm text-gray-600">Prof. {item.professores?.nome}</p>
+                      <p className="text-sm text-gray-600">Prof. {item.professores?.nome_completo}</p>
                     </div>
 
                     <div className="flex gap-2 pt-2">

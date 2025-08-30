@@ -48,7 +48,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
     serie: turma?.serie || "",
     turno: turma?.turno || "matutino",
     capacidade_maxima: turma?.capacidade_maxima || "",
-    professor_responsavel_id: turma?.professor_responsavel_id || "",
+    professor_responsavel_id: turma?.professor_responsavel_id || "none",
     ativo: turma?.ativo ?? true,
   })
 
@@ -69,7 +69,8 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
         ...formData,
         ano_letivo: Number.parseInt(formData.ano_letivo),
         capacidade_maxima: formData.capacidade_maxima ? Number.parseInt(formData.capacidade_maxima) : null,
-        professor_responsavel_id: formData.professor_responsavel_id || null,
+        professor_responsavel_id:
+          formData.professor_responsavel_id === "none" ? null : formData.professor_responsavel_id,
       }
 
       if (isEditing && turma) {
@@ -177,7 +178,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
                   <SelectValue placeholder="Selecione um professor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum professor</SelectItem>
+                  <SelectItem value="none">Nenhum professor</SelectItem>
                   {professores.map((professor) => (
                     <SelectItem key={professor.id} value={professor.id}>
                       {professor.nome_completo}

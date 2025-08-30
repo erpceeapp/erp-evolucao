@@ -49,6 +49,13 @@ export default function CadastroPage() {
     }
 
     try {
+      const roleMapping: { [key: string]: string } = {
+        diretor: "admin",
+        secretaria: "secretaria",
+        professor: "professor",
+        coordenacao: "coordenacao",
+      }
+
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -57,7 +64,7 @@ export default function CadastroPage() {
           data: {
             nome_completo: formData.nomeCompleto,
             telefone: formData.telefone,
-            tipo_usuario: formData.tipoUsuario,
+            tipo_usuario: roleMapping[formData.tipoUsuario] || formData.tipoUsuario,
           },
         },
       })
