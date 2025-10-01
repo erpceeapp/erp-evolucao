@@ -6,6 +6,7 @@ import { Plus, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { TurmasHeader } from "@/components/turmas/turmas-header"
 import { DisciplinasTable } from "@/components/disciplinas/disciplinas-table"
+import { Suspense } from "react"
 
 interface SearchParams {
   busca?: string
@@ -92,13 +93,15 @@ export default async function DisciplinasPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <DisciplinasTable
-              disciplinas={disciplinas || []}
-              currentPage={page}
-              totalPages={totalPages}
-              busca={busca}
-              status={status}
-            />
+            <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando disciplinas...</div>}>
+              <DisciplinasTable
+                disciplinas={disciplinas || []}
+                currentPage={page}
+                totalPages={totalPages}
+                busca={busca}
+                status={status}
+              />
+            </Suspense>
           </CardContent>
         </Card>
       </main>

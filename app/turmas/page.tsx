@@ -6,6 +6,7 @@ import { Plus, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { TurmasHeader } from "@/components/turmas/turmas-header"
 import { TurmasTable } from "@/components/turmas/turmas-table"
+import { Suspense } from "react"
 
 interface SearchParams {
   busca?: string
@@ -108,14 +109,16 @@ export default async function TurmasPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TurmasTable
-              turmas={turmas || []}
-              currentPage={page}
-              totalPages={totalPages}
-              busca={busca}
-              ano={ano}
-              status={status}
-            />
+            <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando turmas...</div>}>
+              <TurmasTable
+                turmas={turmas || []}
+                currentPage={page}
+                totalPages={totalPages}
+                busca={busca}
+                ano={ano}
+                status={status}
+              />
+            </Suspense>
           </CardContent>
         </Card>
       </main>

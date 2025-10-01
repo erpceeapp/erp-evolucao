@@ -6,6 +6,7 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import { MatriculasHeader } from "@/components/matriculas/matriculas-header"
 import { MatriculasTable } from "@/components/matriculas/matriculas-table"
+import { Suspense } from "react"
 
 interface SearchParams {
   busca?: string
@@ -105,16 +106,18 @@ export default async function MatriculasPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <MatriculasTable
-              matriculas={matriculas || []}
-              turmas={turmas || []}
-              currentPage={page}
-              totalPages={totalPages}
-              busca={busca}
-              status={status}
-              ano={ano}
-              turma={turma}
-            />
+            <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando matrículas...</div>}>
+              <MatriculasTable
+                matriculas={matriculas || []}
+                turmas={turmas || []}
+                currentPage={page}
+                totalPages={totalPages}
+                busca={busca}
+                status={status}
+                ano={ano}
+                turma={turma}
+              />
+            </Suspense>
           </CardContent>
         </Card>
       </main>

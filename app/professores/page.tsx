@@ -6,6 +6,7 @@ import { Plus } from "lucide-react"
 import Link from "next/link"
 import { ProfessoresHeader } from "@/components/professores/professores-header"
 import { ProfessoresTable } from "@/components/professores/professores-table"
+import { Suspense } from "react"
 
 interface SearchParams {
   busca?: string
@@ -86,13 +87,15 @@ export default async function ProfessoresPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProfessoresTable
-              professores={professores || []}
-              currentPage={page}
-              totalPages={totalPages}
-              busca={busca}
-              status={status}
-            />
+            <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando professores...</div>}>
+              <ProfessoresTable
+                professores={professores || []}
+                currentPage={page}
+                totalPages={totalPages}
+                busca={busca}
+                status={status}
+              />
+            </Suspense>
           </CardContent>
         </Card>
       </main>
