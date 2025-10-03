@@ -37,7 +37,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="p-8 space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Visão Geral</h2>
         <StatsCards />

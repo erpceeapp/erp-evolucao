@@ -16,7 +16,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       *,
       turmas (id, nome, serie, ano_letivo),
       disciplinas (id, nome, codigo, carga_horaria),
-      professores (id, nome)
+      professores (id, nome_completo)
     `)
     .eq("turma_id", turmaId)
     .eq("disciplina_id", disciplinaId)
@@ -26,8 +26,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
   const { data: aulas } = await supabase
     .from("aulas")
     .select("*")
-    .eq("turma_id", turmaId)
-    .eq("disciplina_id", disciplinaId)
+    .eq("turma_disciplina_id", turmaId + "_" + disciplinaId)
     .order("data_aula", { ascending: false })
 
   // Buscar alunos da turma
@@ -35,7 +34,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     .from("matriculas")
     .select(`
       *,
-      alunos (id, nome, email)
+      alunos (id, nome_completo, email)
     `)
     .eq("turma_id", turmaId)
     .eq("status", "ativa")
@@ -77,7 +76,7 @@ export default async function DiarioDetalhePage({
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{turmaDisciplina.disciplinas?.nome}</h1>
             <p className="text-gray-600">
-              {turmaDisciplina.turmas?.nome} - Prof. {turmaDisciplina.professores?.nome}
+              {turmaDisciplina.turmas?.nome} - Prof. {turmaDisciplina.professores?.nome_completo}
             </p>
           </div>
         </div>
@@ -191,10 +190,10 @@ export default async function DiarioDetalhePage({
                 {alunos.map((aluno) => (
                   <div key={aluno?.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
                     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium">{aluno?.nome?.charAt(0)}</span>
+                      <span className="text-xs font-medium">{aluno?.nome_completo?.charAt(0)}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{aluno?.nome}</p>
+                      <p className="text-sm font-medium text-gray-900">{aluno?.nome_completo}</p>
                       <p className="text-xs text-gray-600">{aluno?.email}</p>
                     </div>
                   </div>

@@ -1,104 +1,106 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Plus, Search, GraduationCap } from "lucide-react"
 import Link from "next/link"
-import { ProfessoresHeader } from "@/components/professores/professores-header"
-import { ProfessoresTable } from "@/components/professores/professores-table"
-import { Suspense } from "react"
+import { createServerClient } from "@/lib/supabase/server"
 
-interface SearchParams {
-  busca?: string
-  status?: string
-  page?: string
-}
+export default async function ProfessoresPage() {
+  const supabase = await createServerClient()
 
-export default async function ProfessoresPage({
-  searchParams,
-}: {
-  searchParams: SearchParams
-}) {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
-
-  // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const status = searchParams.status || "todos"
-  const page = Number.parseInt(searchParams.page || "1")
-  const itemsPerPage = 10
-
-  // Query para buscar professores
-  let query = supabase.from("professores").select("*", { count: "exact" }).order("nome_completo")
-
-  // Aplicar filtros
-  if (busca) {
-    query = query.or(
-      `nome_completo.ilike.%${busca}%,cpf.ilike.%${busca}%,email.ilike.%${busca}%,formacao.ilike.%${busca}%`,
-    )
-  }
-
-  if (status !== "todos") {
-    query = query.eq("ativo", status === "ativo")
-  }
-
-  // Paginação
-  const from = (page - 1) * itemsPerPage
-  const to = from + itemsPerPage - 1
-  query = query.range(from, to)
-
-  const { data: professores, count, error: professoresError } = await query
-
-  if (professoresError) {
-    console.error("Erro ao buscar professores:", professoresError)
-  }
-
-  const totalPages = Math.ceil((count || 0) / itemsPerPage)
+  const { data: professores, error } = await supabase.from("professores").select("*").order("nome", { ascending: true })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProfessoresHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Professores</h1>
-            <p className="text-gray-600 mt-1">Gerencie o cadastro de professores da escola</p>
-          </div>
-          <Button asChild>
-            <Link href="/professores/novo">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Professor
-            </Link>
-          </Button>
+    <div className="p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Professores</h2>
+          <p className="text-gray-600 mt-1">Gerencie os professores da instituição</p>
         </div>
+        <Link href="/professores/novo">
+          <Button className="bg-green-600 hover:bg-green-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Professor
+          </Button>
+        </Link>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Professores</CardTitle>
-            <CardDescription>
-              {count
-                ? `${count} professor${count !== 1 ? "es" : ""} encontrado${count !== 1 ? "s" : ""}`
-                : "Nenhum professor encontrado"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando professores...</div>}>
-              <ProfessoresTable
-                professores={professores || []}
-                currentPage={page}
-                totalPages={totalPages}
-                busca={busca}
-                status={status}
-              />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </main>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Lista de Professores</CardTitle>
+              <CardDescription>{professores?.length || 0} professor(es) cadastrado(s)</CardDescription>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input placeholder="Buscar professor..." className="pl-10" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <div className="text-red-600 p-4 bg-red-50 rounded-lg">Erro ao carregar professores: {error.message}</div>
+          )}
+
+          {!error && professores && professores.length === 0 && (
+            <div className="text-center py-12">
+              <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum professor cadastrado</h3>
+              <p className="text-gray-600 mb-4">Comece cadastrando o primeiro professor da instituição</p>
+              <Link href="/professores/novo">
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Cadastrar Primeiro Professor
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {!error && professores && professores.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Nome</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">CPF</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Telefone</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Especialidade</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-700">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {professores.map((professor) => (
+                    <tr key={professor.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">{professor.nome}</td>
+                      <td className="py-3 px-4">{professor.cpf}</td>
+                      <td className="py-3 px-4">{professor.email}</td>
+                      <td className="py-3 px-4">{professor.telefone}</td>
+                      <td className="py-3 px-4">{professor.especialidade || "-"}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            professor.status === "ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {professor.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button variant="ghost" size="sm">
+                          Ver Detalhes
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

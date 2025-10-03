@@ -20,7 +20,7 @@ async function getAlunosRelatorio() {
         turmas (nome, serie)
       )
     `)
-    .order("nome", { ascending: true })
+    .order("nome_completo", { ascending: true })
 
   if (error) {
     console.error("Erro ao buscar alunos:", error)
@@ -95,7 +95,7 @@ export default async function RelatorioAlunosPage() {
                 const matriculaAtiva = aluno.matriculas?.find((m) => m.status === "ativa")
                 return (
                   <TableRow key={aluno.id}>
-                    <TableCell className="font-medium">{aluno.nome}</TableCell>
+                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
                     <TableCell>{aluno.email}</TableCell>
                     <TableCell>{aluno.cpf}</TableCell>
                     <TableCell>

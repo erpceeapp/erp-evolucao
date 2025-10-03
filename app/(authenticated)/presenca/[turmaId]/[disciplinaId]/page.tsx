@@ -13,7 +13,7 @@ import { toast } from "@/hooks/use-toast"
 
 interface Aluno {
   id: string
-  nome: string
+  nome_completo: string
   email: string
 }
 
@@ -65,7 +65,7 @@ export default function PresencaPage({
       const { data: matriculas } = await supabase
         .from("matriculas")
         .select(`
-          alunos (id, nome, email)
+          alunos (id, nome_completo, email)
         `)
         .eq("turma_id", params.turmaId)
         .eq("status", "ativa")
@@ -227,10 +227,10 @@ export default function PresencaPage({
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium">{aluno.nome.charAt(0)}</span>
+                        <span className="text-sm font-medium">{aluno.nome_completo.charAt(0)}</span>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{aluno.nome}</p>
+                        <p className="font-medium text-gray-900">{aluno.nome_completo}</p>
                         <p className="text-sm text-gray-600">{aluno.email}</p>
                       </div>
                     </div>

@@ -119,11 +119,6 @@ export function Sidebar({ userRole }: SidebarProps) {
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsOpen(false)} />
-      )}
-
       {/* Sidebar */}
       <aside
         className={cn(
