@@ -9,6 +9,10 @@ import Link from "next/link"
 import { MatriculasHeader } from "@/components/matriculas/matriculas-header"
 
 export default async function MatriculaDetalhePage({ params }: { params: { id: string } }) {
+  if (params.id === "nova") {
+    redirect("/matriculas/nova")
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
