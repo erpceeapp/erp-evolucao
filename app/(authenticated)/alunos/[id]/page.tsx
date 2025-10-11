@@ -9,6 +9,10 @@ import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
 
 export default async function AlunoDetalhePage({ params }: { params: { id: string } }) {
+  if (params.id === "novo") {
+    redirect("/alunos/novo")
+  }
+
   console.log("[v0] AlunoDetalhePage - params:", params)
   console.log("[v0] AlunoDetalhePage - params.id:", params.id)
 
