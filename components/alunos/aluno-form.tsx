@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, ArrowLeft } from "lucide-react"
+import { Save, ArrowLeft, ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
 import { cadastrarAluno, atualizarAluno } from "@/app/(authenticated)/alunos/novo/actions"
+import { cn } from "@/lib/utils"
 
 interface AlunoData {
   // Dados básicos
@@ -98,6 +98,7 @@ interface AlunoFormProps {
 }
 
 export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
+  const [currentStep, setCurrentStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -214,754 +215,874 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     "TO",
   ]
 
+  const steps = [
+    { id: 0, title: "Dados Pessoais", description: "Informações básicas do aluno" },
+    { id: 1, title: "Documentação", description: "Certidão e documentos" },
+    { id: 2, title: "Endereço", description: "Localização residencial" },
+    { id: 3, title: "Contatos", description: "Telefones e e-mail" },
+    { id: 4, title: "Dados dos Pais", description: "Informações dos responsáveis" },
+    { id: 5, title: "Resp. Financeiro", description: "Dados do responsável financeiro" },
+    { id: 6, title: "Info. Médicas", description: "Saúde e alergias" },
+    { id: 7, title: "Matrícula", description: "Dados da matrícula" },
+  ]
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 0: // Dados Pessoais
+        return !!(formData.nome_completo && formData.data_nascimento)
+      case 1: // Documentação
+        return true // Campos opcionais
+      case 2: // Endereço
+        return true // Campos opcionais
+      case 3: // Contatos
+        return true // Campos opcionais
+      case 4: // Dados dos Pais
+        return true // Campos opcionais
+      case 5: // Responsável Financeiro
+        return true // Campos opcionais
+      case 6: // Informações Médicas
+        return true // Campos opcionais
+      case 7: // Matrícula
+        return true // Campos opcionais
+      default:
+        return true
+    }
+  }
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setError(null)
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+    } else {
+      setError("Por favor, preencha todos os campos obrigatórios antes de continuar.")
+    }
+  }
+
+  const prevStep = () => {
+    setError(null)
+    setCurrentStep((prev) => Math.max(prev - 1, 0))
+  }
+
+  const goToStep = (step: number) => {
+    // Permite navegar para etapas anteriores ou para a próxima se a atual for válida
+    if (step < currentStep || (step === currentStep + 1 && validateStep(currentStep))) {
+      setError(null)
+      setCurrentStep(step)
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-6">
-        <Tabs defaultValue="dados-aluno" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dados-aluno">Dados do Aluno</TabsTrigger>
-            <TabsTrigger value="responsavel-financeiro">Resp. Financeiro</TabsTrigger>
-            <TabsTrigger value="informacoes-medicas">Info. Médicas</TabsTrigger>
-            <TabsTrigger value="matricula">Matrícula</TabsTrigger>
-          </TabsList>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <button
+                  type="button"
+                  onClick={() => goToStep(index)}
+                  disabled={index > currentStep + 1}
+                  className={cn(
+                    "flex flex-col items-center gap-2 transition-all",
+                    index <= currentStep ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all",
+                      index < currentStep
+                        ? "bg-green-500 text-white"
+                        : index === currentStep
+                          ? "bg-blue-500 text-white ring-4 ring-blue-100"
+                          : "bg-gray-200 text-gray-500",
+                    )}
+                  >
+                    {index < currentStep ? <Check className="h-5 w-5" /> : index + 1}
+                  </div>
+                  <div className="text-center hidden md:block">
+                    <p className={cn("text-xs font-medium", index === currentStep ? "text-blue-600" : "text-gray-600")}>
+                      {step.title}
+                    </p>
+                  </div>
+                </button>
+                {index < steps.length - 1 && (
+                  <div
+                    className={cn(
+                      "flex-1 h-1 mx-2 transition-all",
+                      index < currentStep ? "bg-green-500" : "bg-gray-200",
+                    )}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-          <TabsContent value="dados-aluno" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dados Pessoais</CardTitle>
-                <CardDescription>Informações básicas do aluno</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome_completo">Nome Completo *</Label>
-                    <Input id="nome_completo" name="nome_completo" required defaultValue={formData.nome_completo} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
-                    <Input
-                      id="data_nascimento"
-                      name="data_nascimento"
-                      type="date"
-                      required
-                      defaultValue={formData.data_nascimento}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sexo">Sexo</Label>
-                    <Select value={formData.sexo} onValueChange={(value) => handleInputChange("sexo", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Masculino">Masculino</SelectItem>
-                        <SelectItem value="Feminino">Feminino</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="naturalidade">Naturalidade</Label>
-                    <Input
-                      id="naturalidade"
-                      name="naturalidade"
-                      placeholder="Cidade - UF"
-                      defaultValue={formData.naturalidade}
-                      onChange={(e) => handleInputChange("naturalidade", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF da Criança</Label>
-                    <Input
-                      id="cpf"
-                      name="cpf"
-                      defaultValue={formData.cpf}
-                      onChange={(e) => handleInputChange("cpf", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="rg">RG</Label>
-                    <Input
-                      id="rg"
-                      name="rg"
-                      defaultValue={formData.rg}
-                      onChange={(e) => handleInputChange("rg", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Certidão de Nascimento</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_nascimento_numero">Nº de Registro</Label>
-                    <Input
-                      id="certidao_nascimento_numero"
-                      name="certidao_nascimento_numero"
-                      defaultValue={formData.certidao_nascimento_numero}
-                      onChange={(e) => handleInputChange("certidao_nascimento_numero", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_livro">Livro nº</Label>
-                    <Input
-                      id="certidao_livro"
-                      name="certidao_livro"
-                      defaultValue={formData.certidao_livro}
-                      onChange={(e) => handleInputChange("certidao_livro", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_folha">Folha nº</Label>
-                    <Input
-                      id="certidao_folha"
-                      name="certidao_folha"
-                      defaultValue={formData.certidao_folha}
-                      onChange={(e) => handleInputChange("certidao_folha", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_data_emissao">Data de Emissão</Label>
-                    <Input
-                      id="certidao_data_emissao"
-                      name="certidao_data_emissao"
-                      type="date"
-                      defaultValue={formData.certidao_data_emissao}
-                      onChange={(e) => handleInputChange("certidao_data_emissao", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_cartorio">Nome do Cartório</Label>
-                    <Input
-                      id="certidao_cartorio"
-                      name="certidao_cartorio"
-                      defaultValue={formData.certidao_cartorio}
-                      onChange={(e) => handleInputChange("certidao_cartorio", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="certidao_uf">UF do Cartório</Label>
-                    <Select
-                      value={formData.certidao_uf}
-                      onValueChange={(value) => handleInputChange("certidao_uf", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ufs.map((uf) => (
-                          <SelectItem key={uf} value={uf}>
-                            {uf}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Endereço</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input
-                      id="endereco"
-                      name="endereco"
-                      defaultValue={formData.endereco}
-                      onChange={(e) => handleInputChange("endereco", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endereco_numero">Número</Label>
-                    <Input
-                      id="endereco_numero"
-                      name="endereco_numero"
-                      defaultValue={formData.endereco_numero}
-                      onChange={(e) => handleInputChange("endereco_numero", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bairro">Bairro</Label>
-                    <Input
-                      id="bairro"
-                      name="bairro"
-                      defaultValue={formData.bairro}
-                      onChange={(e) => handleInputChange("bairro", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <Input
-                      id="cidade"
-                      name="cidade"
-                      defaultValue={formData.cidade}
-                      onChange={(e) => handleInputChange("cidade", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="uf">UF</Label>
-                    <Select value={formData.uf} onValueChange={(value) => handleInputChange("uf", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="UF" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ufs.map((uf) => (
-                          <SelectItem key={uf} value={uf}>
-                            {uf}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cep">CEP</Label>
-                    <Input
-                      id="cep"
-                      name="cep"
-                      defaultValue={formData.cep}
-                      onChange={(e) => handleInputChange("cep", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Contatos</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone_residencial">Telefone Residencial</Label>
-                    <Input
-                      id="telefone_residencial"
-                      name="telefone_residencial"
-                      type="tel"
-                      defaultValue={formData.telefone_residencial}
-                      onChange={(e) => handleInputChange("telefone_residencial", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone_comercial">Telefone Comercial</Label>
-                    <Input
-                      id="telefone_comercial"
-                      name="telefone_comercial"
-                      type="tel"
-                      defaultValue={formData.telefone_comercial}
-                      onChange={(e) => handleInputChange("telefone_comercial", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Outro Telefone</Label>
-                    <Input
-                      id="telefone"
-                      name="telefone"
-                      type="tel"
-                      defaultValue={formData.telefone}
-                      onChange={(e) => handleInputChange("telefone", e.target.value)}
-                    />
-                  </div>
-                </div>
-
+        {currentStep === 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados Pessoais</CardTitle>
+              <CardDescription>Informações básicas do aluno</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
+                  <Label htmlFor="nome_completo">
+                    Nome Completo <span className="text-red-500">*</span>
+                  </Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    defaultValue={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    id="nome_completo"
+                    name="nome_completo"
+                    required
+                    value={formData.nome_completo}
+                    onChange={(e) => handleInputChange("nome_completo", e.target.value)}
                   />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="data_nascimento">
+                    Data de Nascimento <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="data_nascimento"
+                    name="data_nascimento"
+                    type="date"
+                    required
+                    value={formData.data_nascimento}
+                    onChange={(e) => handleInputChange("data_nascimento", e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Dados dos Pais</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sexo">Sexo</Label>
+                  <Select value={formData.sexo} onValueChange={(value) => handleInputChange("sexo", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Masculino">Masculino</SelectItem>
+                      <SelectItem value="Feminino">Feminino</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="naturalidade">Naturalidade</Label>
+                  <Input
+                    id="naturalidade"
+                    name="naturalidade"
+                    placeholder="Cidade - UF"
+                    value={formData.naturalidade}
+                    onChange={(e) => handleInputChange("naturalidade", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF da Criança</Label>
+                  <Input
+                    id="cpf"
+                    name="cpf"
+                    value={formData.cpf}
+                    onChange={(e) => handleInputChange("cpf", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rg">RG</Label>
+                  <Input
+                    id="rg"
+                    name="rg"
+                    value={formData.rg}
+                    onChange={(e) => handleInputChange("rg", e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Certidão de Nascimento</CardTitle>
+              <CardDescription>Dados da certidão de nascimento do aluno</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_nascimento_numero">Nº de Registro</Label>
+                  <Input
+                    id="certidao_nascimento_numero"
+                    name="certidao_nascimento_numero"
+                    value={formData.certidao_nascimento_numero}
+                    onChange={(e) => handleInputChange("certidao_nascimento_numero", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_livro">Livro nº</Label>
+                  <Input
+                    id="certidao_livro"
+                    name="certidao_livro"
+                    value={formData.certidao_livro}
+                    onChange={(e) => handleInputChange("certidao_livro", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_folha">Folha nº</Label>
+                  <Input
+                    id="certidao_folha"
+                    name="certidao_folha"
+                    value={formData.certidao_folha}
+                    onChange={(e) => handleInputChange("certidao_folha", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_data_emissao">Data de Emissão</Label>
+                  <Input
+                    id="certidao_data_emissao"
+                    name="certidao_data_emissao"
+                    type="date"
+                    value={formData.certidao_data_emissao}
+                    onChange={(e) => handleInputChange("certidao_data_emissao", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_cartorio">Nome do Cartório</Label>
+                  <Input
+                    id="certidao_cartorio"
+                    name="certidao_cartorio"
+                    value={formData.certidao_cartorio}
+                    onChange={(e) => handleInputChange("certidao_cartorio", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certidao_uf">UF do Cartório</Label>
+                  <Select
+                    value={formData.certidao_uf}
+                    onValueChange={(value) => handleInputChange("certidao_uf", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ufs.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 2 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Endereço</CardTitle>
+              <CardDescription>Endereço residencial do aluno</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    name="endereco"
+                    value={formData.endereco}
+                    onChange={(e) => handleInputChange("endereco", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endereco_numero">Número</Label>
+                  <Input
+                    id="endereco_numero"
+                    name="endereco_numero"
+                    value={formData.endereco_numero}
+                    onChange={(e) => handleInputChange("endereco_numero", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    name="bairro"
+                    value={formData.bairro}
+                    onChange={(e) => handleInputChange("bairro", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    name="cidade"
+                    value={formData.cidade}
+                    onChange={(e) => handleInputChange("cidade", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="uf">UF</Label>
+                  <Select value={formData.uf} onValueChange={(value) => handleInputChange("uf", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ufs.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    name="cep"
+                    value={formData.cep}
+                    onChange={(e) => handleInputChange("cep", e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 3 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Contatos</CardTitle>
+              <CardDescription>Telefones e e-mail para contato</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="telefone_residencial">Telefone Residencial</Label>
+                  <Input
+                    id="telefone_residencial"
+                    name="telefone_residencial"
+                    type="tel"
+                    value={formData.telefone_residencial}
+                    onChange={(e) => handleInputChange("telefone_residencial", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone_comercial">Telefone Comercial</Label>
+                  <Input
+                    id="telefone_comercial"
+                    name="telefone_comercial"
+                    type="tel"
+                    value={formData.telefone_comercial}
+                    onChange={(e) => handleInputChange("telefone_comercial", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Outro Telefone</Label>
+                  <Input
+                    id="telefone"
+                    name="telefone"
+                    type="tel"
+                    value={formData.telefone}
+                    onChange={(e) => handleInputChange("telefone", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 4 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados dos Pais</CardTitle>
+              <CardDescription>Informações dos pais e responsável geral</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h4 className="font-medium mb-4">Dados da Mãe</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome_mae">Nome da Mãe</Label>
                     <Input
                       id="nome_mae"
                       name="nome_mae"
-                      defaultValue={formData.nome_mae}
+                      value={formData.nome_mae}
                       onChange={(e) => handleInputChange("nome_mae", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="profissao_mae">Profissão da Mãe</Label>
+                    <Label htmlFor="profissao_mae">Profissão</Label>
                     <Input
                       id="profissao_mae"
                       name="profissao_mae"
-                      defaultValue={formData.profissao_mae}
+                      value={formData.profissao_mae}
                       onChange={(e) => handleInputChange("profissao_mae", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="celular_mae">Celular da Mãe</Label>
+                    <Label htmlFor="celular_mae">Celular</Label>
                     <Input
                       id="celular_mae"
                       name="celular_mae"
                       type="tel"
-                      defaultValue={formData.celular_mae}
+                      value={formData.celular_mae}
                       onChange={(e) => handleInputChange("celular_mae", e.target.value)}
                     />
                   </div>
                 </div>
+              </div>
 
+              <div>
+                <h4 className="font-medium mb-4">Dados do Pai</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="nome_pai">Nome do Pai</Label>
                     <Input
                       id="nome_pai"
                       name="nome_pai"
-                      defaultValue={formData.nome_pai}
+                      value={formData.nome_pai}
                       onChange={(e) => handleInputChange("nome_pai", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="profissao_pai">Profissão do Pai</Label>
+                    <Label htmlFor="profissao_pai">Profissão</Label>
                     <Input
                       id="profissao_pai"
                       name="profissao_pai"
-                      defaultValue={formData.profissao_pai}
+                      value={formData.profissao_pai}
                       onChange={(e) => handleInputChange("profissao_pai", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="celular_pai">Celular do Pai</Label>
+                    <Label htmlFor="celular_pai">Celular</Label>
                     <Input
                       id="celular_pai"
                       name="celular_pai"
                       type="tel"
-                      defaultValue={formData.celular_pai}
+                      value={formData.celular_pai}
                       onChange={(e) => handleInputChange("celular_pai", e.target.value)}
                     />
                   </div>
                 </div>
+              </div>
 
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium mb-4">Responsável Geral</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nome_responsavel">Nome do Responsável</Label>
-                      <Input
-                        id="nome_responsavel"
-                        name="nome_responsavel"
-                        defaultValue={formData.nome_responsavel}
-                        onChange={(e) => handleInputChange("nome_responsavel", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="telefone_responsavel">Telefone</Label>
-                      <Input
-                        id="telefone_responsavel"
-                        name="telefone_responsavel"
-                        type="tel"
-                        defaultValue={formData.telefone_responsavel}
-                        onChange={(e) => handleInputChange("telefone_responsavel", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email_responsavel">E-mail</Label>
-                      <Input
-                        id="email_responsavel"
-                        name="email_responsavel"
-                        type="email"
-                        defaultValue={formData.email_responsavel}
-                        onChange={(e) => handleInputChange("email_responsavel", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="responsavel-financeiro" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dados do Responsável Financeiro</CardTitle>
-                <CardDescription>Informações do responsável pelas questões financeiras</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-4">Responsável Geral</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="resp_fin_nome">Nome Completo</Label>
+                    <Label htmlFor="nome_responsavel">Nome</Label>
                     <Input
-                      id="resp_fin_nome"
-                      name="resp_fin_nome"
-                      defaultValue={formData.resp_fin_nome}
-                      onChange={(e) => handleInputChange("resp_fin_nome", e.target.value)}
+                      id="nome_responsavel"
+                      name="nome_responsavel"
+                      value={formData.nome_responsavel}
+                      onChange={(e) => handleInputChange("nome_responsavel", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="resp_fin_data_nascimento">Data de Nascimento</Label>
+                    <Label htmlFor="telefone_responsavel">Telefone</Label>
                     <Input
-                      id="resp_fin_data_nascimento"
-                      name="resp_fin_data_nascimento"
-                      type="date"
-                      defaultValue={formData.resp_fin_data_nascimento}
-                      onChange={(e) => handleInputChange("resp_fin_data_nascimento", e.target.value)}
+                      id="telefone_responsavel"
+                      name="telefone_responsavel"
+                      type="tel"
+                      value={formData.telefone_responsavel}
+                      onChange={(e) => handleInputChange("telefone_responsavel", e.target.value)}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="resp_fin_estado_civil">Estado Civil</Label>
-                    <Select
-                      value={formData.resp_fin_estado_civil}
-                      onValueChange={(value) => handleInputChange("resp_fin_estado_civil", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
-                        <SelectItem value="Casado(a)">Casado(a)</SelectItem>
-                        <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
-                        <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
-                        <SelectItem value="União Estável">União Estável</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resp_fin_grau_parentesco">Grau de Parentesco</Label>
+                    <Label htmlFor="email_responsavel">E-mail</Label>
                     <Input
-                      id="resp_fin_grau_parentesco"
-                      name="resp_fin_grau_parentesco"
-                      placeholder="Ex: Pai, Mãe, Avô, Tio"
-                      defaultValue={formData.resp_fin_grau_parentesco}
-                      onChange={(e) => handleInputChange("resp_fin_grau_parentesco", e.target.value)}
+                      id="email_responsavel"
+                      name="email_responsavel"
+                      type="email"
+                      value={formData.email_responsavel}
+                      onChange={(e) => handleInputChange("email_responsavel", e.target.value)}
                     />
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="resp_fin_cpf">CPF</Label>
-                    <Input
-                      id="resp_fin_cpf"
-                      name="resp_fin_cpf"
-                      defaultValue={formData.resp_fin_cpf}
-                      onChange={(e) => handleInputChange("resp_fin_cpf", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resp_fin_identidade">Identidade (RG)</Label>
-                    <Input
-                      id="resp_fin_identidade"
-                      name="resp_fin_identidade"
-                      defaultValue={formData.resp_fin_identidade}
-                      onChange={(e) => handleInputChange("resp_fin_identidade", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="resp_fin_orgao_emissor">Órgão Emissor</Label>
-                    <Input
-                      id="resp_fin_orgao_emissor"
-                      name="resp_fin_orgao_emissor"
-                      placeholder="Ex: SSP"
-                      defaultValue={formData.resp_fin_orgao_emissor}
-                      onChange={(e) => handleInputChange("resp_fin_orgao_emissor", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="resp_fin_uf">UF</Label>
-                    <Select
-                      value={formData.resp_fin_uf}
-                      onValueChange={(value) => handleInputChange("resp_fin_uf", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ufs.map((uf) => (
-                          <SelectItem key={uf} value={uf}>
-                            {uf}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium mb-4">Endereço do Responsável Financeiro</h4>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="resp_fin_endereco">Endereço</Label>
-                      <Input
-                        id="resp_fin_endereco"
-                        name="resp_fin_endereco"
-                        defaultValue={formData.resp_fin_endereco}
-                        onChange={(e) => handleInputChange("resp_fin_endereco", e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="resp_fin_bairro">Bairro</Label>
-                        <Input
-                          id="resp_fin_bairro"
-                          name="resp_fin_bairro"
-                          defaultValue={formData.resp_fin_bairro}
-                          onChange={(e) => handleInputChange("resp_fin_bairro", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="resp_fin_cidade">Cidade</Label>
-                        <Input
-                          id="resp_fin_cidade"
-                          name="resp_fin_cidade"
-                          defaultValue={formData.resp_fin_cidade}
-                          onChange={(e) => handleInputChange("resp_fin_cidade", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="resp_fin_uf_endereco">UF</Label>
-                        <Select
-                          value={formData.resp_fin_uf_endereco}
-                          onValueChange={(value) => handleInputChange("resp_fin_uf_endereco", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="UF" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ufs.map((uf) => (
-                              <SelectItem key={uf} value={uf}>
-                                {uf}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="resp_fin_cep">CEP</Label>
-                        <Input
-                          id="resp_fin_cep"
-                          name="resp_fin_cep"
-                          defaultValue={formData.resp_fin_cep}
-                          onChange={(e) => handleInputChange("resp_fin_cep", e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="resp_fin_telefone">Telefone para Contato</Label>
-                      <Input
-                        id="resp_fin_telefone"
-                        name="resp_fin_telefone"
-                        type="tel"
-                        defaultValue={formData.resp_fin_telefone}
-                        onChange={(e) => handleInputChange("resp_fin_telefone", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="informacoes-medicas" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações Médicas</CardTitle>
-                <CardDescription>Dados importantes sobre saúde do aluno</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="uso_medicamento_continuo"
-                      checked={formData.uso_medicamento_continuo}
-                      onCheckedChange={(checked) => handleInputChange("uso_medicamento_continuo", checked)}
-                    />
-                    <Label htmlFor="uso_medicamento_continuo">Uso contínuo de algum medicamento</Label>
-                  </div>
-                  {formData.uso_medicamento_continuo && (
-                    <div className="space-y-2 ml-6">
-                      <Label htmlFor="medicamento_continuo_qual">Qual medicamento?</Label>
-                      <Textarea
-                        id="medicamento_continuo_qual"
-                        name="medicamento_continuo_qual"
-                        rows={2}
-                        placeholder="Descreva o(s) medicamento(s) e a dosagem"
-                        defaultValue={formData.medicamento_continuo_qual}
-                        onChange={(e) => handleInputChange("medicamento_continuo_qual", e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="alergia_medicamento"
-                      checked={formData.alergia_medicamento}
-                      onCheckedChange={(checked) => handleInputChange("alergia_medicamento", checked)}
-                    />
-                    <Label htmlFor="alergia_medicamento">Alergia a algum medicamento</Label>
-                  </div>
-                  {formData.alergia_medicamento && (
-                    <div className="space-y-2 ml-6">
-                      <Label htmlFor="alergia_medicamento_qual">Qual medicamento?</Label>
-                      <Textarea
-                        id="alergia_medicamento_qual"
-                        name="alergia_medicamento_qual"
-                        rows={2}
-                        placeholder="Descreva o(s) medicamento(s) que causam alergia"
-                        defaultValue={formData.alergia_medicamento_qual}
-                        onChange={(e) => handleInputChange("alergia_medicamento_qual", e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="alergia_alimento"
-                      checked={formData.alergia_alimento}
-                      onCheckedChange={(checked) => handleInputChange("alergia_alimento", checked)}
-                    />
-                    <Label htmlFor="alergia_alimento">Alergia a algum alimento</Label>
-                  </div>
-                  {formData.alergia_alimento && (
-                    <div className="space-y-2 ml-6">
-                      <Label htmlFor="alergia_alimento_qual">Qual alimento?</Label>
-                      <Textarea
-                        id="alergia_alimento_qual"
-                        name="alergia_alimento_qual"
-                        rows={2}
-                        placeholder="Descreva o(s) alimento(s) que causam alergia"
-                        defaultValue={formData.alergia_alimento_qual}
-                        onChange={(e) => handleInputChange("alergia_alimento_qual", e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="matricula" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Dados da Matrícula</CardTitle>
-                <CardDescription>Informações sobre a matrícula do aluno</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="periodo_letivo">Período Letivo</Label>
-                    <Input
-                      id="periodo_letivo"
-                      name="periodo_letivo"
-                      placeholder="Ex: 2024"
-                      defaultValue={formData.periodo_letivo}
-                      onChange={(e) => handleInputChange("periodo_letivo", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nivel">Nível</Label>
-                    <Select value={formData.nivel} onValueChange={(value) => handleInputChange("nivel", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Educação Infantil">Educação Infantil</SelectItem>
-                        <SelectItem value="Ensino Fundamental I">Ensino Fundamental I</SelectItem>
-                        <SelectItem value="Ensino Fundamental II">Ensino Fundamental II</SelectItem>
-                        <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="turno_preferencial">Turno</Label>
-                    <Select
-                      value={formData.turno_preferencial}
-                      onValueChange={(value) => handleInputChange("turno_preferencial", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Matutino">Matutino</SelectItem>
-                        <SelectItem value="Vespertino">Vespertino</SelectItem>
-                        <SelectItem value="Noturno">Noturno</SelectItem>
-                        <SelectItem value="Integral">Integral</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="responsavel_matricula">Responsável pela Matrícula</Label>
-                    <Input
-                      id="responsavel_matricula"
-                      name="responsavel_matricula"
-                      defaultValue={formData.responsavel_matricula}
-                      onChange={(e) => handleInputChange("responsavel_matricula", e.target.value)}
-                    />
-                  </div>
-                </div>
-
+        {currentStep === 5 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Responsável Financeiro</CardTitle>
+              <CardDescription>Dados completos do responsável financeiro</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
-                  <Textarea
-                    id="observacoes"
-                    name="observacoes"
-                    rows={4}
-                    placeholder="Informações adicionais sobre o aluno ou a matrícula"
-                    defaultValue={formData.observacoes}
-                    onChange={(e) => handleInputChange("observacoes", e.target.value)}
+                  <Label htmlFor="resp_fin_nome">Nome Completo</Label>
+                  <Input
+                    id="resp_fin_nome"
+                    name="resp_fin_nome"
+                    value={formData.resp_fin_nome}
+                    onChange={(e) => handleInputChange("resp_fin_nome", e.target.value)}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_data_nascimento">Data de Nascimento</Label>
+                  <Input
+                    id="resp_fin_data_nascimento"
+                    name="resp_fin_data_nascimento"
+                    type="date"
+                    value={formData.resp_fin_data_nascimento}
+                    onChange={(e) => handleInputChange("resp_fin_data_nascimento", e.target.value)}
+                  />
+                </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_estado_civil">Estado Civil</Label>
+                  <Select
+                    value={formData.resp_fin_estado_civil}
+                    onValueChange={(value) => handleInputChange("resp_fin_estado_civil", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                      <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                      <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                      <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                      <SelectItem value="União Estável">União Estável</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_grau_parentesco">Grau de Parentesco</Label>
+                  <Input
+                    id="resp_fin_grau_parentesco"
+                    name="resp_fin_grau_parentesco"
+                    placeholder="Ex: Pai, Mãe, Avô, Tio"
+                    value={formData.resp_fin_grau_parentesco}
+                    onChange={(e) => handleInputChange("resp_fin_grau_parentesco", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_cpf">CPF</Label>
+                  <Input
+                    id="resp_fin_cpf"
+                    name="resp_fin_cpf"
+                    value={formData.resp_fin_cpf}
+                    onChange={(e) => handleInputChange("resp_fin_cpf", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_identidade">Identidade (RG)</Label>
+                  <Input
+                    id="resp_fin_identidade"
+                    name="resp_fin_identidade"
+                    value={formData.resp_fin_identidade}
+                    onChange={(e) => handleInputChange("resp_fin_identidade", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_orgao_emissor">Órgão Emissor</Label>
+                  <Input
+                    id="resp_fin_orgao_emissor"
+                    name="resp_fin_orgao_emissor"
+                    placeholder="Ex: SSP"
+                    value={formData.resp_fin_orgao_emissor}
+                    onChange={(e) => handleInputChange("resp_fin_orgao_emissor", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="resp_fin_uf">UF</Label>
+                  <Select
+                    value={formData.resp_fin_uf}
+                    onValueChange={(value) => handleInputChange("resp_fin_uf", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ufs.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium mb-4">Endereço do Responsável Financeiro</h4>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="resp_fin_endereco">Endereço</Label>
+                    <Input
+                      id="resp_fin_endereco"
+                      name="resp_fin_endereco"
+                      value={formData.resp_fin_endereco}
+                      onChange={(e) => handleInputChange("resp_fin_endereco", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="resp_fin_bairro">Bairro</Label>
+                      <Input
+                        id="resp_fin_bairro"
+                        name="resp_fin_bairro"
+                        value={formData.resp_fin_bairro}
+                        onChange={(e) => handleInputChange("resp_fin_bairro", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="resp_fin_cidade">Cidade</Label>
+                      <Input
+                        id="resp_fin_cidade"
+                        name="resp_fin_cidade"
+                        value={formData.resp_fin_cidade}
+                        onChange={(e) => handleInputChange("resp_fin_cidade", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="resp_fin_uf_endereco">UF</Label>
+                      <Select
+                        value={formData.resp_fin_uf_endereco}
+                        onValueChange={(value) => handleInputChange("resp_fin_uf_endereco", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="UF" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ufs.map((uf) => (
+                            <SelectItem key={uf} value={uf}>
+                              {uf}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="resp_fin_cep">CEP</Label>
+                      <Input
+                        id="resp_fin_cep"
+                        name="resp_fin_cep"
+                        value={formData.resp_fin_cep}
+                        onChange={(e) => handleInputChange("resp_fin_cep", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="resp_fin_telefone">Telefone para Contato</Label>
+                    <Input
+                      id="resp_fin_telefone"
+                      name="resp_fin_telefone"
+                      type="tel"
+                      value={formData.resp_fin_telefone}
+                      onChange={(e) => handleInputChange("resp_fin_telefone", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 6 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações Médicas</CardTitle>
+              <CardDescription>Dados importantes sobre saúde do aluno</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="ativo"
-                    checked={formData.ativo}
-                    onCheckedChange={(checked) => handleInputChange("ativo", checked)}
+                    id="uso_medicamento_continuo"
+                    checked={formData.uso_medicamento_continuo}
+                    onCheckedChange={(checked) => handleInputChange("uso_medicamento_continuo", checked)}
                   />
-                  <Label htmlFor="ativo">Aluno ativo</Label>
+                  <Label htmlFor="uso_medicamento_continuo">Uso contínuo de algum medicamento</Label>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                {formData.uso_medicamento_continuo && (
+                  <div className="space-y-2 ml-6">
+                    <Label htmlFor="medicamento_continuo_qual">Qual medicamento?</Label>
+                    <Textarea
+                      id="medicamento_continuo_qual"
+                      name="medicamento_continuo_qual"
+                      rows={2}
+                      placeholder="Descreva o(s) medicamento(s) e a dosagem"
+                      value={formData.medicamento_continuo_qual}
+                      onChange={(e) => handleInputChange("medicamento_continuo_qual", e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="alergia_medicamento"
+                    checked={formData.alergia_medicamento}
+                    onCheckedChange={(checked) => handleInputChange("alergia_medicamento", checked)}
+                  />
+                  <Label htmlFor="alergia_medicamento">Alergia a algum medicamento</Label>
+                </div>
+                {formData.alergia_medicamento && (
+                  <div className="space-y-2 ml-6">
+                    <Label htmlFor="alergia_medicamento_qual">Qual medicamento?</Label>
+                    <Textarea
+                      id="alergia_medicamento_qual"
+                      name="alergia_medicamento_qual"
+                      rows={2}
+                      placeholder="Descreva o(s) medicamento(s) que causam alergia"
+                      value={formData.alergia_medicamento_qual}
+                      onChange={(e) => handleInputChange("alergia_medicamento_qual", e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="alergia_alimento"
+                    checked={formData.alergia_alimento}
+                    onCheckedChange={(checked) => handleInputChange("alergia_alimento", checked)}
+                  />
+                  <Label htmlFor="alergia_alimento">Alergia a algum alimento</Label>
+                </div>
+                {formData.alergia_alimento && (
+                  <div className="space-y-2 ml-6">
+                    <Label htmlFor="alergia_alimento_qual">Qual alimento?</Label>
+                    <Textarea
+                      id="alergia_alimento_qual"
+                      name="alergia_alimento_qual"
+                      rows={2}
+                      placeholder="Descreva o(s) alimento(s) que causam alergia"
+                      value={formData.alergia_alimento_qual}
+                      onChange={(e) => handleInputChange("alergia_alimento_qual", e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 7 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados da Matrícula</CardTitle>
+              <CardDescription>Informações sobre a matrícula do aluno</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="periodo_letivo">Período Letivo</Label>
+                  <Input
+                    id="periodo_letivo"
+                    name="periodo_letivo"
+                    placeholder="Ex: 2024"
+                    value={formData.periodo_letivo}
+                    onChange={(e) => handleInputChange("periodo_letivo", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nivel">Nível</Label>
+                  <Select value={formData.nivel} onValueChange={(value) => handleInputChange("nivel", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Educação Infantil">Educação Infantil</SelectItem>
+                      <SelectItem value="Ensino Fundamental I">Ensino Fundamental I</SelectItem>
+                      <SelectItem value="Ensino Fundamental II">Ensino Fundamental II</SelectItem>
+                      <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="turno_preferencial">Turno</Label>
+                  <Select
+                    value={formData.turno_preferencial}
+                    onValueChange={(value) => handleInputChange("turno_preferencial", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Matutino">Matutino</SelectItem>
+                      <SelectItem value="Vespertino">Vespertino</SelectItem>
+                      <SelectItem value="Noturno">Noturno</SelectItem>
+                      <SelectItem value="Integral">Integral</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="responsavel_matricula">Responsável pela Matrícula</Label>
+                  <Input
+                    id="responsavel_matricula"
+                    name="responsavel_matricula"
+                    value={formData.responsavel_matricula}
+                    onChange={(e) => handleInputChange("responsavel_matricula", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="observacoes">Observações</Label>
+                <Textarea
+                  id="observacoes"
+                  name="observacoes"
+                  rows={4}
+                  placeholder="Informações adicionais sobre o aluno ou a matrícula"
+                  value={formData.observacoes}
+                  onChange={(e) => handleInputChange("observacoes", e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="ativo"
+                  checked={formData.ativo}
+                  onCheckedChange={(checked) => handleInputChange("ativo", checked)}
+                />
+                <Label htmlFor="ativo">Aluno ativo</Label>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -970,23 +1091,47 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
         )}
 
         <div className="flex justify-between">
-          <Button variant="outline" asChild>
-            <Link href="/alunos">
+          {currentStep === 0 ? (
+            <Button variant="outline" asChild>
+              <Link href="/alunos">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Cancelar
+              </Link>
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" onClick={prevStep}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Cancelar
-            </Link>
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            <Save className="h-4 w-4 mr-2" />
-            {isLoading ? "Salvando..." : isEditing ? "Atualizar" : "Cadastrar"}
-          </Button>
+              Anterior
+            </Button>
+          )}
+
+          {currentStep === steps.length - 1 ? (
+            <Button type="submit" disabled={isLoading}>
+              <Save className="h-4 w-4 mr-2" />
+              {isLoading ? "Salvando..." : isEditing ? "Atualizar" : "Cadastrar"}
+            </Button>
+          ) : (
+            <Button type="button" onClick={nextStep}>
+              Próximo
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* Hidden inputs para campos booleanos e selects */}
       <input type="hidden" name="uso_medicamento_continuo" value={formData.uso_medicamento_continuo.toString()} />
       <input type="hidden" name="alergia_medicamento" value={formData.alergia_medicamento.toString()} />
       <input type="hidden" name="alergia_alimento" value={formData.alergia_alimento.toString()} />
       <input type="hidden" name="ativo" value={formData.ativo.toString()} />
+      <input type="hidden" name="sexo" value={formData.sexo} />
+      <input type="hidden" name="certidao_uf" value={formData.certidao_uf} />
+      <input type="hidden" name="uf" value={formData.uf} />
+      <input type="hidden" name="resp_fin_estado_civil" value={formData.resp_fin_estado_civil} />
+      <input type="hidden" name="resp_fin_uf" value={formData.resp_fin_uf} />
+      <input type="hidden" name="resp_fin_uf_endereco" value={formData.resp_fin_uf_endereco} />
+      <input type="hidden" name="nivel" value={formData.nivel} />
+      <input type="hidden" name="turno_preferencial" value={formData.turno_preferencial} />
     </form>
   )
 }
