@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, BookOpen, Users, Calendar, User } from "lucide-react"
 import Link from "next/link"
+import { GerenciarAlunosTurma } from "@/components/turmas/gerenciar-alunos-turma"
+import { GerenciarDisciplinasTurma } from "@/components/turmas/gerenciar-disciplinas-turma"
 
 export default async function TurmaDetalhePage({ params }: { params: { id: string } }) {
   if (params.id === "nova") {
@@ -50,9 +52,27 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
   // Buscar matrículas ativas da turma
   const { data: matriculas, count: totalAlunos } = await supabase
     .from("matriculas")
-    .select("id, aluno:alunos!matriculas_aluno_id_fkey(nome_completo)", { count: "exact" })
+    .select("id, aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, cpf)", { count: "exact" })
     .eq("turma_id", params.id)
     .eq("status", "ativa")
+
+  const { data: todosAlunos } = await supabase
+    .from("alunos")
+    .select("id, nome_completo, cpf, data_nascimento")
+    .eq("ativo", true)
+    .order("nome_completo")
+
+  const { data: todasDisciplinas } = await supabase
+    .from("disciplinas")
+    .select("id, nome, codigo, carga_horaria")
+    .eq("ativo", true)
+    .order("nome")
+
+  const { data: todosProfessores } = await supabase
+    .from("professores")
+    .select("id, nome_completo")
+    .eq("ativo", true)
+    .order("nome_completo")
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR")
@@ -230,6 +250,21 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
                 )}
               </CardContent>
             </Card>
+
+            <GerenciarDisciplinasTurma
+              turmaId={turma.id}
+              disciplinasAtuais={disciplinas || []}
+              todasDisciplinas={todasDisciplinas || []}
+              todosProfessores={todosProfessores || []}
+            />
+
+            <GerenciarAlunosTurma
+              turmaId={turma.id}
+              capacidadeMaxima={turma.capacidade_maxima}
+              alunosMatriculados={matriculas || []}
+              todosAlunos={todosAlunos || []}
+              totalAlunos={totalAlunos || 0}
+            />
           </div>
 
           {/* Sidebar */}

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -10,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Save, ArrowLeft, User, GraduationCap } from "lucide-react"
+import { Save, ArrowLeft, User, GraduationCap, Search, X, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface MatriculaData {
   numero_matricula: string
@@ -35,6 +34,7 @@ interface Turma {
   nome: string
   serie: string
   ano_letivo: number
+  capacidade_maxima: number
 }
 
 interface MatriculaFormProps {
@@ -50,6 +50,12 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
   const [error, setError] = useState<string | null>(null)
   const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
   const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null)
+  const [alunosSelecionados, setAlunosSelecionados] = useState<Aluno[]>([])
+  const [showAlunoSearch, setShowAlunoSearch] = useState(false)
+  const [showTurmaSearch, setShowTurmaSearch] = useState(false)
+  const [capacidadeInfo, setCapacidadeInfo] = useState<{ atual: number; maxima: number } | null>(null)
+  const [searchAluno, setSearchAluno] = useState("")
+  const [searchTurma, setSearchTurma] = useState("")
 
   const currentYear = new Date().getFullYear()
   const currentDate = new Date().toISOString().split("T")[0]
@@ -97,31 +103,113 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
     }
   }, [formData.turma_id, turmas])
 
+  useEffect(() => {
+    if (formData.turma_id) {
+      const fetchCapacidade = async () => {
+        const supabase = createClient()
+        const { data: turma } = await supabase
+          .from("turmas")
+          .select("capacidade_maxima")
+          .eq("id", formData.turma_id)
+          .single()
+
+        const { count } = await supabase
+          .from("matriculas")
+          .select("*", { count: "exact", head: true })
+          .eq("turma_id", formData.turma_id)
+          .eq("status", "ativa")
+
+        if (turma) {
+          setCapacidadeInfo({ atual: count || 0, maxima: turma.capacidade_maxima })
+        }
+      }
+      fetchCapacidade()
+    }
+  }, [formData.turma_id])
+
   const handleInputChange = (field: keyof MatriculaData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const alunosFiltrados = alunos.filter((aluno) =>
+    aluno.nome_completo.toLowerCase().includes(searchAluno.toLowerCase()),
+  )
+
+  const turmasFiltradas = turmas.filter(
+    (turma) =>
+      turma.nome.toLowerCase().includes(searchTurma.toLowerCase()) ||
+      turma.serie.toLowerCase().includes(searchTurma.toLowerCase()),
+  )
+
+  const handleAdicionarAluno = (aluno: Aluno) => {
+    if (!alunosSelecionados.find((a) => a.id === aluno.id)) {
+      setAlunosSelecionados([...alunosSelecionados, aluno])
+    }
+    setShowAlunoSearch(false)
+    setSearchAluno("")
+  }
+
+  const handleRemoverAluno = (alunoId: string) => {
+    setAlunosSelecionados(alunosSelecionados.filter((a) => a.id !== alunoId))
+  }
+
+  const handleSelecionarTurma = (turma: Turma) => {
+    setSelectedTurma(turma)
+    setFormData((prev) => ({ ...prev, turma_id: turma.id, ano_letivo: turma.ano_letivo.toString() }))
+    setShowTurmaSearch(false)
+    setSearchTurma("")
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!isEditing && alunosSelecionados.length === 0) {
+      setError("Selecione pelo menos um aluno")
+      return
+    }
+
+    if (!formData.turma_id) {
+      setError("Selecione uma turma")
+      return
+    }
+
+    // Verificar capacidade
+    if (capacidadeInfo && !isEditing) {
+      const vagasDisponiveis = capacidadeInfo.maxima - capacidadeInfo.atual
+      if (alunosSelecionados.length > vagasDisponiveis) {
+        setError(`A turma tem apenas ${vagasDisponiveis} vaga(s) disponível(is)`)
+        return
+      }
+    }
+
     setIsLoading(true)
     setError(null)
 
     const supabase = createClient()
 
     try {
-      // Preparar dados para envio
-      const dataToSend = {
-        ...formData,
-        ano_letivo: Number.parseInt(formData.ano_letivo),
-      }
-
       if (isEditing && matricula) {
+        const dataToSend = {
+          ...formData,
+          ano_letivo: Number.parseInt(formData.ano_letivo),
+        }
         const { error } = await supabase.from("matriculas").update(dataToSend).eq("id", matricula.id)
-
         if (error) throw error
       } else {
-        const { error } = await supabase.from("matriculas").insert([dataToSend])
+        // Criar múltiplas matrículas
+        const matriculas = alunosSelecionados.map((aluno) => ({
+          numero_matricula: `${formData.ano_letivo.slice(-2)}${Math.floor(Math.random() * 10000)
+            .toString()
+            .padStart(4, "0")}`,
+          aluno_id: aluno.id,
+          turma_id: formData.turma_id,
+          ano_letivo: Number.parseInt(formData.ano_letivo),
+          data_matricula: formData.data_matricula,
+          status: formData.status,
+          observacoes: formData.observacoes,
+        }))
 
+        const { error } = await supabase.from("matriculas").insert(matriculas)
         if (error) throw error
       }
 
@@ -132,6 +220,8 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
       setIsLoading(false)
     }
   }
+
+  const capacidadeAtingida = capacidadeInfo && capacidadeInfo.atual >= capacidadeInfo.maxima
 
   return (
     <form onSubmit={handleSubmit}>
@@ -199,46 +289,74 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Seleção do Aluno
-            </CardTitle>
-            <CardDescription>Escolha o aluno para esta matrícula</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="aluno_id">Aluno *</Label>
-              <Select value={formData.aluno_id} onValueChange={(value) => handleInputChange("aluno_id", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um aluno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {alunos.map((aluno) => (
-                    <SelectItem key={aluno.id} value={aluno.id}>
-                      {aluno.nome_completo} {aluno.cpf && `- ${aluno.cpf}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {!isEditing && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Seleção de Alunos
+              </CardTitle>
+              <CardDescription>Pesquise e adicione múltiplos alunos de uma vez</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Pesquisar Alunos</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Digite o nome do aluno..."
+                    value={searchAluno}
+                    onChange={(e) => {
+                      setSearchAluno(e.target.value)
+                      setShowAlunoSearch(true)
+                    }}
+                    onFocus={() => setShowAlunoSearch(true)}
+                    className="pl-10"
+                  />
+                </div>
 
-            {selectedAluno && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Aluno Selecionado</h4>
-                <p className="text-blue-800">
-                  <strong>Nome:</strong> {selectedAluno.nome_completo}
-                </p>
-                {selectedAluno.cpf && (
-                  <p className="text-blue-800">
-                    <strong>CPF:</strong> {selectedAluno.cpf}
-                  </p>
+                {showAlunoSearch && searchAluno && (
+                  <div className="border rounded-lg max-h-60 overflow-y-auto bg-white shadow-lg">
+                    {alunosFiltrados.length > 0 ? (
+                      alunosFiltrados.map((aluno) => (
+                        <button
+                          key={aluno.id}
+                          type="button"
+                          onClick={() => handleAdicionarAluno(aluno)}
+                          className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0"
+                        >
+                          <p className="font-medium">{aluno.nome_completo}</p>
+                          {aluno.cpf && <p className="text-sm text-gray-600">CPF: {aluno.cpf}</p>}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="p-4 text-center text-gray-500">Nenhum aluno encontrado</p>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {alunosSelecionados.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Alunos Selecionados ({alunosSelecionados.length})</Label>
+                  <div className="space-y-2">
+                    {alunosSelecionados.map((aluno) => (
+                      <div key={aluno.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-blue-900">{aluno.nome_completo}</p>
+                          {aluno.cpf && <p className="text-sm text-blue-700">CPF: {aluno.cpf}</p>}
+                        </div>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoverAluno(aluno.id)}>
+                          <X className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -246,28 +364,51 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
               <GraduationCap className="h-5 w-5" />
               Seleção da Turma
             </CardTitle>
-            <CardDescription>Escolha a turma para esta matrícula</CardDescription>
+            <CardDescription>Pesquise e selecione a turma para a matrícula</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="turma_id">Turma *</Label>
-              <Select value={formData.turma_id} onValueChange={(value) => handleInputChange("turma_id", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma turma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {turmas.map((turma) => (
-                    <SelectItem key={turma.id} value={turma.id}>
-                      {turma.nome} - {turma.serie} ({turma.ano_letivo})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Pesquisar Turma</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Digite o nome ou série da turma..."
+                  value={searchTurma}
+                  onChange={(e) => {
+                    setSearchTurma(e.target.value)
+                    setShowTurmaSearch(true)
+                  }}
+                  onFocus={() => setShowTurmaSearch(true)}
+                  className="pl-10"
+                />
+              </div>
+
+              {showTurmaSearch && searchTurma && (
+                <div className="border rounded-lg max-h-60 overflow-y-auto bg-white shadow-lg">
+                  {turmasFiltradas.length > 0 ? (
+                    turmasFiltradas.map((turma) => (
+                      <button
+                        key={turma.id}
+                        type="button"
+                        onClick={() => handleSelecionarTurma(turma)}
+                        className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0"
+                      >
+                        <p className="font-medium">
+                          {turma.nome} - {turma.serie}
+                        </p>
+                        <p className="text-sm text-gray-600">Ano Letivo: {turma.ano_letivo}</p>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="p-4 text-center text-gray-500">Nenhuma turma encontrada</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {selectedTurma && (
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-medium text-green-900 mb-2">Turma Selecionada</h4>
+              <div className="bg-green-50 p-4 rounded-lg space-y-2">
+                <h4 className="font-medium text-green-900">Turma Selecionada</h4>
                 <p className="text-green-800">
                   <strong>Nome:</strong> {selectedTurma.nome}
                 </p>
@@ -277,33 +418,37 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
                 <p className="text-green-800">
                   <strong>Ano Letivo:</strong> {selectedTurma.ano_letivo}
                 </p>
+                {capacidadeInfo && (
+                  <div className="pt-2 border-t border-green-200">
+                    <p className="text-green-800">
+                      <strong>Capacidade:</strong> {capacidadeInfo.atual}/{capacidadeInfo.maxima} alunos
+                    </p>
+                    <div className="w-full bg-green-200 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-green-600 h-2 rounded-full"
+                        style={{
+                          width: `${Math.min((capacidadeInfo.atual / capacidadeInfo.maxima) * 100, 100)}%`,
+                        }}
+                      />
+                    </div>
+                    {capacidadeAtingida && (
+                      <Alert variant="destructive" className="mt-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>Capacidade máxima atingida</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Observações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea
-                id="observacoes"
-                rows={3}
-                placeholder="Observações sobre a matrícula..."
-                value={formData.observacoes}
-                onChange={(e) => handleInputChange("observacoes", e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <div className="flex justify-between">
@@ -313,9 +458,14 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
               Cancelar
             </Link>
           </Button>
-          <Button type="submit" disabled={isLoading || !formData.aluno_id || !formData.turma_id}>
+          <Button
+            type="submit"
+            disabled={
+              isLoading || (!isEditing && alunosSelecionados.length === 0) || !formData.turma_id || capacidadeAtingida
+            }
+          >
             <Save className="h-4 w-4 mr-2" />
-            {isLoading ? "Salvando..." : isEditing ? "Atualizar" : "Matricular"}
+            {isLoading ? "Salvando..." : isEditing ? "Atualizar" : `Matricular ${alunosSelecionados.length} Aluno(s)`}
           </Button>
         </div>
       </div>
