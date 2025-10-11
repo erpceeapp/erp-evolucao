@@ -24,7 +24,7 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
     .from("turmas")
     .select(`
       *,
-      professor_responsavel:professores(nome_completo, email, telefone)
+      professor_responsavel:professores!turmas_professor_responsavel_id_fkey(nome_completo, email, telefone)
     `)
     .eq("id", params.id)
     .single()
@@ -38,15 +38,15 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
     .from("turma_disciplinas")
     .select(`
       id,
-      disciplina:disciplinas(nome, codigo, carga_horaria),
-      professor:professores(nome_completo)
+      disciplina:disciplinas!turma_disciplinas_disciplina_id_fkey(nome, codigo, carga_horaria),
+      professor:professores!turma_disciplinas_professor_id_fkey(nome_completo)
     `)
     .eq("turma_id", params.id)
 
   // Buscar matrículas ativas da turma
   const { data: matriculas, count: totalAlunos } = await supabase
     .from("matriculas")
-    .select("id, aluno:alunos(nome_completo)", { count: "exact" })
+    .select("id, aluno:alunos!matriculas_aluno_id_fkey(nome_completo)", { count: "exact" })
     .eq("turma_id", params.id)
     .eq("status", "ativa")
 

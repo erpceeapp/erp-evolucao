@@ -40,7 +40,7 @@ export default async function TurmasPage({
     .select(
       `
       *,
-      professor_responsavel:professores(nome_completo)
+      professor_responsavel:professores!turmas_professor_responsavel_id_fkey(nome_completo)
     `,
       { count: "exact" },
     )

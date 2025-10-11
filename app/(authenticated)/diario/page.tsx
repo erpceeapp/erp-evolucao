@@ -14,8 +14,8 @@ async function getTurmasComDisciplinas() {
     .from("turma_disciplinas")
     .select(`
       *,
-      turmas (id, nome, serie, ano_letivo),
-      disciplinas (id, nome, codigo),
+      turmas!turma_disciplinas_turma_id_fkey (id, nome, serie, ano_letivo),
+      disciplinas!turma_disciplinas_disciplina_id_fkey (id, nome, codigo),
       professores!turma_disciplinas_professor_id_fkey (id, nome_completo)
     `)
     .order("turmas(serie)", { ascending: true })
