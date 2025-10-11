@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { BookOpen, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -7,14 +7,14 @@ import Link from "next/link"
 import NovaAulaForm from "@/components/diario/nova-aula-form"
 
 async function getTurmasComDisciplinas() {
-  const supabase = await createServerClient()
+  const supabase = await createClient()
 
   const { data: turmasDisciplinas, error } = await supabase
     .from("turma_disciplinas")
     .select(`
       *,
-      turmas (id, nome, serie, ano_letivo),
-      disciplinas (id, nome, codigo),
+      turmas!turma_disciplinas_turma_id_fkey (id, nome, serie, ano_letivo),
+      disciplinas!turma_disciplinas_disciplina_id_fkey (id, nome, codigo),
       professores!turma_disciplinas_professor_id_fkey (id, nome_completo)
     `)
     .order("turmas(serie)", { ascending: true })
@@ -28,7 +28,7 @@ async function getTurmasComDisciplinas() {
 }
 
 export default async function NovaAulaPage() {
-  const supabase = await createServerClient()
+  const supabase = await createClient()
 
   const {
     data: { user },

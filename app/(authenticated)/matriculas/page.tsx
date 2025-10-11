@@ -36,14 +36,13 @@ export default async function MatriculasPage({
   const page = Number.parseInt(searchParams.page || "1")
   const itemsPerPage = 10
 
-  // Query para buscar matrículas com dados relacionados
   let query = supabase
     .from("matriculas")
     .select(
       `
       *,
-      aluno:alunos(nome_completo, cpf),
-      turma:turmas(nome, serie, ano_letivo)
+      aluno:alunos!matriculas_aluno_id_fkey(nome_completo, cpf),
+      turma:turmas!matriculas_turma_id_fkey(nome, serie, ano_letivo)
     `,
       { count: "exact" },
     )

@@ -9,6 +9,10 @@ import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
 export default async function DisciplinaDetalhePage({ params }: { params: { id: string } }) {
+  if (params.id === "nova") {
+    redirect("/disciplinas/nova")
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()

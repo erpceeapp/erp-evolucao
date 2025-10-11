@@ -44,10 +44,10 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
 
   const [formData, setFormData] = useState<TurmaData>({
     nome: turma?.nome || "",
-    ano_letivo: turma?.ano_letivo || currentYear.toString(),
+    ano_letivo: turma?.ano_letivo?.toString() || currentYear.toString(),
     serie: turma?.serie || "",
     turno: turma?.turno || "matutino",
-    capacidade_maxima: turma?.capacidade_maxima || "",
+    capacidade_maxima: turma?.capacidade_maxima?.toString() || "",
     professor_responsavel_id: turma?.professor_responsavel_id || "none",
     ativo: turma?.ativo ?? true,
   })

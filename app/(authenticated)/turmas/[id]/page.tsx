@@ -8,6 +8,10 @@ import { Edit, ArrowLeft, BookOpen, Users, Calendar, User } from "lucide-react"
 import Link from "next/link"
 
 export default async function TurmaDetalhePage({ params }: { params: { id: string } }) {
+  if (params.id === "nova") {
+    redirect("/turmas/nova")
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
