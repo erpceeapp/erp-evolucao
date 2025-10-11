@@ -1,7 +1,4 @@
-"use client"
-
 import React from "react"
-
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Calendar, Plus, Filter, Eye, Grid3X3, List } from "lucide-react"
@@ -11,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { AgendaCalendar } from "@/components/agenda/agenda-calendar"
 
 async function getEventos() {
   const supabase = await createServerClient()
@@ -80,49 +78,7 @@ export default async function AgendaPage() {
           <TabsContent value="mes">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Calendário - Dezembro 2024</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-7 gap-2 mb-4">
-                      {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dia) => (
-                        <div key={dia} className="text-center text-sm font-medium text-gray-500 p-2">
-                          {dia}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-2">
-                      {Array.from({ length: 35 }, (_, i) => {
-                        const dia = i - 5 + 1
-                        const isToday = dia === new Date().getDate()
-                        const hasEvent = eventos.some((evento) => {
-                          const eventDate = new Date(evento.data_inicio)
-                          return eventDate.getDate() === dia
-                        })
-
-                        return (
-                          <Button
-                            key={i}
-                            variant="ghost"
-                            className={`
-                              aspect-square flex items-center justify-center text-sm rounded-lg cursor-pointer
-                              ${isToday ? "bg-cyan-600 text-white hover:bg-cyan-700" : "hover:bg-gray-100"}
-                              ${hasEvent ? "bg-cyan-50 border border-cyan-200" : ""}
-                              ${dia <= 0 || dia > 31 ? "text-gray-300" : ""}
-                            `}
-                            onClick={() => {
-                              // Aqui poderia abrir modal para criar evento neste dia
-                              window.location.href = `/agenda/novo-evento?data=${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
-                            }}
-                          >
-                            {dia > 0 && dia <= 31 ? dia : ""}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                <AgendaCalendar eventos={eventos} />
               </div>
 
               <div className="space-y-6">
@@ -244,9 +200,7 @@ export default async function AgendaPage() {
                               </div>
                             ))
                           ) : (
-                            <div className="text-gray-400 text-sm cursor-pointer hover:text-gray-600">
-                              Clique para adicionar evento
-                            </div>
+                            <div className="text-gray-400 text-sm">Sem eventos neste horário</div>
                           )}
                         </div>
                       </div>
