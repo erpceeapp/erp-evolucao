@@ -13,7 +13,22 @@ export function createClient() {
     throw new Error("Missing Supabase environment variables. Please check your .env file.")
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      // Desabilita auto-refresh de token no cliente para evitar erros de fetch
+      autoRefreshToken: false,
+      // Desabilita persistência de sessão no cliente
+      persistSession: false,
+      // Desabilita detecção automática de sessão
+      detectSessionInUrl: false,
+    },
+    global: {
+      // Adiciona headers para melhor compatibilidade
+      headers: {
+        "X-Client-Info": "erp-educacional",
+      },
+    },
+  })
 }
 
 export { createClient as createBrowserClient }
