@@ -17,8 +17,10 @@ interface SearchParams {
 export default async function DisciplinasPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -27,9 +29,9 @@ export default async function DisciplinasPage({
   }
 
   // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const status = searchParams.status || "todos"
-  const page = Number.parseInt(searchParams.page || "1")
+  const busca = params.busca || ""
+  const status = params.status || "todos"
+  const page = Number.parseInt(params.page || "1")
   const itemsPerPage = 10
 
   // Query para buscar disciplinas

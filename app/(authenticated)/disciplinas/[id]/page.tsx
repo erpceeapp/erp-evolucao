@@ -8,8 +8,10 @@ import { Edit, BookOpen, Users, Calendar, Clock } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
-export default async function DisciplinaDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "nova") {
+export default async function DisciplinaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  if (id === "nova") {
     redirect("/disciplinas/nova")
   }
 
@@ -20,7 +22,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: { id: 
     redirect("/auth/login")
   }
 
-  if (!params.id || params.id === "undefined" || params.id === "null") {
+  if (!id || id === "undefined" || id === "null") {
     notFound()
   }
 
@@ -28,7 +30,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: { id: 
   const { data: disciplina, error: disciplinaError } = await supabase
     .from("disciplinas")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (disciplinaError || !disciplina) {
@@ -41,12 +43,12 @@ export default async function DisciplinaDetalhePage({ params }: { params: { id: 
     .select(
       `
       id,
-      turma:turmas(nome, serie, turno),
-      professor:professores(nome_completo)
+      turma:turmas!turma_disciplinas_turma_id_fkey(nome, serie, turno),
+      professor:professores!turma_disciplinas_professor_id_fkey(nome_completo)
     `,
       { count: "exact" },
     )
-    .eq("disciplina_id", params.id)
+    .eq("disciplina_id", id)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR")

@@ -4,7 +4,9 @@ import { DisciplinaForm } from "@/components/disciplinas/disciplina-form"
 import { PageHeader } from "@/components/page-header"
 import { BookOpen } from "lucide-react"
 
-export default async function EditarDisciplinaPage({ params }: { params: { id: string } }) {
+export default async function EditarDisciplinaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -12,14 +14,14 @@ export default async function EditarDisciplinaPage({ params }: { params: { id: s
     redirect("/auth/login")
   }
 
-  if (!params.id || params.id === "undefined" || params.id === "null") {
+  if (!id || id === "undefined" || id === "null") {
     notFound()
   }
 
   const { data: disciplina, error: disciplinaError } = await supabase
     .from("disciplinas")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (disciplinaError || !disciplina) {
