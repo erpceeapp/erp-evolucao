@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -29,6 +30,12 @@ interface ProfessorData {
   ativo: boolean
 }
 
+interface Disciplina {
+  id: string
+  nome: string
+  codigo: string
+}
+
 interface ProfessorFormProps {
   professor?: ProfessorData & { id: string }
   isEditing?: boolean
@@ -38,6 +45,9 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
+  const [selectedDisciplinas, setSelectedDisciplinas] = useState<string[]>([])
+  const [loadingDisciplinas, setLoadingDisciplinas] = useState(true)
 
   const [formData, setFormData] = useState<ProfessorData>({
     nome_completo: professor?.nome_completo || "",
@@ -59,6 +69,12 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const toggleDisciplina = (disciplinaId: string) => {
+    setSelectedDisciplinas((prev) =>
+      prev.includes(disciplinaId) ? prev.filter((id) => id !== disciplinaId) : [...prev, disciplinaId],
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -73,14 +89,33 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
         salario: formData.salario ? Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", ".")) : null,
       }
 
+      let professorId: string
+
       if (isEditing && professor) {
         const { error } = await supabase.from("professores").update(dataToSend).eq("id", professor.id)
 
         if (error) throw error
+        professorId = professor.id
       } else {
-        const { error } = await supabase.from("professores").insert([dataToSend])
+        const { data, error } = await supabase.from("professores").insert([dataToSend]).select().single()
 
         if (error) throw error
+        professorId = data.id
+      }
+
+      // Primeiro, remover todas as associações existentes
+      await supabase.from("professor_disciplinas").delete().eq("professor_id", professorId)
+
+      // Depois, inserir as novas associações
+      if (selectedDisciplinas.length > 0) {
+        const disciplinasToInsert = selectedDisciplinas.map((disciplinaId) => ({
+          professor_id: professorId,
+          disciplina_id: disciplinaId,
+        }))
+
+        const { error: disciplinasError } = await supabase.from("professor_disciplinas").insert(disciplinasToInsert)
+
+        if (disciplinasError) throw disciplinasError
       }
 
       router.push("/professores")
@@ -104,6 +139,43 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     const formatted = formatCurrency(value)
     handleInputChange("salario", formatted)
   }
+
+  useEffect(() => {
+    const fetchDisciplinas = async () => {
+      const supabase = createClient()
+
+      try {
+        // Buscar todas as disciplinas ativas
+        const { data: disciplinasData, error: disciplinasError } = await supabase
+          .from("disciplinas")
+          .select("id, nome, codigo")
+          .eq("ativo", true)
+          .order("nome")
+
+        if (disciplinasError) throw disciplinasError
+        setDisciplinas(disciplinasData || [])
+
+        // Se estiver editando, buscar disciplinas já associadas ao professor
+        if (isEditing && professor) {
+          const { data: professorDisciplinas, error: pdError } = await supabase
+            .from("professor_disciplinas")
+            .select("disciplina_id")
+            .eq("professor_id", professor.id)
+
+          if (pdError) throw pdError
+
+          const disciplinaIds = professorDisciplinas?.map((pd) => pd.disciplina_id) || []
+          setSelectedDisciplinas(disciplinaIds)
+        }
+      } catch (error: any) {
+        console.error("Erro ao buscar disciplinas:", error)
+      } finally {
+        setLoadingDisciplinas(false)
+      }
+    }
+
+    fetchDisciplinas()
+  }, [isEditing, professor])
 
   return (
     <form onSubmit={handleSubmit}>
@@ -249,6 +321,36 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
               />
               <Label htmlFor="ativo">Professor ativo</Label>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Disciplinas</CardTitle>
+            <CardDescription>Selecione as disciplinas que o professor pode lecionar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingDisciplinas ? (
+              <p className="text-sm text-gray-500">Carregando disciplinas...</p>
+            ) : disciplinas.length === 0 ? (
+              <p className="text-sm text-gray-500">Nenhuma disciplina cadastrada no sistema.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {disciplinas.map((disciplina) => (
+                  <div key={disciplina.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`disciplina-${disciplina.id}`}
+                      checked={selectedDisciplinas.includes(disciplina.id)}
+                      onCheckedChange={() => toggleDisciplina(disciplina.id)}
+                    />
+                    <Label htmlFor={`disciplina-${disciplina.id}`} className="text-sm font-normal cursor-pointer">
+                      {disciplina.codigo ? `${disciplina.codigo} - ` : ""}
+                      {disciplina.nome}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
