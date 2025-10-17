@@ -8,44 +8,28 @@ import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText } from "lucide
 import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
 
-export default async function AlunoDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "novo") {
+export default async function AlunoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  if (id === "novo") {
     redirect("/alunos/novo")
   }
-
-  console.log("[v0] AlunoDetalhePage - params:", params)
-  console.log("[v0] AlunoDetalhePage - params.id:", params.id)
 
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) {
-    console.log("[v0] Auth error or no user, redirecting to login")
     redirect("/auth/login")
   }
 
-  if (!params.id || params.id === "undefined" || params.id === "null") {
-    console.log("[v0] Invalid params.id:", params.id)
+  if (!id || id === "undefined" || id === "null") {
     notFound()
   }
 
   // Buscar dados do aluno
-  console.log("[v0] Fetching aluno with id:", params.id)
-  const { data: aluno, error: alunoError } = await supabase.from("alunos").select("*").eq("id", params.id).single()
-
-  console.log("[v0] Supabase query result - aluno:", aluno)
-  console.log("[v0] Supabase query error:", alunoError)
-
-  if (alunoError) {
-    console.log("[v0] Aluno error details:", {
-      message: alunoError.message,
-      code: alunoError.code,
-      details: alunoError.details,
-    })
-  }
+  const { data: aluno, error: alunoError } = await supabase.from("alunos").select("*").eq("id", id).single()
 
   if (alunoError || !aluno) {
-    console.log("[v0] Calling notFound() - alunoError:", !!alunoError, "aluno exists:", !!aluno)
     notFound()
   }
 
