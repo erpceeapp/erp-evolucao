@@ -13,6 +13,7 @@ import { Save } from "lucide-react"
 import Link from "next/link"
 import { cadastrarAluno, atualizarAluno } from "@/app/(authenticated)/alunos/novo/actions"
 import { Separator } from "@/components/ui/separator"
+import { maskCPF, maskRG, maskCEP, maskPhone, maskCellPhone, removeMask } from "@/lib/input-masks"
 
 interface AlunoData {
   // Dados básicos
@@ -165,6 +166,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleMaskedInput = (field: keyof AlunoData, value: string, maskFn: (v: string) => string) => {
+    const maskedValue = maskFn(value)
+    setFormData((prev) => ({ ...prev, [field]: maskedValue }))
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -173,10 +179,36 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     try {
       const formDataToSend = new FormData(e.currentTarget)
 
+      // Remover máscaras antes de enviar para o backend
+      const unmaskedFormData = new FormData()
+      for (const [key, value] of formDataToSend.entries()) {
+        let processedValue = value
+        if (typeof value === "string") {
+          if (key === "cpf" || key === "resp_fin_cpf") {
+            processedValue = removeMask(value)
+          } else if (key === "cep" || key === "resp_fin_cep") {
+            processedValue = removeMask(value)
+          } else if (
+            key === "telefone_residencial" ||
+            key === "telefone_comercial" ||
+            key === "telefone" ||
+            key === "celular_mae" ||
+            key === "celular_pai" ||
+            key === "telefone_responsavel" ||
+            key === "resp_fin_telefone"
+          ) {
+            processedValue = removeMask(value)
+          } else if (key === "rg" || key === "resp_fin_identidade") {
+            processedValue = removeMask(value)
+          }
+        }
+        unmaskedFormData.append(key, processedValue)
+      }
+
       if (isEditing && aluno) {
-        await atualizarAluno(aluno.id, formDataToSend)
+        await atualizarAluno(aluno.id, unmaskedFormData)
       } else {
-        await cadastrarAluno(formDataToSend)
+        await cadastrarAluno(unmaskedFormData)
       }
     } catch (error: any) {
       setError(error.message || "Erro ao salvar aluno")
@@ -282,13 +314,22 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               <Input
                 id="cpf"
                 name="cpf"
+                placeholder="000.000.000-00"
                 value={formData.cpf}
-                onChange={(e) => handleInputChange("cpf", e.target.value)}
+                onChange={(e) => handleMaskedInput("cpf", e.target.value, maskCPF)}
+                maxLength={14}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="rg">RG</Label>
-              <Input id="rg" name="rg" value={formData.rg} onChange={(e) => handleInputChange("rg", e.target.value)} />
+              <Input
+                id="rg"
+                name="rg"
+                placeholder="00.000.000-0"
+                value={formData.rg}
+                onChange={(e) => handleMaskedInput("rg", e.target.value, maskRG)}
+                maxLength={12}
+              />
             </div>
           </div>
         </CardContent>
@@ -438,8 +479,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   <Input
                     id="cep"
                     name="cep"
+                    placeholder="00000-000"
                     value={formData.cep}
-                    onChange={(e) => handleInputChange("cep", e.target.value)}
+                    onChange={(e) => handleMaskedInput("cep", e.target.value, maskCEP)}
+                    maxLength={9}
                   />
                 </div>
               </div>
@@ -458,8 +501,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                     id="telefone_residencial"
                     name="telefone_residencial"
                     type="tel"
+                    placeholder="(00) 0000-0000"
                     value={formData.telefone_residencial}
-                    onChange={(e) => handleInputChange("telefone_residencial", e.target.value)}
+                    onChange={(e) => handleMaskedInput("telefone_residencial", e.target.value, maskPhone)}
+                    maxLength={14}
                   />
                 </div>
                 <div className="space-y-2">
@@ -468,18 +513,22 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                     id="telefone_comercial"
                     name="telefone_comercial"
                     type="tel"
+                    placeholder="(00) 0000-0000"
                     value={formData.telefone_comercial}
-                    onChange={(e) => handleInputChange("telefone_comercial", e.target.value)}
+                    onChange={(e) => handleMaskedInput("telefone_comercial", e.target.value, maskPhone)}
+                    maxLength={14}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Outro Telefone</Label>
+                  <Label htmlFor="telefone">Celular</Label>
                   <Input
                     id="telefone"
                     name="telefone"
                     type="tel"
+                    placeholder="(00) 00000-0000"
                     value={formData.telefone}
-                    onChange={(e) => handleInputChange("telefone", e.target.value)}
+                    onChange={(e) => handleMaskedInput("telefone", e.target.value, maskCellPhone)}
+                    maxLength={15}
                   />
                 </div>
               </div>
@@ -532,8 +581,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   id="celular_mae"
                   name="celular_mae"
                   type="tel"
+                  placeholder="(00) 00000-0000"
                   value={formData.celular_mae}
-                  onChange={(e) => handleInputChange("celular_mae", e.target.value)}
+                  onChange={(e) => handleMaskedInput("celular_mae", e.target.value, maskCellPhone)}
+                  maxLength={15}
                 />
               </div>
             </div>
@@ -568,8 +619,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   id="celular_pai"
                   name="celular_pai"
                   type="tel"
+                  placeholder="(00) 00000-0000"
                   value={formData.celular_pai}
-                  onChange={(e) => handleInputChange("celular_pai", e.target.value)}
+                  onChange={(e) => handleMaskedInput("celular_pai", e.target.value, maskCellPhone)}
+                  maxLength={15}
                 />
               </div>
             </div>
@@ -595,8 +648,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   id="telefone_responsavel"
                   name="telefone_responsavel"
                   type="tel"
+                  placeholder="(00) 00000-0000"
                   value={formData.telefone_responsavel}
-                  onChange={(e) => handleInputChange("telefone_responsavel", e.target.value)}
+                  onChange={(e) => handleMaskedInput("telefone_responsavel", e.target.value, maskCellPhone)}
+                  maxLength={15}
                 />
               </div>
               <div className="space-y-2">
@@ -679,8 +734,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               <Input
                 id="resp_fin_cpf"
                 name="resp_fin_cpf"
+                placeholder="000.000.000-00"
                 value={formData.resp_fin_cpf}
-                onChange={(e) => handleInputChange("resp_fin_cpf", e.target.value)}
+                onChange={(e) => handleMaskedInput("resp_fin_cpf", e.target.value, maskCPF)}
+                maxLength={14}
               />
             </div>
             <div className="space-y-2">
@@ -688,8 +745,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               <Input
                 id="resp_fin_identidade"
                 name="resp_fin_identidade"
+                placeholder="00.000.000-0"
                 value={formData.resp_fin_identidade}
-                onChange={(e) => handleInputChange("resp_fin_identidade", e.target.value)}
+                onChange={(e) => handleMaskedInput("resp_fin_identidade", e.target.value, maskRG)}
+                maxLength={12}
               />
             </div>
           </div>
@@ -779,8 +838,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   <Input
                     id="resp_fin_cep"
                     name="resp_fin_cep"
+                    placeholder="00000-000"
                     value={formData.resp_fin_cep}
-                    onChange={(e) => handleInputChange("resp_fin_cep", e.target.value)}
+                    onChange={(e) => handleMaskedInput("resp_fin_cep", e.target.value, maskCEP)}
+                    maxLength={9}
                   />
                 </div>
               </div>
@@ -791,8 +852,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   id="resp_fin_telefone"
                   name="resp_fin_telefone"
                   type="tel"
+                  placeholder="(00) 00000-0000"
                   value={formData.resp_fin_telefone}
-                  onChange={(e) => handleInputChange("resp_fin_telefone", e.target.value)}
+                  onChange={(e) => handleMaskedInput("resp_fin_telefone", e.target.value, maskCellPhone)}
+                  maxLength={15}
                 />
               </div>
             </div>

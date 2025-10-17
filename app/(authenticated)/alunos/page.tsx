@@ -17,7 +17,7 @@ interface SearchParams {
 export default async function AlunosPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
   const supabase = await createClient()
 
@@ -26,10 +26,10 @@ export default async function AlunosPage({
     redirect("/auth/login")
   }
 
-  // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const status = searchParams.status || "todos"
-  const page = Number.parseInt(searchParams.page || "1")
+  const params = await searchParams
+  const busca = params.busca || ""
+  const status = params.status || "todos"
+  const page = Number.parseInt(params.page || "1")
   const itemsPerPage = 10
 
   // Query para buscar alunos
