@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
 import { AlunoForm } from "@/components/alunos/aluno-form"
 
-export default async function EditarAlunoPage({ params }: { params: { id: string } }) {
+export default async function EditarAlunoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -12,7 +14,7 @@ export default async function EditarAlunoPage({ params }: { params: { id: string
   }
 
   // Buscar dados do aluno
-  const { data: aluno, error: alunoError } = await supabase.from("alunos").select("*").eq("id", params.id).single()
+  const { data: aluno, error: alunoError } = await supabase.from("alunos").select("*").eq("id", id).single()
 
   if (alunoError || !aluno) {
     notFound()

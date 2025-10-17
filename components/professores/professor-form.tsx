@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -321,36 +320,6 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
               />
               <Label htmlFor="ativo">Professor ativo</Label>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Disciplinas</CardTitle>
-            <CardDescription>Selecione as disciplinas que o professor pode lecionar</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingDisciplinas ? (
-              <p className="text-sm text-gray-500">Carregando disciplinas...</p>
-            ) : disciplinas.length === 0 ? (
-              <p className="text-sm text-gray-500">Nenhuma disciplina cadastrada no sistema.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {disciplinas.map((disciplina) => (
-                  <div key={disciplina.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`disciplina-${disciplina.id}`}
-                      checked={selectedDisciplinas.includes(disciplina.id)}
-                      onCheckedChange={() => toggleDisciplina(disciplina.id)}
-                    />
-                    <Label htmlFor={`disciplina-${disciplina.id}`} className="text-sm font-normal cursor-pointer">
-                      {disciplina.codigo ? `${disciplina.codigo} - ` : ""}
-                      {disciplina.nome}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
 
