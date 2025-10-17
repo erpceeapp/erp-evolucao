@@ -64,7 +64,7 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
 
   const { data: todasDisciplinas } = await supabase
     .from("disciplinas")
-    .select("id, nome, codigo, carga_horaria")
+    .select("id, nome, codigo, carga_horaria, professor:professores!disciplinas_professor_id_fkey(id, nome_completo)")
     .eq("ativo", true)
     .order("nome")
 

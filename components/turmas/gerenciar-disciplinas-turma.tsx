@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Plus, Trash2, AlertCircle } from "lucide-react"
+import { BookOpen, Plus, Trash2, AlertCircle, Search } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
   Dialog,
@@ -15,14 +15,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Disciplina {
   id: string
   nome: string
   codigo: string
   carga_horaria: number
+  professor?: {
+    id: string
+    nome_completo: string
+  }
 }
 
 interface Professor {
@@ -53,15 +60,27 @@ export function GerenciarDisciplinasTurma({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDisciplina, setSelectedDisciplina] = useState("")
-  const [selectedProfessor, setSelectedProfessor] = useState("")
+  const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null)
+  const [open, setOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
 
   const disciplinasIds = disciplinasAtuais.map((d) => d.disciplina.id)
   const disciplinasDisponiveis = todasDisciplinas.filter((d) => !disciplinasIds.includes(d.id))
 
+  const disciplinasFiltradas = disciplinasDisponiveis.filter(
+    (d) =>
+      d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.codigo.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
   const handleAdicionarDisciplina = async () => {
-    if (!selectedDisciplina || !selectedProfessor) {
-      setError("Selecione uma disciplina e um professor")
+    if (!selectedDisciplina) {
+      setError("Selecione uma disciplina")
+      return
+    }
+
+    if (!selectedDisciplina.professor) {
+      setError("Esta disciplina não tem um professor associado. Por favor, associe um professor à disciplina primeiro.")
       return
     }
 
@@ -73,16 +92,16 @@ export function GerenciarDisciplinasTurma({
     try {
       const { error } = await supabase.from("turma_disciplinas").insert({
         turma_id: turmaId,
-        disciplina_id: selectedDisciplina,
-        professor_id: selectedProfessor,
+        disciplina_id: selectedDisciplina.id,
+        professor_id: selectedDisciplina.professor.id,
         carga_horaria_semanal: 4, // Valor padrão
       })
 
       if (error) throw error
 
       setIsAddDialogOpen(false)
-      setSelectedDisciplina("")
-      setSelectedProfessor("")
+      setSelectedDisciplina(null)
+      setSearchTerm("")
       router.refresh()
     } catch (err: any) {
       setError(err.message || "Erro ao adicionar disciplina")
@@ -130,7 +149,9 @@ export function GerenciarDisciplinasTurma({
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Adicionar Disciplina à Turma</DialogTitle>
-                <DialogDescription>Selecione uma disciplina e o professor responsável</DialogDescription>
+                <DialogDescription>
+                  Selecione uma disciplina. O professor responsável será automaticamente associado.
+                </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
@@ -143,38 +164,89 @@ export function GerenciarDisciplinasTurma({
 
                 <div className="space-y-2">
                   <Label>Disciplina *</Label>
-                  <Select value={selectedDisciplina} onValueChange={setSelectedDisciplina}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma disciplina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {disciplinasDisponiveis.map((disciplina) => (
-                        <SelectItem key={disciplina.id} value={disciplina.id}>
-                          {disciplina.nome} ({disciplina.codigo})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-full justify-between bg-transparent"
+                      >
+                        {selectedDisciplina ? (
+                          <span className="truncate">
+                            {selectedDisciplina.nome} ({selectedDisciplina.codigo})
+                          </span>
+                        ) : (
+                          "Buscar disciplina..."
+                        )}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Buscar disciplina..."
+                          value={searchTerm}
+                          onValueChange={setSearchTerm}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma disciplina encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {disciplinasFiltradas.map((disciplina) => (
+                              <CommandItem
+                                key={disciplina.id}
+                                value={disciplina.id}
+                                onSelect={() => {
+                                  setSelectedDisciplina(disciplina)
+                                  setOpen(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedDisciplina?.id === disciplina.id ? "opacity-100" : "opacity-0",
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    {disciplina.nome} ({disciplina.codigo})
+                                  </span>
+                                  <span className="text-sm text-gray-500">
+                                    {disciplina.carga_horaria}h
+                                    {disciplina.professor && ` • Prof. ${disciplina.professor.nome_completo}`}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Professor *</Label>
-                  <Select value={selectedProfessor} onValueChange={setSelectedProfessor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um professor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {todosProfessores.map((professor) => (
-                        <SelectItem key={professor.id} value={professor.id}>
-                          {professor.nome_completo}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {selectedDisciplina && (
+                  <div className="p-3 bg-gray-50 rounded-lg space-y-1">
+                    <p className="text-sm font-medium">Detalhes da Disciplina:</p>
+                    <p className="text-sm text-gray-600">Código: {selectedDisciplina.codigo}</p>
+                    <p className="text-sm text-gray-600">Carga Horária: {selectedDisciplina.carga_horaria}h</p>
+                    {selectedDisciplina.professor ? (
+                      <p className="text-sm text-gray-600">Professor: {selectedDisciplina.professor.nome_completo}</p>
+                    ) : (
+                      <p className="text-sm text-red-600">⚠️ Sem professor associado</p>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsAddDialogOpen(false)
+                      setSelectedDisciplina(null)
+                      setSearchTerm("")
+                    }}
+                  >
                     Cancelar
                   </Button>
                   <Button onClick={handleAdicionarDisciplina} disabled={isLoading}>
