@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DisciplinaData {
   nome: string
@@ -20,6 +24,7 @@ interface DisciplinaData {
   descricao: string
   carga_horaria: string
   ativo: boolean
+  professor_id: string
 }
 
 interface DisciplinaFormProps {
@@ -27,10 +32,17 @@ interface DisciplinaFormProps {
   isEditing?: boolean
 }
 
+interface Professor {
+  id: string
+  nome_completo: string
+}
+
 export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [professores, setProfessores] = useState<Professor[]>([])
+  const [openProfessor, setOpenProfessor] = useState(false)
 
   const [formData, setFormData] = useState<DisciplinaData>({
     nome: disciplina?.nome || "",
@@ -38,7 +50,25 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
     descricao: disciplina?.descricao || "",
     carga_horaria: disciplina?.carga_horaria || "",
     ativo: disciplina?.ativo ?? true,
+    professor_id: disciplina?.professor_id || "",
   })
+
+  useEffect(() => {
+    const fetchProfessores = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("professores")
+        .select("id, nome_completo")
+        .eq("ativo", true)
+        .order("nome_completo")
+
+      if (!error && data) {
+        setProfessores(data)
+      }
+    }
+
+    fetchProfessores()
+  }, [])
 
   const handleInputChange = (field: keyof DisciplinaData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -56,6 +86,7 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
       const dataToSend = {
         ...formData,
         carga_horaria: formData.carga_horaria ? Number.parseInt(formData.carga_horaria) : null,
+        professor_id: formData.professor_id || null,
       }
 
       if (isEditing && disciplina) {
@@ -75,6 +106,8 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
       setIsLoading(false)
     }
   }
+
+  const selectedProfessor = professores.find((p) => p.id === formData.professor_id)
 
   return (
     <form onSubmit={handleSubmit}>
@@ -119,16 +152,75 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="carga_horaria">Carga Horária (horas)</Label>
-              <Input
-                id="carga_horaria"
-                type="number"
-                min="1"
-                placeholder="Ex: 60"
-                value={formData.carga_horaria}
-                onChange={(e) => handleInputChange("carga_horaria", e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="carga_horaria">Carga Horária (horas)</Label>
+                <Input
+                  id="carga_horaria"
+                  type="number"
+                  min="1"
+                  placeholder="Ex: 60"
+                  value={formData.carga_horaria}
+                  onChange={(e) => handleInputChange("carga_horaria", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="professor">Professor Responsável</Label>
+                <Popover open={openProfessor} onOpenChange={setOpenProfessor}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openProfessor}
+                      className="w-full justify-between bg-transparent"
+                    >
+                      {selectedProfessor ? selectedProfessor.nome_completo : "Selecione um professor..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar professor..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum professor encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value=""
+                            onSelect={() => {
+                              handleInputChange("professor_id", "")
+                              setOpenProfessor(false)
+                            }}
+                          >
+                            <Check
+                              className={cn("mr-2 h-4 w-4", !formData.professor_id ? "opacity-100" : "opacity-0")}
+                            />
+                            Nenhum professor
+                          </CommandItem>
+                          {professores.map((professor) => (
+                            <CommandItem
+                              key={professor.id}
+                              value={professor.nome_completo}
+                              onSelect={() => {
+                                handleInputChange("professor_id", professor.id)
+                                setOpenProfessor(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.professor_id === professor.id ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {professor.nome_completo}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
