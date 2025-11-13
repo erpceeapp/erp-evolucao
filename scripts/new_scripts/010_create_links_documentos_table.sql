@@ -14,22 +14,34 @@ CREATE TABLE IF NOT EXISTS links_documentos (
 );
 
 -- Trigger para atualizar updated_at
-CREATE OR REPLACE TRIGGER update_links_documentos_updated_at
-  BEFORE UPDATE ON links_documentos
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger 
+    WHERE tgname = 'update_links_documentos_updated_at'
+  ) THEN
+    CREATE TRIGGER update_links_documentos_updated_at
+      BEFORE UPDATE ON links_documentos
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
 -- Políticas RLS
 ALTER TABLE links_documentos ENABLE ROW LEVEL SECURITY;
 
+-- Remover políticas existentes antes de criar novas
+DROP POLICY IF EXISTS "links_documentos_select_authenticated" ON links_documentos;
+DROP POLICY IF EXISTS "links_documentos_manage_admin_coord" ON links_documentos;
+
 -- Todos usuários autenticados podem visualizar links ativos
-CREATE POLICY IF NOT EXISTS "links_documentos_select_authenticated"
+CREATE POLICY "links_documentos_select_authenticated"
   ON links_documentos FOR SELECT
   TO authenticated
   USING (ativo = true);
 
 -- Apenas admin e coordenação podem gerenciar links
-CREATE POLICY IF NOT EXISTS "links_documentos_manage_admin_coord"
+CREATE POLICY "links_documentos_manage_admin_coord"
   ON links_documentos FOR ALL
   TO authenticated
   USING (
