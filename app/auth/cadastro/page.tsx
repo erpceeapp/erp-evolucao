@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { useState } from "react"
-import { GraduationCap } from "lucide-react"
+import { GraduationCap } from 'lucide-react'
 
 export default function CadastroPage() {
   const [formData, setFormData] = useState({
@@ -49,13 +49,6 @@ export default function CadastroPage() {
     }
 
     try {
-      console.log("[v0] Iniciando cadastro com dados:", {
-        email: formData.email,
-        nome_completo: formData.nomeCompleto,
-        telefone: formData.telefone,
-        tipo_usuario: formData.tipoUsuario,
-      })
-
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -69,53 +62,15 @@ export default function CadastroPage() {
         },
       })
 
-      console.log("[v0] Resposta do signUp:", { data, error: signUpError })
-
       if (signUpError) {
-        console.error("[v0] Erro no signUp:", signUpError)
         throw signUpError
       }
 
       if (data.user) {
-        console.log("[v0] Usuário criado com sucesso, ID:", data.user.id)
-
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        const { data: profiles, error: checkError } = await supabase.from("profiles").select("*").eq("id", data.user.id)
-
-        console.log("[v0] Verificação de perfil:", { profiles, error: checkError })
-
-        if (!profiles || profiles.length === 0) {
-          console.log("[v0] Perfil não encontrado, criando manualmente...")
-
-          const { data: newProfile, error: createError } = await supabase
-            .from("profiles")
-            .insert({
-              id: data.user.id,
-              nome_completo: formData.nomeCompleto,
-              telefone: formData.telefone || null,
-              role: formData.tipoUsuario,
-              email: formData.email,
-            })
-            .select()
-            .single()
-
-          console.log("[v0] Perfil criado manualmente:", { newProfile, error: createError })
-
-          if (createError) {
-            console.error("[v0] Erro ao criar perfil manualmente:", createError)
-            throw new Error(`Erro ao criar perfil: ${createError.message}`)
-          }
-
-          console.log("[v0] Perfil criado com sucesso!")
-        } else {
-          console.log("[v0] Perfil já existe:", profiles[0])
-        }
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        router.push("/auth/verificar-email")
       }
-
-      router.push("/auth/verificar-email")
     } catch (error: unknown) {
-      console.error("[v0] Erro no processo de cadastro:", error)
       const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
       setError(errorMessage)
     } finally {
