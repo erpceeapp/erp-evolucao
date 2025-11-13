@@ -67,11 +67,13 @@ export function GerenciarDisciplinasTurma({
   const disciplinasIds = disciplinasAtuais.map((d) => d.disciplina.id)
   const disciplinasDisponiveis = todasDisciplinas.filter((d) => !disciplinasIds.includes(d.id))
 
-  const disciplinasFiltradas = disciplinasDisponiveis.filter(
-    (d) =>
-      d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.codigo.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const disciplinasFiltradas = searchTerm
+    ? disciplinasDisponiveis.filter(
+        (d) =>
+          d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.codigo.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : disciplinasDisponiveis
 
   const handleAdicionarDisciplina = async () => {
     if (!selectedDisciplina) {
@@ -187,18 +189,27 @@ export function GerenciarDisciplinasTurma({
                         <CommandInput
                           placeholder="Buscar disciplina..."
                           value={searchTerm}
-                          onValueChange={setSearchTerm}
+                          onValueChange={(value) => {
+                            console.log("[v0] Search term changed:", value)
+                            setSearchTerm(value)
+                          }}
                         />
                         <CommandList>
-                          <CommandEmpty>Nenhuma disciplina encontrada.</CommandEmpty>
+                          <CommandEmpty>
+                            {searchTerm
+                              ? "Nenhuma disciplina encontrada para sua busca."
+                              : "Nenhuma disciplina disponível."}
+                          </CommandEmpty>
                           <CommandGroup>
                             {disciplinasFiltradas.map((disciplina) => (
                               <CommandItem
                                 key={disciplina.id}
                                 value={disciplina.id}
                                 onSelect={() => {
+                                  console.log("[v0] Disciplina selected:", disciplina.nome)
                                   setSelectedDisciplina(disciplina)
                                   setOpen(false)
+                                  setSearchTerm("")
                                 }}
                               >
                                 <Check
@@ -231,7 +242,9 @@ export function GerenciarDisciplinasTurma({
                     <p className="text-sm text-gray-600">Código: {selectedDisciplina.codigo}</p>
                     <p className="text-sm text-gray-600">Carga Horária: {selectedDisciplina.carga_horaria}h</p>
                     {selectedDisciplina.professor ? (
-                      <p className="text-sm text-gray-600">Professor: {selectedDisciplina.professor.nome_completo}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Professor: {selectedDisciplina.professor.nome_completo}
+                      </p>
                     ) : (
                       <p className="text-sm text-red-600">⚠️ Sem professor associado</p>
                     )}

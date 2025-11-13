@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Edit, Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
 interface Matricula {
   id: string
@@ -61,6 +63,7 @@ export function MatriculasTable({
   const [statusFilter, setStatusFilter] = useState(status)
   const [anoFilter, setAnoFilter] = useState(ano)
   const [turmaFilter, setTurmaFilter] = useState(turma)
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams)
@@ -83,7 +86,6 @@ export function MatriculasTable({
     params.set("page", "1")
     router.push(`/matriculas?${params.toString()}`)
 
-    // Update local state
     switch (filterType) {
       case "status":
         setStatusFilter(value)
@@ -123,13 +125,34 @@ export function MatriculasTable({
     )
   }
 
-  // Gerar anos disponíveis (últimos 5 anos + próximos 2)
   const currentYear = new Date().getFullYear()
   const availableYears = Array.from({ length: 8 }, (_, i) => currentYear - 3 + i)
 
+  const handleRemoverMatricula = async (matriculaId: string, numeroMatricula: string) => {
+    if (!confirm(`Deseja realmente remover a matrícula ${numeroMatricula}? Esta ação não pode ser desfeita.`)) {
+      return
+    }
+
+    setIsDeleting(matriculaId)
+
+    const supabase = createClient()
+
+    try {
+      const { error } = await supabase.from("matriculas").update({ status: "cancelada" }).eq("id", matriculaId)
+
+      if (error) throw error
+
+      router.refresh()
+    } catch (err: any) {
+      console.error("Erro ao remover matrícula:", err)
+      alert("Erro ao remover matrícula. Tente novamente.")
+    } finally {
+      setIsDeleting(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      {/* Filtros */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 flex gap-2">
@@ -186,7 +209,6 @@ export function MatriculasTable({
         </div>
       </div>
 
-      {/* Tabela */}
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -240,6 +262,17 @@ export function MatriculasTable({
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoverMatricula(matricula.id, matricula.numero_matricula)}
+                        disabled={isDeleting === matricula.id || matricula.status === "cancelada"}
+                        title={matricula.status === "cancelada" ? "Matrícula já cancelada" : "Remover matrícula"}
+                      >
+                        <Trash2
+                          className={`h-4 w-4 ${isDeleting === matricula.id ? "text-gray-400" : "text-red-600"}`}
+                        />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -249,7 +282,6 @@ export function MatriculasTable({
         </Table>
       </div>
 
-      {/* Paginação */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-700">

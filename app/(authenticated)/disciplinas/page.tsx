@@ -35,7 +35,7 @@ export default async function DisciplinasPage({
   const itemsPerPage = 10
 
   // Query para buscar disciplinas
-  let query = supabase.from("disciplinas").select("*", { count: "exact" }).order("nome")
+  let query = supabase.from("disciplinas").select("*, professores(id, nome_completo)", { count: "exact" }).order("nome")
 
   // Aplicar filtros
   if (busca) {
