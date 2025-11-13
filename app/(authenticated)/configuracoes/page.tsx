@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare } from "lucide-react"
+import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon } from 'lucide-react'
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
@@ -40,6 +40,14 @@ export default async function ConfiguracoesPage() {
       title: "Campos Obrigatórios",
       description: "Defina campos obrigatórios no cadastro de alunos",
       href: "/configuracoes/campos-obrigatorios",
+      adminOnly: false,
+      coordenacaoAccess: true,
+    },
+    {
+      icon: LinkIcon,
+      title: "Links de Documentos",
+      description: "Gerencie links que aparecem no dashboard",
+      href: "/configuracoes/links-documentos",
       adminOnly: false,
       coordenacaoAccess: true,
     },
