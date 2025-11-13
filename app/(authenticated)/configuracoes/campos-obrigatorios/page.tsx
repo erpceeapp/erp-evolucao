@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { CheckCircle2, Save, Settings } from "lucide-react"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createBrowserClient } from "@supabase/ssr"
 import { useRouter } from "next/navigation"
 import { PageHeader } from "@/components/page-header"
 import { toast } from "sonner"
@@ -100,7 +100,10 @@ export default function CamposObrigatoriosPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
-  const supabase = createBrowserClient()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
   const router = useRouter()
 
   useEffect(() => {
@@ -129,12 +132,22 @@ export default function CamposObrigatoriosPage() {
 
   const loadConfig = async () => {
     try {
-      const saved = localStorage.getItem("aluno_required_fields_config")
-      if (saved) {
-        setConfig(JSON.parse(saved))
+      const { data, error } = await supabase.from("config_campos_obrigatorios").select("campo, obrigatorio")
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        const configFromDB = { ...DEFAULT_CONFIG }
+        data.forEach((item) => {
+          if (item.campo in configFromDB) {
+            configFromDB[item.campo as keyof RequiredFieldsConfig] = item.obrigatorio
+          }
+        })
+        setConfig(configFromDB)
       }
     } catch (error) {
       console.error("Erro ao carregar configuração:", error)
+      toast.error("Erro ao carregar configurações")
     } finally {
       setLoading(false)
     }
@@ -143,7 +156,13 @@ export default function CamposObrigatoriosPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      localStorage.setItem("aluno_required_fields_config", JSON.stringify(config))
+      // Atualizar cada campo no banco
+      const updates = Object.entries(config).map(([campo, obrigatorio]) =>
+        supabase.from("config_campos_obrigatorios").update({ obrigatorio }).eq("campo", campo),
+      )
+
+      await Promise.all(updates)
+
       toast.success("Configuração salva com sucesso!")
     } catch (error) {
       console.error("Erro ao salvar:", error)

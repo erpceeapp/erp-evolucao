@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save } from "lucide-react"
+import { Save, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { cadastrarAluno, atualizarAluno } from "@/app/(authenticated)/alunos/novo/actions"
 import { Separator } from "@/components/ui/separator"
 import { maskCPF, maskRG, maskCEP, maskPhone, maskCellPhone, removeMask } from "@/lib/input-masks"
+import { useRequiredFields } from "@/hooks/use-required-fields"
 
 interface AlunoData {
   // Dados básicos
@@ -101,6 +102,7 @@ interface AlunoFormProps {
 export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isRequired, loading: loadingRequiredFields } = useRequiredFields()
 
   const [formData, setFormData] = useState<AlunoData>({
     nome_completo: aluno?.nome_completo || "",
@@ -246,6 +248,14 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     "TO",
   ]
 
+  if (loadingRequiredFields) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
@@ -257,25 +267,25 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nome_completo">
-                Nome Completo <span className="text-red-500">*</span>
+                Nome Completo {isRequired("nome_completo") && <span className="text-red-500">*</span>}
               </Label>
               <Input
                 id="nome_completo"
                 name="nome_completo"
-                required
+                required={isRequired("nome_completo")}
                 value={formData.nome_completo}
                 onChange={(e) => handleInputChange("nome_completo", e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="data_nascimento">
-                Data de Nascimento <span className="text-red-500">*</span>
+                Data de Nascimento {isRequired("data_nascimento") && <span className="text-red-500">*</span>}
               </Label>
               <Input
                 id="data_nascimento"
                 name="data_nascimento"
                 type="date"
-                required
+                required={isRequired("data_nascimento")}
                 value={formData.data_nascimento}
                 onChange={(e) => handleInputChange("data_nascimento", e.target.value)}
               />
@@ -284,7 +294,7 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="sexo">Sexo</Label>
+              <Label htmlFor="sexo">Sexo {isRequired("sexo") && <span className="text-red-500">*</span>}</Label>
               <Select value={formData.sexo} onValueChange={(value) => handleInputChange("sexo", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
@@ -297,11 +307,14 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="naturalidade">Naturalidade</Label>
+              <Label htmlFor="naturalidade">
+                Naturalidade {isRequired("naturalidade") && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="naturalidade"
                 name="naturalidade"
                 placeholder="Cidade - UF"
+                required={isRequired("naturalidade")}
                 value={formData.naturalidade}
                 onChange={(e) => handleInputChange("naturalidade", e.target.value)}
               />
@@ -310,22 +323,24 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cpf">CPF da Criança</Label>
+              <Label htmlFor="cpf">CPF da Criança {isRequired("cpf") && <span className="text-red-500">*</span>}</Label>
               <Input
                 id="cpf"
                 name="cpf"
                 placeholder="000.000.000-00"
+                required={isRequired("cpf")}
                 value={formData.cpf}
                 onChange={(e) => handleMaskedInput("cpf", e.target.value, maskCPF)}
                 maxLength={14}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rg">RG</Label>
+              <Label htmlFor="rg">RG {isRequired("rg") && <span className="text-red-500">*</span>}</Label>
               <Input
                 id="rg"
                 name="rg"
                 placeholder="00.000.000-0"
+                required={isRequired("rg")}
                 value={formData.rg}
                 onChange={(e) => handleMaskedInput("rg", e.target.value, maskRG)}
                 maxLength={12}
@@ -421,10 +436,13 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="endereco">Endereço</Label>
+                  <Label htmlFor="endereco">
+                    Endereço {isRequired("endereco") && <span className="text-red-500">*</span>}
+                  </Label>
                   <Input
                     id="endereco"
                     name="endereco"
+                    required={isRequired("endereco")}
                     value={formData.endereco}
                     onChange={(e) => handleInputChange("endereco", e.target.value)}
                   />
@@ -442,25 +460,31 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="bairro">Bairro</Label>
+                  <Label htmlFor="bairro">
+                    Bairro {isRequired("bairro") && <span className="text-red-500">*</span>}
+                  </Label>
                   <Input
                     id="bairro"
                     name="bairro"
+                    required={isRequired("bairro")}
                     value={formData.bairro}
                     onChange={(e) => handleInputChange("bairro", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cidade">Cidade</Label>
+                  <Label htmlFor="cidade">
+                    Cidade {isRequired("cidade") && <span className="text-red-500">*</span>}
+                  </Label>
                   <Input
                     id="cidade"
                     name="cidade"
+                    required={isRequired("cidade")}
                     value={formData.cidade}
                     onChange={(e) => handleInputChange("cidade", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="uf">UF</Label>
+                  <Label htmlFor="uf">UF {isRequired("uf") && <span className="text-red-500">*</span>}</Label>
                   <Select value={formData.uf} onValueChange={(value) => handleInputChange("uf", value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="UF" />
@@ -475,11 +499,12 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cep">CEP</Label>
+                  <Label htmlFor="cep">CEP {isRequired("cep") && <span className="text-red-500">*</span>}</Label>
                   <Input
                     id="cep"
                     name="cep"
                     placeholder="00000-000"
+                    required={isRequired("cep")}
                     value={formData.cep}
                     onChange={(e) => handleMaskedInput("cep", e.target.value, maskCEP)}
                     maxLength={9}
@@ -520,12 +545,15 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Celular</Label>
+                  <Label htmlFor="telefone">
+                    Celular {isRequired("telefone") && <span className="text-red-500">*</span>}
+                  </Label>
                   <Input
                     id="telefone"
                     name="telefone"
                     type="tel"
                     placeholder="(00) 00000-0000"
+                    required={isRequired("telefone")}
                     value={formData.telefone}
                     onChange={(e) => handleMaskedInput("telefone", e.target.value, maskCellPhone)}
                     maxLength={15}
@@ -534,11 +562,12 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">E-mail {isRequired("email") && <span className="text-red-500">*</span>}</Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
+                  required={isRequired("email")}
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                 />
@@ -558,30 +587,39 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             <h4 className="font-medium mb-4">Dados da Mãe</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome_mae">Nome da Mãe</Label>
+                <Label htmlFor="nome_mae">
+                  Nome da Mãe {isRequired("nome_mae") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="nome_mae"
                   name="nome_mae"
+                  required={isRequired("nome_mae")}
                   value={formData.nome_mae}
                   onChange={(e) => handleInputChange("nome_mae", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profissao_mae">Profissão</Label>
+                <Label htmlFor="profissao_mae">
+                  Profissão {isRequired("profissao_mae") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="profissao_mae"
                   name="profissao_mae"
+                  required={isRequired("profissao_mae")}
                   value={formData.profissao_mae}
                   onChange={(e) => handleInputChange("profissao_mae", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="celular_mae">Celular</Label>
+                <Label htmlFor="celular_mae">
+                  Celular {isRequired("celular_mae") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="celular_mae"
                   name="celular_mae"
                   type="tel"
                   placeholder="(00) 00000-0000"
+                  required={isRequired("celular_mae")}
                   value={formData.celular_mae}
                   onChange={(e) => handleMaskedInput("celular_mae", e.target.value, maskCellPhone)}
                   maxLength={15}
@@ -596,30 +634,39 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             <h4 className="font-medium mb-4">Dados do Pai</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome_pai">Nome do Pai</Label>
+                <Label htmlFor="nome_pai">
+                  Nome do Pai {isRequired("nome_pai") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="nome_pai"
                   name="nome_pai"
+                  required={isRequired("nome_pai")}
                   value={formData.nome_pai}
                   onChange={(e) => handleInputChange("nome_pai", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="profissao_pai">Profissão</Label>
+                <Label htmlFor="profissao_pai">
+                  Profissão {isRequired("profissao_pai") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="profissao_pai"
                   name="profissao_pai"
+                  required={isRequired("profissao_pai")}
                   value={formData.profissao_pai}
                   onChange={(e) => handleInputChange("profissao_pai", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="celular_pai">Celular</Label>
+                <Label htmlFor="celular_pai">
+                  Celular {isRequired("celular_pai") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="celular_pai"
                   name="celular_pai"
                   type="tel"
                   placeholder="(00) 00000-0000"
+                  required={isRequired("celular_pai")}
                   value={formData.celular_pai}
                   onChange={(e) => handleMaskedInput("celular_pai", e.target.value, maskCellPhone)}
                   maxLength={15}
@@ -634,32 +681,41 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             <h4 className="font-medium mb-4">Responsável Geral</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nome_responsavel">Nome</Label>
+                <Label htmlFor="nome_responsavel">
+                  Nome {isRequired("nome_responsavel") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="nome_responsavel"
                   name="nome_responsavel"
+                  required={isRequired("nome_responsavel")}
                   value={formData.nome_responsavel}
                   onChange={(e) => handleInputChange("nome_responsavel", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="telefone_responsavel">Telefone</Label>
+                <Label htmlFor="telefone_responsavel">
+                  Telefone {isRequired("telefone_responsavel") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="telefone_responsavel"
                   name="telefone_responsavel"
                   type="tel"
                   placeholder="(00) 00000-0000"
+                  required={isRequired("telefone_responsavel")}
                   value={formData.telefone_responsavel}
                   onChange={(e) => handleMaskedInput("telefone_responsavel", e.target.value, maskCellPhone)}
                   maxLength={15}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email_responsavel">E-mail</Label>
+                <Label htmlFor="email_responsavel">
+                  E-mail {isRequired("email_responsavel") && <span className="text-red-500">*</span>}
+                </Label>
                 <Input
                   id="email_responsavel"
                   name="email_responsavel"
                   type="email"
+                  required={isRequired("email_responsavel")}
                   value={formData.email_responsavel}
                   onChange={(e) => handleInputChange("email_responsavel", e.target.value)}
                 />
@@ -876,7 +932,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                 checked={formData.uso_medicamento_continuo}
                 onCheckedChange={(checked) => handleInputChange("uso_medicamento_continuo", checked)}
               />
-              <Label htmlFor="uso_medicamento_continuo">Uso contínuo de algum medicamento</Label>
+              <Label htmlFor="uso_medicamento_continuo">
+                Uso contínuo de algum medicamento{" "}
+                {isRequired("uso_medicamento_continuo") && <span className="text-red-500">*</span>}
+              </Label>
             </div>
             {formData.uso_medicamento_continuo && (
               <div className="space-y-2 ml-6">
@@ -902,7 +961,10 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                 checked={formData.alergia_medicamento}
                 onCheckedChange={(checked) => handleInputChange("alergia_medicamento", checked)}
               />
-              <Label htmlFor="alergia_medicamento">Alergia a algum medicamento</Label>
+              <Label htmlFor="alergia_medicamento">
+                Alergia a algum medicamento{" "}
+                {isRequired("alergia_medicamento") && <span className="text-red-500">*</span>}
+              </Label>
             </div>
             {formData.alergia_medicamento && (
               <div className="space-y-2 ml-6">
@@ -928,7 +990,9 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                 checked={formData.alergia_alimento}
                 onCheckedChange={(checked) => handleInputChange("alergia_alimento", checked)}
               />
-              <Label htmlFor="alergia_alimento">Alergia a algum alimento</Label>
+              <Label htmlFor="alergia_alimento">
+                Alergia a algum alimento {isRequired("alergia_alimento") && <span className="text-red-500">*</span>}
+              </Label>
             </div>
             {formData.alergia_alimento && (
               <div className="space-y-2 ml-6">
@@ -965,7 +1029,7 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nivel">Nível</Label>
+              <Label htmlFor="nivel">Nível {isRequired("nivel") && <span className="text-red-500">*</span>}</Label>
               <Select value={formData.nivel} onValueChange={(value) => handleInputChange("nivel", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
@@ -982,7 +1046,9 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="turno_preferencial">Turno</Label>
+              <Label htmlFor="turno_preferencial">
+                Turno {isRequired("turno_preferencial") && <span className="text-red-500">*</span>}
+              </Label>
               <Select
                 value={formData.turno_preferencial}
                 onValueChange={(value) => handleInputChange("turno_preferencial", value)}
