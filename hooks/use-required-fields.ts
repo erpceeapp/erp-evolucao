@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 
 interface RequiredField {
   campo: string
@@ -18,14 +18,18 @@ export function useRequiredFields() {
 
   async function loadRequiredFields() {
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      )
+      const supabase = createClient()
 
+      console.log("[v0] Loading required fields configuration")
+      
       const { data, error } = await supabase.from("config_campos_obrigatorios").select("campo, obrigatorio")
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Error loading required fields:", error)
+        throw error
+      }
+
+      console.log("[v0] Loaded required fields:", data)
 
       const fieldsMap = (data || []).reduce(
         (acc, field) => {
