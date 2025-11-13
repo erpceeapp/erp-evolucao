@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, School, Users, Bell, Shield, Database, Palette } from "lucide-react"
+import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
@@ -18,6 +18,7 @@ export default async function ConfiguracoesPage() {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single()
 
   const isAdmin = profile?.role === "admin"
+  const isCoordenacao = profile?.role === "coordenacao"
 
   const configSections = [
     {
@@ -33,6 +34,14 @@ export default async function ConfiguracoesPage() {
       description: "Gerencie usuários e permissões do sistema",
       href: "/gerenciar-usuarios",
       adminOnly: true,
+    },
+    {
+      icon: CheckSquare,
+      title: "Campos Obrigatórios",
+      description: "Defina campos obrigatórios no cadastro de alunos",
+      href: "/configuracoes/campos-obrigatorios",
+      adminOnly: false,
+      coordenacaoAccess: true,
     },
     {
       icon: Bell,
@@ -80,7 +89,8 @@ export default async function ConfiguracoesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {configSections.map((section) => {
           const Icon = section.icon
-          const isDisabled = section.comingSoon || (section.adminOnly && !isAdmin)
+          const hasAccess = !section.adminOnly || isAdmin || (section.coordenacaoAccess && isCoordenacao)
+          const isDisabled = section.comingSoon || !hasAccess
 
           return (
             <Card key={section.href} className={isDisabled ? "opacity-60" : ""}>
@@ -93,6 +103,9 @@ export default async function ConfiguracoesPage() {
                     <div>
                       <CardTitle className="text-lg">{section.title}</CardTitle>
                       {section.adminOnly && <span className="text-xs text-orange-600 font-medium">Apenas Admin</span>}
+                      {section.coordenacaoAccess && !section.adminOnly && (
+                        <span className="text-xs text-blue-600 font-medium">Admin/Coordenação</span>
+                      )}
                     </div>
                   </div>
                   {section.comingSoon && (

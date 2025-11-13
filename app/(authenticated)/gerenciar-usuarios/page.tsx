@@ -16,8 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { ArrowLeft, Edit, Users } from "lucide-react"
-import Link from "next/link"
+import { Edit, Users } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
 
 interface Profile {
   id: string
@@ -175,13 +175,13 @@ export default function GerenciarUsuariosPage() {
 
   if (currentUserRole !== "admin") {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="mb-6">
-          <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Dashboard
-          </Link>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          icon={Users}
+          title="Gerenciar Usuários"
+          subtitle="Gerencie usuários e permissões do sistema"
+          backHref="/configuracoes"
+        />
         <Card>
           <CardContent className="pt-6">
             <div className="text-red-600 mb-4">
@@ -196,13 +196,13 @@ export default function GerenciarUsuariosPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar ao Dashboard
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={Users}
+        title="Gerenciar Usuários"
+        subtitle="Visualize e edite informações dos usuários do sistema"
+        backHref="/configuracoes"
+      />
 
       <Card>
         <CardHeader>

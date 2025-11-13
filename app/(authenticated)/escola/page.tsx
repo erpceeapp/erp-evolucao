@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Building2, Save } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/page-header"
 
 interface EscolaData {
   id?: string
@@ -123,14 +124,13 @@ export default function EscolaPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Building2 className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Dados da Escola</h1>
-        </div>
-        <p className="text-gray-600">Configure as informações básicas da sua instituição de ensino.</p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={Building2}
+        title="Dados da Escola"
+        subtitle="Configure as informações básicas da sua instituição de ensino"
+        backHref="/configuracoes"
+      />
 
       <Card>
         <CardHeader>
