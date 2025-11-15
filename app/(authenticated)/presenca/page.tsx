@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Calendar, Search, Users } from "lucide-react"
+import { redirect } from 'next/navigation'
+import { Calendar, Search, Users } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,22 +11,53 @@ import { PageHeader } from "@/components/page-header"
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
 
-  const { data: turmasDisciplinas, error } = await supabase
+  // Buscar turma_disciplinas
+  const { data: turmasDisciplinas, error: tdError } = await supabase
     .from("turma_disciplinas")
-    .select(`
-      *,
-      turmas (id, nome, serie, ano_letivo),
-      disciplinas (id, nome, codigo),
-      professores (id, nome_completo)
-    `)
-    .order("turmas(serie)", { ascending: true })
+    .select("*")
 
-  if (error) {
-    console.error("Erro ao buscar turmas e disciplinas:", error)
+  if (tdError) {
+    console.error("Erro ao buscar turma_disciplinas:", tdError)
     return []
   }
 
-  return turmasDisciplinas || []
+  if (!turmasDisciplinas || turmasDisciplinas.length === 0) {
+    return []
+  }
+
+  // Buscar turmas
+  const turmaIds = [...new Set(turmasDisciplinas.map(td => td.turma_id))]
+  const { data: turmas } = await supabase
+    .from("turmas")
+    .select("id, nome, serie, ano_letivo")
+    .in("id", turmaIds)
+
+  // Buscar disciplinas
+  const disciplinaIds = [...new Set(turmasDisciplinas.map(td => td.disciplina_id))]
+  const { data: disciplinas } = await supabase
+    .from("disciplinas")
+    .select("id, nome, codigo")
+    .in("id", disciplinaIds)
+
+  // Buscar professores
+  const professorIds = [...new Set(turmasDisciplinas.map(td => td.professor_id).filter(Boolean))]
+  const { data: professores } = await supabase
+    .from("professores")
+    .select("id, nome_completo")
+    .in("id", professorIds)
+
+  // Criar maps para lookup rápido
+  const turmasMap = new Map(turmas?.map(t => [t.id, t]) || [])
+  const disciplinasMap = new Map(disciplinas?.map(d => [d.id, d]) || [])
+  const professoresMap = new Map(professores?.map(p => [p.id, p]) || [])
+
+  // Combinar os dados
+  return turmasDisciplinas.map(td => ({
+    ...td,
+    turmas: turmasMap.get(td.turma_id),
+    disciplinas: disciplinasMap.get(td.disciplina_id),
+    professores: professoresMap.get(td.professor_id)
+  }))
 }
 
 export default async function PresencaPage() {
