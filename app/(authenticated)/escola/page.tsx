@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Building2, Save } from "lucide-react"
+import { Building2, Save } from 'lucide-react'
 import { createBrowserClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { PageHeader } from "@/components/page-header"
+import { useRouter } from 'next/navigation'
+import PageHeader from "@/components/page-header"
 
 interface EscolaData {
   id?: string

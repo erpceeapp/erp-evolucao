@@ -15,9 +15,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { toast } from "sonner"
-import { Edit, Users } from "lucide-react"
-import { PageHeader } from "@/components/page-header"
+import toast from "sonner"
+import Edit from "lucide-react/Edit"
+import Users from "lucide-react/Users"
+import PageHeader from "@/components/page-header"
 
 interface Profile {
   id: string

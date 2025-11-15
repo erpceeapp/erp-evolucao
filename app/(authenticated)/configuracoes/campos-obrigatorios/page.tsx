@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { CheckCircle2, Save, Settings } from "lucide-react"
+import { CheckCircle2, Save, Settings } from 'lucide-react'
 import { createBrowserClient } from "@supabase/ssr"
-import { useRouter } from "next/navigation"
-import { PageHeader } from "@/components/page-header"
+import { useRouter } from 'next/navigation'
+import PageHeader from "@/components/page-header"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 

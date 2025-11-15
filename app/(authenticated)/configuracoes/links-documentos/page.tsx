@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from "@/lib/supabase/server"
-import { PageHeader } from "@/components/page-header"
+import PageHeader from "@/components/page-header"
 import { LinkIcon } from 'lucide-react'
 import { LinksDocumentosManager } from "@/components/configuracoes/links-documentos-manager"
 
