@@ -11,56 +11,79 @@ import AulasTab from "@/components/diario/aulas-tab"
 import NotasTab from "@/components/diario/notas-tab"
 
 async function getDiarioData(turmaId: string, disciplinaId: string) {
+  console.log("[v0] getDiarioData called for turma:", turmaId, "disciplina:", disciplinaId)
   const supabase = await createServerClient()
 
-  // Buscar turma_disciplina_id
-  const { data: turmaDisciplina } = await supabase
-    .from("turma_disciplinas")
-    .select(`
-      id,
-      carga_horaria_semanal,
-      turmas (id, nome, serie, ano_letivo),
-      disciplinas (id, nome, codigo, carga_horaria),
-      professores (id, nome_completo)
-    `)
-    .eq("turma_id", turmaId)
-    .eq("disciplina_id", disciplinaId)
-    .single()
+  try {
+    const { data: turmaDisciplinas, error: tdError } = await supabase
+      .from("turma_disciplinas")
+      .select("id, carga_horaria_semanal, turma_id, disciplina_id, professor_id")
+      .eq("turma_id", turmaId)
+      .eq("disciplina_id", disciplinaId)
+      .single()
 
-  if (!turmaDisciplina) {
+    if (tdError) {
+      console.error("[v0] Erro ao buscar turma_disciplina:", tdError)
+      return null
+    }
+
+    if (!turmaDisciplinas) {
+      console.log("[v0] Nenhuma turma_disciplina encontrada")
+      return null
+    }
+
+    console.log("[v0] turma_disciplina encontrada:", turmaDisciplinas.id)
+
+    // Buscar dados relacionados em paralelo
+    const [turmaRes, disciplinaRes, professorRes, aulasRes, matriculasRes] = await Promise.all([
+      supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
+      supabase.from("disciplinas").select("id, nome, codigo, carga_horaria").eq("id", disciplinaId).single(),
+      supabase.from("professores").select("id, nome_completo").eq("id", turmaDisciplinas.professor_id).single(),
+      supabase.from("aulas").select("*").eq("turma_disciplina_id", turmaDisciplinas.id).order("data_aula", { ascending: false }),
+      supabase.from("matriculas").select("id, numero_matricula, aluno_id").eq("turma_id", turmaId).eq("status", "ativa")
+    ])
+
+    if (turmaRes.error || disciplinaRes.error || professorRes.error) {
+      console.error("[v0] Erro ao buscar dados relacionados")
+      return null
+    }
+
+    // Buscar alunos
+    const alunoIds = matriculasRes.data?.map(m => m.aluno_id) || []
+    const { data: alunos } = await supabase
+      .from("alunos")
+      .select("id, nome_completo, email")
+      .in("id", alunoIds)
+
+    // Combinar matriculas com alunos
+    const matriculasComAlunos = (matriculasRes.data || []).map(matricula => ({
+      ...matricula,
+      alunos: alunos?.find(a => a.id === matricula.aluno_id)
+    }))
+
+    // Buscar períodos letivos
+    const { data: periodos } = await supabase
+      .from("periodos_letivos")
+      .select("*")
+      .eq("ano_letivo", turmaRes.data.ano_letivo)
+      .order("numero_periodo")
+
+    console.log("[v0] Dados carregados com sucesso")
+
+    return {
+      turmaDisciplina: {
+        ...turmaDisciplinas,
+        turmas: turmaRes.data,
+        disciplinas: disciplinaRes.data,
+        professores: professorRes.data
+      },
+      aulas: aulasRes.data || [],
+      matriculas: matriculasComAlunos,
+      periodos: periodos || [],
+    }
+  } catch (error) {
+    console.error("[v0] Erro em getDiarioData:", error)
     return null
-  }
-
-  // Buscar aulas registradas
-  const { data: aulas } = await supabase
-    .from("aulas")
-    .select("*")
-    .eq("turma_disciplina_id", turmaDisciplina.id)
-    .order("data_aula", { ascending: false })
-
-  // Buscar alunos da turma (matrículas ativas)
-  const { data: matriculas } = await supabase
-    .from("matriculas")
-    .select(`
-      id,
-      numero_matricula,
-      alunos (id, nome_completo, email)
-    `)
-    .eq("turma_id", turmaId)
-    .eq("status", "ativa")
-
-  // Buscar períodos letivos
-  const { data: periodos } = await supabase
-    .from("periodos_letivos")
-    .select("*")
-    .eq("ano_letivo", turmaDisciplina.turmas.ano_letivo)
-    .order("numero_periodo")
-
-  return {
-    turmaDisciplina,
-    aulas: aulas || [],
-    matriculas: matriculas || [],
-    periodos: periodos || [],
   }
 }
 

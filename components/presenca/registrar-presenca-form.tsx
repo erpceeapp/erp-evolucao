@@ -34,12 +34,12 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
   const [dataAula, setDataAula] = useState(new Date().toISOString().split('T')[0])
   const [horario, setHorario] = useState('')
   const [conteudo, setConteudo] = useState('')
-  const [presencas, setPresencas] = useState<Record<string, 'presente' | 'ausente' | 'justificado'>>(
-    Object.fromEntries(alunos.map(a => [a.id, 'presente']))
+  const [presencas, setPresencas] = useState<Record<string, boolean>>(
+    Object.fromEntries(alunos.map(a => [a.id, true]))
   )
 
-  const handlePresencaChange = (alunoId: string, status: 'presente' | 'ausente' | 'justificado') => {
-    setPresencas(prev => ({ ...prev, [alunoId]: status }))
+  const handlePresencaChange = (alunoId: string, presente: boolean) => {
+    setPresencas(prev => ({ ...prev, [alunoId]: presente }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,13 +59,12 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
     try {
       const supabase = createClient()
 
-      // 1. Criar o registro da aula
       const { data: aula, error: aulaError } = await supabase
         .from("aulas")
         .insert({
           turma_disciplina_id: turmaDisciplinaId,
           data_aula: dataAula,
-          horario,
+          horario: horario,
           conteudo_ministrado: conteudo || null,
         })
         .select()
@@ -73,11 +72,10 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
 
       if (aulaError) throw aulaError
 
-      // 2. Registrar presenças
       const presencasData = alunos.map(aluno => ({
         aula_id: aula.id,
         aluno_id: aluno.id,
-        status: presencas[aluno.id] || 'presente',
+        presente: presencas[aluno.id] ?? true,
       }))
 
       const { error: presencaError } = await supabase
@@ -91,7 +89,7 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         description: "Presença registrada com sucesso",
       })
 
-      router.push(`/diario/${turmaId}/${disciplinaId}`)
+      router.push(`/diario/${turmaId}/${disciplinaId}/presencas`)
       router.refresh()
     } catch (error) {
       console.error("Erro ao registrar presença:", error)
@@ -105,13 +103,11 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
     }
   }
 
-  const totalPresentes = Object.values(presencas).filter(p => p === 'presente').length
-  const totalAusentes = Object.values(presencas).filter(p => p === 'ausente').length
-  const totalJustificados = Object.values(presencas).filter(p => p === 'justificado').length
+  const totalPresentes = Object.values(presencas).filter(p => p === true).length
+  const totalAusentes = Object.values(presencas).filter(p => p === false).length
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Dados da Aula */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="data_aula">Data da Aula *</Label>
@@ -147,7 +143,6 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         />
       </div>
 
-      {/* Resumo de Presenças */}
       <div className="flex gap-4 p-4 bg-muted rounded-lg">
         <div className="flex items-center gap-2">
           <Check className="h-4 w-4 text-green-600" />
@@ -157,13 +152,8 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
           <X className="h-4 w-4 text-red-600" />
           <span className="font-medium">{totalAusentes} Ausentes</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-yellow-600" />
-          <span className="font-medium">{totalJustificados} Justificados</span>
-        </div>
       </div>
 
-      {/* Lista de Alunos */}
       <div className="space-y-3">
         <Label>Chamada dos Alunos</Label>
         <div className="space-y-2">
@@ -178,29 +168,22 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
                   <Button
                     type="button"
                     size="sm"
-                    variant={presencas[aluno.id] === 'presente' ? 'default' : 'outline'}
-                    onClick={() => handlePresencaChange(aluno.id, 'presente')}
-                    className={presencas[aluno.id] === 'presente' ? 'bg-green-600 hover:bg-green-700' : ''}
+                    variant={presencas[aluno.id] === true ? 'default' : 'outline'}
+                    onClick={() => handlePresencaChange(aluno.id, true)}
+                    className={presencas[aluno.id] === true ? 'bg-green-600 hover:bg-green-700' : ''}
                   >
-                    <Check className="h-4 w-4" />
+                    <Check className="h-4 w-4 mr-1" />
+                    Presente
                   </Button>
                   <Button
                     type="button"
                     size="sm"
-                    variant={presencas[aluno.id] === 'ausente' ? 'default' : 'outline'}
-                    onClick={() => handlePresencaChange(aluno.id, 'ausente')}
-                    className={presencas[aluno.id] === 'ausente' ? 'bg-red-600 hover:bg-red-700' : ''}
+                    variant={presencas[aluno.id] === false ? 'default' : 'outline'}
+                    onClick={() => handlePresencaChange(aluno.id, false)}
+                    className={presencas[aluno.id] === false ? 'bg-red-600 hover:bg-red-700' : ''}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={presencas[aluno.id] === 'justificado' ? 'default' : 'outline'}
-                    onClick={() => handlePresencaChange(aluno.id, 'justificado')}
-                    className={presencas[aluno.id] === 'justificado' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-                  >
-                    <Calendar className="h-4 w-4" />
+                    <X className="h-4 w-4 mr-1" />
+                    Ausente
                   </Button>
                 </div>
               </div>
@@ -209,14 +192,13 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         </div>
       </div>
 
-      {/* Botões de Ação */}
       <div className="flex gap-3 justify-end">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancelar
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           <Save className="h-4 w-4 mr-2" />
-          {isSubmitting ? "Salvando..." : "Salvar Presença"}
+          {isSubmitting ? "Salvando..." : "Confirmar Presenças"}
         </Button>
       </div>
     </form>

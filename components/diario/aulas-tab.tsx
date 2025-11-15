@@ -22,9 +22,9 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aulas Registradas</CardTitle>
             <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-              <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
+              <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Aula
+                Nova Chamada
               </Link>
             </Button>
           </CardHeader>
@@ -40,18 +40,22 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                           <span className="font-medium text-gray-900">
                             {new Date(aula.data_aula + "T00:00:00").toLocaleDateString("pt-BR")}
                           </span>
-                          <span className="text-sm text-gray-500">
-                            {aula.hora_inicio} - {aula.hora_fim}
-                          </span>
+                          {aula.horario && (
+                            <span className="text-sm text-gray-500">
+                              {aula.horario}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2 mb-3">
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-700">Conteúdo:</h5>
-                        <p className="text-sm text-gray-600">{aula.conteudo}</p>
-                      </div>
+                      {aula.conteudo_ministrado && (
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700">Conteúdo:</h5>
+                          <p className="text-sm text-gray-600">{aula.conteudo_ministrado}</p>
+                        </div>
+                      )}
 
                       {aula.observacoes && (
                         <div>
@@ -63,9 +67,9 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
 
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`/presenca/${turmaId}/${disciplinaId}/${aula.id}`}>
+                        <Link href={`/diario/${turmaId}/${disciplinaId}/presencas`}>
                           <Eye className="h-3 w-3 mr-1" />
-                          Ver Presença
+                          Ver Histórico
                         </Link>
                       </Button>
                     </div>
@@ -75,11 +79,11 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                 <div className="text-center py-12">
                   <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma aula registrada</h3>
-                  <p className="text-gray-600 mb-4">Comece registrando a primeira aula desta disciplina.</p>
+                  <p className="text-gray-600 mb-4">Comece registrando a primeira chamada desta disciplina.</p>
                   <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-                    <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
+                    <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Registrar Primeira Aula
+                      Registrar Primeira Chamada
                     </Link>
                   </Button>
                 </div>
