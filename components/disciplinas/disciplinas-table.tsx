@@ -18,6 +18,10 @@ interface Disciplina {
   carga_horaria?: number
   ativo: boolean
   created_at: string
+  professores?: {
+    id: string
+    nome_completo: string
+  }
 }
 
 interface DisciplinasTableProps {
@@ -99,6 +103,7 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Carga Horária</TableHead>
+              <TableHead>Professor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -106,7 +111,7 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
           <TableBody>
             {disciplinas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   Nenhuma disciplina encontrada
                 </TableCell>
               </TableRow>
@@ -131,6 +136,13 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
                     ) : (
                       "-"
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {disciplina.professores?.nome_completo || (
+                        <span className="text-gray-400 italic">Sem professor</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={disciplina.ativo ? "default" : "secondary"}>

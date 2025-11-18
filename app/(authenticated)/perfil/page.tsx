@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner"
-import { ArrowLeft } from "lucide-react"
+import toast from "sonner"
+import User from 'lucide-react'
 import Link from "next/link"
+import PageHeader from "@/components/page-header"
 
 interface Profile {
   id: string
@@ -116,20 +117,18 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar ao Dashboard
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        icon={User}
+        title="Meu Perfil"
+        subtitle="Atualize suas informações pessoais"
+        backHref="/configuracoes"
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle>Meu Perfil</CardTitle>
-          <CardDescription>
-            Atualize suas informações pessoais. Apenas administradores podem alterar seu tipo de usuário.
-          </CardDescription>
+          <CardTitle>Informações Pessoais</CardTitle>
+          <CardDescription>Apenas administradores podem alterar seu tipo de usuário.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

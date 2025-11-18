@@ -1,8 +1,9 @@
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, GraduationCap, BookOpen, Calendar, UserCheck } from "lucide-react"
+import { Users, GraduationCap, BookOpen, Calendar, UserCheck } from 'lucide-react'
 import Link from "next/link"
+import { LinksDocumentosCard } from "@/components/dashboard/links-documentos-card"
 
 export default async function DashboardPage() {
   const quickActions = [
@@ -65,6 +66,8 @@ export default async function DashboardPage() {
           })}
         </div>
       </div>
+
+      <LinksDocumentosCard />
 
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Atividades Recentes</h3>

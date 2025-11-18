@@ -5,13 +5,24 @@ import { BackButton } from "./back-button"
 interface PageHeaderProps {
   icon: LucideIcon
   title: string
+  description?: string
   subtitle?: string
   backHref?: string
   showBackButton?: boolean
   actions?: React.ReactNode
+  children?: React.ReactNode
 }
 
-export function PageHeader({ icon: Icon, title, subtitle, backHref, showBackButton = true, actions }: PageHeaderProps) {
+export function PageHeader({ 
+  icon: Icon, 
+  title, 
+  description,
+  subtitle, 
+  backHref, 
+  showBackButton = true, 
+  actions,
+  children 
+}: PageHeaderProps) {
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
       <div className="flex items-center justify-between gap-4">
@@ -22,11 +33,13 @@ export function PageHeader({ icon: Icon, title, subtitle, backHref, showBackButt
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-gray-900 truncate">{title}</h1>
-            {subtitle && <p className="text-sm text-gray-600 truncate">{subtitle}</p>}
+            {(subtitle || description) && <p className="text-sm text-gray-600 truncate">{subtitle || description}</p>}
           </div>
         </div>
-        {actions && <div className="shrink-0">{actions}</div>}
+        {(actions || children) && <div className="shrink-0">{actions || children}</div>}
       </div>
     </div>
   )
 }
+
+export default PageHeader

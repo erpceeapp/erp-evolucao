@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, User, GraduationCap, Calendar, FileText, Hash } from "lucide-react"
 import Link from "next/link"
 import { MatriculasHeader } from "@/components/matriculas/matriculas-header"
+import { DeleteMatriculaButton } from "@/components/matriculas/delete-matricula-button"
 
 export default async function MatriculaDetalhePage({ params }: { params: { id: string } }) {
   if (params.id === "nova") {
@@ -85,6 +86,11 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
                 Voltar
               </Link>
             </Button>
+            <DeleteMatriculaButton
+              matriculaId={matricula.id}
+              numeroMatricula={matricula.numero_matricula}
+              isDisabled={matricula.status === "cancelada"}
+            />
             <Button asChild>
               <Link href={`/matriculas/${matricula.id}/editar`}>
                 <Edit className="h-4 w-4 mr-2" />

@@ -1,12 +1,12 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { GraduationCap, Search } from "lucide-react"
+import { redirect } from 'next/navigation'
+import { GraduationCap, Search } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { PageHeader } from "@/components/page-header"
+import PageHeader from "@/components/page-header"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
@@ -14,19 +14,49 @@ async function getTurmasComDisciplinas() {
   const { data: turmasDisciplinas, error } = await supabase
     .from("turma_disciplinas")
     .select(`
-      *,
-      turmas (id, nome, serie, ano_letivo),
-      disciplinas (id, nome, codigo),
-      professores (id, nome_completo)
+      id,
+      turma_id,
+      disciplina_id,
+      professor_id,
+      carga_horaria_semanal
     `)
-    .order("turmas(serie)", { ascending: true })
 
   if (error) {
     console.error("Erro ao buscar turmas e disciplinas:", error)
     return []
   }
 
-  return turmasDisciplinas || []
+  if (!turmasDisciplinas || turmasDisciplinas.length === 0) {
+    return []
+  }
+
+  // Fetch related data separately to avoid ambiguous relationships
+  const turmaIds = [...new Set(turmasDisciplinas.map(td => td.turma_id))]
+  const disciplinaIds = [...new Set(turmasDisciplinas.map(td => td.disciplina_id))]
+  const professorIds = [...new Set(turmasDisciplinas.map(td => td.professor_id).filter(Boolean))]
+
+  const [turmasResult, disciplinasResult, professoresResult] = await Promise.all([
+    supabase.from("turmas").select("id, nome, serie, ano_letivo").in("id", turmaIds),
+    supabase.from("disciplinas").select("id, nome, codigo").in("id", disciplinaIds),
+    professorIds.length > 0
+      ? supabase.from("professores").select("id, nome_completo").in("id", professorIds)
+      : { data: [], error: null }
+  ])
+
+  // Create maps for quick lookup
+  const turmasMap = new Map((turmasResult.data || []).map(t => [t.id, t]))
+  const disciplinasMap = new Map((disciplinasResult.data || []).map(d => [d.id, d]))
+  const professoresMap = new Map((professoresResult.data || []).map(p => [p.id, p]))
+
+  // Combine the data
+  const combined = turmasDisciplinas.map(td => ({
+    ...td,
+    turmas: turmasMap.get(td.turma_id),
+    disciplinas: disciplinasMap.get(td.disciplina_id),
+    professores: td.professor_id ? professoresMap.get(td.professor_id) : null
+  }))
+
+  return combined
 }
 
 export default async function NotasPage() {
@@ -80,7 +110,7 @@ export default async function NotasPage() {
 
                       <div>
                         <p className="font-medium text-cyan-700">{item.disciplinas?.nome}</p>
-                        <p className="text-sm text-gray-600">Prof. {item.professores?.nome_completo}</p>
+                        <p className="text-sm text-gray-600">Prof. {item.professores?.nome_completo || 'Não atribuído'}</p>
                       </div>
 
                       <div className="flex gap-2 pt-2">
