@@ -22,10 +22,10 @@ import {
 } from "lucide-react"
 
 interface SidebarProps {
-  userRole?: string
+  userTipo?: string
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userTipo }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -105,7 +105,10 @@ export function Sidebar({ userRole }: SidebarProps) {
     },
   ]
 
-  const allMenuItems = userRole === "admin" ? [...adminItems, ...menuItems] : menuItems
+  const allMenuItems =
+    userTipo?.toLowerCase() === "admin" || userTipo?.toLowerCase() === "diretor"
+      ? [...adminItems, ...menuItems]
+      : menuItems
 
   return (
     <>

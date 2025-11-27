@@ -10,24 +10,61 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 async function getAlunosRelatorio() {
   const supabase = await createServerClient()
 
-  const { data: alunos, error } = await supabase
+  // Buscar todos os alunos
+  const { data: alunos, error: alunosError } = await supabase
     .from("alunos")
-    .select(`
-      *,
-      matriculas (
-        id,
-        status,
-        turmas (nome, serie)
-      )
-    `)
+    .select("*")
     .order("nome_completo", { ascending: true })
 
-  if (error) {
-    console.error("Erro ao buscar alunos:", error)
+  if (alunosError) {
+    console.error("[v0] Erro ao buscar alunos:", alunosError)
     return []
   }
 
-  return alunos || []
+  if (!alunos || alunos.length === 0) return []
+
+  // Buscar matrículas separadamente
+  const { data: matriculas, error: matriculasError } = await supabase
+    .from("matriculas")
+    .select("id, aluno_id, turma_id, status")
+    .in(
+      "aluno_id",
+      alunos.map((a) => a.id),
+    )
+
+  if (matriculasError) {
+    console.error("[v0] Erro ao buscar matrículas:", matriculasError)
+  }
+
+  // Buscar turmas das matrículas
+  const turmaIds = matriculas?.map((m) => m.turma_id).filter(Boolean) || []
+  let turmas = []
+  if (turmaIds.length > 0) {
+    const { data: turmasData, error: turmasError } = await supabase
+      .from("turmas")
+      .select("id, nome, serie")
+      .in("id", turmaIds)
+
+    if (turmasError) {
+      console.error("[v0] Erro ao buscar turmas:", turmasError)
+    } else {
+      turmas = turmasData || []
+    }
+  }
+
+  // Combinar os dados
+  return alunos.map((aluno) => {
+    const alunoMatriculas = matriculas?.filter((m) => m.aluno_id === aluno.id) || []
+    const matriculasComTurma = alunoMatriculas.map((mat) => ({
+      ...mat,
+      turmas: turmas.find((t) => t.id === mat.turma_id),
+    }))
+
+    return {
+      ...aluno,
+      matriculas: matriculasComTurma,
+    }
+  })
 }
 
 export default async function RelatorioAlunosPage() {

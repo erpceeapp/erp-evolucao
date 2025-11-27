@@ -66,12 +66,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR")
+    const [year, month, day] = dateString.split("-")
+    return `${day}/${month}/${year}`
   }
 
   const calculateAge = (birthDate: string) => {
+    const [year, month, day] = birthDate.split("-").map(Number)
     const today = new Date()
-    const birth = new Date(birthDate)
+    const birth = new Date(year, month - 1, day) // month is 0-indexed
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {

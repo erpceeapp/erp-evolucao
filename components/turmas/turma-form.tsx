@@ -61,10 +61,50 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Iniciando cadastro de turma")
+
     const supabase = createClient()
 
     try {
-      // Preparar dados para envio
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !userData?.user) {
+        throw new Error("Usuário não autenticado")
+      }
+
+      console.log("[v0] Usuário autenticado:", userData.user.id)
+
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", userData.user.id)
+
+      if (profileError) {
+        console.error("[v0] Erro ao buscar perfil:", profileError)
+        throw new Error("Erro ao verificar permissões do usuário")
+      }
+
+      const profile = profiles && profiles.length > 0 ? profiles[0] : null
+
+      console.log("[v0] Perfil do usuário:", profile)
+
+      if (!profile) {
+        throw new Error("Perfil do usuário não encontrado")
+      }
+
+      const allowedRoles = ["admin", "coordenacao", "secretaria", "diretor"]
+      const allowedTipos = ["coordenação", "secretaria", "diretor", "admin"]
+
+      const hasPermission =
+        (profile.role && allowedRoles.includes(profile.role.toLowerCase())) ||
+        (profile.tipo_usuario && allowedTipos.includes(profile.tipo_usuario))
+
+      if (!hasPermission) {
+        throw new Error(
+          "Você não tem permissão para cadastrar turmas. Apenas Secretaria, Coordenação e Diretor podem realizar esta ação.",
+        )
+      }
+
       const dataToSend = {
         ...formData,
         ano_letivo: Number.parseInt(formData.ano_letivo),
@@ -73,25 +113,34 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
           formData.professor_responsavel_id === "none" ? null : formData.professor_responsavel_id,
       }
 
+      console.log("[v0] Dados a serem enviados:", dataToSend)
+
       if (isEditing && turma) {
         const { error } = await supabase.from("turmas").update(dataToSend).eq("id", turma.id)
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao atualizar turma:", error)
+          throw error
+        }
       } else {
         const { error } = await supabase.from("turmas").insert([dataToSend])
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao inserir turma:", error)
+          throw error
+        }
       }
 
+      console.log("[v0] Turma salva com sucesso")
       router.push("/turmas")
     } catch (error: any) {
+      console.error("[v0] Erro no handleSubmit:", error)
       setError(error.message || "Erro ao salvar turma")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Gerar anos disponíveis (últimos 3 anos + próximos 5)
   const availableYears = Array.from({ length: 8 }, (_, i) => currentYear - 3 + i)
 
   return (

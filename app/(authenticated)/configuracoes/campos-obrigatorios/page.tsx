@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { CheckCircle2, Save, Settings } from 'lucide-react'
+import { CheckCircle2, Save, Settings } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
@@ -99,7 +99,7 @@ export default function CamposObrigatoriosPage() {
   const [config, setConfig] = useState<RequiredFieldsConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userTipo, setUserTipo] = useState<string | null>(null)
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -107,11 +107,11 @@ export default function CamposObrigatoriosPage() {
   const router = useRouter()
 
   useEffect(() => {
-    checkUserRole()
+    checkUserTipo()
     loadConfig()
   }, [])
 
-  const checkUserRole = async () => {
+  const checkUserTipo = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -120,14 +120,15 @@ export default function CamposObrigatoriosPage() {
       return
     }
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
-    if (profile?.role !== "admin" && profile?.role !== "coordenacao") {
+    const allowedTipos = ["admin", "coordenacao", "secretaria", "diretor"]
+    if (!profile?.tipo_usuario || !allowedTipos.includes(profile.tipo_usuario.toLowerCase())) {
       router.push("/dashboard")
       return
     }
 
-    setUserRole(profile.role)
+    setUserTipo(profile.tipo_usuario)
   }
 
   const loadConfig = async () => {
@@ -184,7 +185,7 @@ export default function CamposObrigatoriosPage() {
     )
   }
 
-  if (userRole !== "admin" && userRole !== "coordenacao") {
+  if (!userTipo) {
     return (
       <div className="space-y-6">
         <PageHeader

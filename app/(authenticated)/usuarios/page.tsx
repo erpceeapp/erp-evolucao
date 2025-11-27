@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation"
 interface UserInvite {
   id: string
   email: string
-  role: string
+  tipo_usuario: string
   created_at: string
   accepted_at: string | null
   expires_at: string
@@ -24,7 +24,7 @@ interface Profile {
   id: string
   nome_completo: string
   email: string
-  role: string
+  tipo_usuario: string
   created_at: string
 }
 
@@ -33,20 +33,20 @@ export default function UsuariosPage() {
   const [users, setUsers] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
   const [inviting, setInviting] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
+  const [userTipo, setUserTipo] = useState<string | null>(null)
   const [newInvite, setNewInvite] = useState({
     email: "",
-    role: "",
+    tipo_usuario: "",
   })
   const supabase = createBrowserClient()
   const router = useRouter()
 
   useEffect(() => {
-    checkUserRole()
+    checkUserTipo()
     loadData()
   }, [])
 
-  const checkUserRole = async () => {
+  const checkUserTipo = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -55,19 +55,19 @@ export default function UsuariosPage() {
       return
     }
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
-    if (profile?.role !== "admin") {
+    const allowedTipos = ["admin", "diretor"]
+    if (!profile?.tipo_usuario || !allowedTipos.includes(profile.tipo_usuario.toLowerCase())) {
       router.push("/dashboard")
       return
     }
 
-    setUserRole(profile.role)
+    setUserTipo(profile.tipo_usuario)
   }
 
   const loadData = async () => {
     try {
-      // Carregar convites pendentes
       const { data: invitesData } = await supabase
         .from("user_invites")
         .select("*")
@@ -77,10 +77,9 @@ export default function UsuariosPage() {
         setInvites(invitesData)
       }
 
-      // Carregar usuários existentes
       const { data: usersData } = await supabase
         .from("profiles")
-        .select("id, nome_completo, email, role, created_at")
+        .select("id, nome_completo, email, tipo_usuario, created_at")
         .order("created_at", { ascending: false })
 
       if (usersData) {
@@ -94,17 +93,16 @@ export default function UsuariosPage() {
   }
 
   const sendInvite = async () => {
-    if (!newInvite.email || !newInvite.role) {
+    if (!newInvite.email || !newInvite.tipo_usuario) {
       alert("Preencha todos os campos")
       return
     }
 
     setInviting(true)
     try {
-      // Gerar token único
       const token = Math.random().toString(36).substring(2) + Date.now().toString(36)
       const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7) // Expira em 7 dias
+      expiresAt.setDate(expiresAt.getDate() + 7)
 
       const {
         data: { user },
@@ -113,7 +111,7 @@ export default function UsuariosPage() {
       const { error } = await supabase.from("user_invites").insert([
         {
           email: newInvite.email,
-          role: newInvite.role,
+          tipo_usuario: newInvite.tipo_usuario,
           invited_by: user?.id,
           token,
           expires_at: expiresAt.toISOString(),
@@ -122,12 +120,10 @@ export default function UsuariosPage() {
 
       if (error) throw error
 
-      // Aqui você implementaria o envio do email
-      // Por enquanto, vamos simular
       console.log(`Email enviado para ${newInvite.email} com token: ${token}`)
       alert(`Convite enviado para ${newInvite.email}!`)
 
-      setNewInvite({ email: "", role: "" })
+      setNewInvite({ email: "", tipo_usuario: "" })
       loadData()
     } catch (error) {
       console.error("Erro ao enviar convite:", error)
@@ -152,14 +148,16 @@ export default function UsuariosPage() {
     }
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
+  const getTipoBadgeColor = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
       case "admin":
         return "bg-red-100 text-red-800"
       case "secretaria":
         return "bg-blue-100 text-blue-800"
       case "coordenacao":
         return "bg-purple-100 text-purple-800"
+      case "diretor":
+        return "bg-orange-100 text-orange-800"
       case "professor":
         return "bg-green-100 text-green-800"
       default:
@@ -167,18 +165,20 @@ export default function UsuariosPage() {
     }
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
       case "admin":
         return "Administrador"
       case "secretaria":
         return "Secretaria"
       case "coordenacao":
         return "Coordenação"
+      case "diretor":
+        return "Diretor"
       case "professor":
         return "Professor"
       default:
-        return role
+        return tipo
     }
   }
 
@@ -190,7 +190,7 @@ export default function UsuariosPage() {
     )
   }
 
-  if (userRole !== "admin") {
+  if (userTipo?.toLowerCase() !== "admin" && userTipo?.toLowerCase() !== "diretor") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
@@ -214,7 +214,6 @@ export default function UsuariosPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Convidar Novo Usuário */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -236,8 +235,11 @@ export default function UsuariosPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Tipo de Usuário</Label>
-              <Select value={newInvite.role} onValueChange={(value) => setNewInvite({ ...newInvite, role: value })}>
+              <Label htmlFor="tipo_usuario">Tipo de Usuário</Label>
+              <Select
+                value={newInvite.tipo_usuario}
+                onValueChange={(value) => setNewInvite({ ...newInvite, tipo_usuario: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -245,6 +247,7 @@ export default function UsuariosPage() {
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="secretaria">Secretaria</SelectItem>
                   <SelectItem value="coordenacao">Coordenação</SelectItem>
+                  <SelectItem value="diretor">Diretor</SelectItem>
                   <SelectItem value="professor">Professor</SelectItem>
                 </SelectContent>
               </Select>
@@ -257,7 +260,6 @@ export default function UsuariosPage() {
           </CardContent>
         </Card>
 
-        {/* Convites Pendentes */}
         <Card>
           <CardHeader>
             <CardTitle>Convites Pendentes</CardTitle>
@@ -273,7 +275,9 @@ export default function UsuariosPage() {
                     <div>
                       <p className="font-medium">{invite.email}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge className={getRoleBadgeColor(invite.role)}>{getRoleLabel(invite.role)}</Badge>
+                        <Badge className={getTipoBadgeColor(invite.tipo_usuario)}>
+                          {getTipoLabel(invite.tipo_usuario)}
+                        </Badge>
                         <span className="text-sm text-gray-500">
                           {new Date(invite.created_at).toLocaleDateString()}
                         </span>
@@ -290,7 +294,6 @@ export default function UsuariosPage() {
         </Card>
       </div>
 
-      {/* Usuários Existentes */}
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Usuários do Sistema</CardTitle>
@@ -307,7 +310,7 @@ export default function UsuariosPage() {
                     <p className="font-medium">{user.nome_completo || "Nome não informado"}</p>
                     <p className="text-sm text-gray-600">{user.email}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge className={getRoleBadgeColor(user.role)}>{getRoleLabel(user.role)}</Badge>
+                      <Badge className={getTipoBadgeColor(user.tipo_usuario)}>{getTipoLabel(user.tipo_usuario)}</Badge>
                       <span className="text-sm text-gray-500">
                         Desde {new Date(user.created_at).toLocaleDateString()}
                       </span>

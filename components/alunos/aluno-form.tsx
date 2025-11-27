@@ -1029,16 +1029,21 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nivel">Nível {isRequired("nivel") && <span className="text-red-500">*</span>}</Label>
+              <Label htmlFor="nivel">Série {isRequired("nivel") && <span className="text-red-500">*</span>}</Label>
               <Select value={formData.nivel} onValueChange={(value) => handleInputChange("nivel", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Educação Infantil">Educação Infantil</SelectItem>
-                  <SelectItem value="Ensino Fundamental I">Ensino Fundamental I</SelectItem>
-                  <SelectItem value="Ensino Fundamental II">Ensino Fundamental II</SelectItem>
-                  <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
+                  <SelectItem value="1º Ano">1º Ano</SelectItem>
+                  <SelectItem value="2º Ano">2º Ano</SelectItem>
+                  <SelectItem value="3º Ano">3º Ano</SelectItem>
+                  <SelectItem value="4º Ano">4º Ano</SelectItem>
+                  <SelectItem value="5º Ano">5º Ano</SelectItem>
+                  <SelectItem value="6º Ano">6º Ano</SelectItem>
+                  <SelectItem value="7º Ano">7º Ano</SelectItem>
+                  <SelectItem value="8º Ano">8º Ano</SelectItem>
+                  <SelectItem value="9º Ano">9º Ano</SelectItem>
                 </SelectContent>
               </Select>
             </div>
