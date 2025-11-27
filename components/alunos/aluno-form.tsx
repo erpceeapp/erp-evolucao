@@ -1044,6 +1044,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
                   <SelectItem value="7º Ano">7º Ano</SelectItem>
                   <SelectItem value="8º Ano">8º Ano</SelectItem>
                   <SelectItem value="9º Ano">9º Ano</SelectItem>
+                  <SelectItem value="Nível I">Nível I</SelectItem>
+                  <SelectItem value="Nível II">Nível II</SelectItem>
+                  <SelectItem value="Nível III">Nível III</SelectItem>
+                  <SelectItem value="Nível IV">Nível IV</SelectItem>
+                  <SelectItem value="Nível V">Nível V</SelectItem>
                 </SelectContent>
               </Select>
             </div>
