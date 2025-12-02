@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -16,15 +18,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Pencil, Trash2, GripVertical } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type LinkDocumento = {
@@ -82,15 +78,17 @@ export function LinksDocumentosManager() {
 
   async function loadLinks() {
     try {
-      const { data, error } = await supabase
-        .from("links_documentos")
-        .select("*")
-        .order("ordem", { ascending: true })
+      console.log("[v0] Carregando links de documentos")
+      const { data, error } = await supabase.from("links_documentos").select("*").order("ordem", { ascending: true })
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Erro ao carregar links:", error)
+        throw error
+      }
+      console.log("[v0] Links carregados:", data?.length || 0)
       setLinks(data || [])
     } catch (error) {
-      console.error("Erro ao carregar links:", error)
+      console.error("[v0] Erro ao carregar links:", error)
       toast({
         title: "Erro",
         description: "Não foi possível carregar os links",
@@ -105,6 +103,9 @@ export function LinksDocumentosManager() {
     e.preventDefault()
 
     try {
+      console.log("[v0] Salvando link, modo:", editingLink ? "atualização" : "criação")
+      console.log("[v0] Dados do formulário:", formData)
+
       if (editingLink) {
         // Atualizar
         const { error } = await supabase
@@ -115,8 +116,12 @@ export function LinksDocumentosManager() {
           })
           .eq("id", editingLink.id)
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao atualizar link:", error)
+          throw error
+        }
 
+        console.log("[v0] Link atualizado com sucesso")
         toast({
           title: "Sucesso",
           description: "Link atualizado com sucesso",
@@ -124,14 +129,19 @@ export function LinksDocumentosManager() {
       } else {
         // Criar novo
         const maxOrdem = links.length > 0 ? Math.max(...links.map((l) => l.ordem)) : 0
+        console.log("[v0] Ordem do novo link:", maxOrdem + 1)
 
         const { error } = await supabase.from("links_documentos").insert({
           ...formData,
           ordem: maxOrdem + 1,
         })
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao criar link:", error)
+          throw error
+        }
 
+        console.log("[v0] Link criado com sucesso")
         toast({
           title: "Sucesso",
           description: "Link criado com sucesso",
@@ -141,11 +151,11 @@ export function LinksDocumentosManager() {
       setDialogOpen(false)
       resetForm()
       loadLinks()
-    } catch (error) {
-      console.error("Erro ao salvar link:", error)
+    } catch (error: any) {
+      console.error("[v0] Erro ao salvar link:", error)
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o link",
+        description: error?.message || "Não foi possível salvar o link",
         variant: "destructive",
       })
     }
@@ -155,20 +165,25 @@ export function LinksDocumentosManager() {
     if (!confirm("Deseja realmente excluir este link?")) return
 
     try {
+      console.log("[v0] Excluindo link:", id)
       const { error } = await supabase.from("links_documentos").delete().eq("id", id)
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Erro ao excluir link:", error)
+        throw error
+      }
 
+      console.log("[v0] Link excluído com sucesso")
       toast({
         title: "Sucesso",
         description: "Link excluído com sucesso",
       })
       loadLinks()
-    } catch (error) {
-      console.error("Erro ao excluir link:", error)
+    } catch (error: any) {
+      console.error("[v0] Erro ao excluir link:", error)
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o link",
+        description: error?.message || "Não foi possível excluir o link",
         variant: "destructive",
       })
     }
@@ -176,23 +191,28 @@ export function LinksDocumentosManager() {
 
   async function toggleAtivo(id: string, ativo: boolean) {
     try {
+      console.log("[v0] Alterando status do link:", id, "para:", ativo)
       const { error } = await supabase
         .from("links_documentos")
         .update({ ativo, updated_at: new Date().toISOString() })
         .eq("id", id)
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Erro ao atualizar status:", error)
+        throw error
+      }
 
+      console.log("[v0] Status atualizado com sucesso")
       toast({
         title: "Sucesso",
         description: `Link ${ativo ? "ativado" : "desativado"} com sucesso`,
       })
       loadLinks()
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error)
+    } catch (error: any) {
+      console.error("[v0] Erro ao atualizar status:", error)
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o status",
+        description: error?.message || "Não foi possível atualizar o status",
         variant: "destructive",
       })
     }
