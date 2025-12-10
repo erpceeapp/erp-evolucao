@@ -28,11 +28,11 @@ export async function cadastrarAluno(formData: FormData) {
   console.log("[v0] Validando campos obrigatórios:", { nomeCompleto, dataNascimento })
 
   if (!nomeCompleto) {
-    throw new Error("Nome completo é obrigatório")
+    return { error: "Nome completo é obrigatório" }
   }
 
   if (!dataNascimento) {
-    throw new Error("Data de nascimento é obrigatória")
+    return { error: "Data de nascimento é obrigatória" }
   }
 
   const alunoData = {
@@ -101,7 +101,7 @@ export async function cadastrarAluno(formData: FormData) {
 
   if (error) {
     console.error("[v0] Erro ao cadastrar aluno:", error)
-    throw new Error(error.message)
+    return { error: error.message }
   }
 
   console.log("[v0] Aluno cadastrado com sucesso")
@@ -116,11 +116,11 @@ export async function atualizarAluno(id: string, formData: FormData) {
   const dataNascimento = sanitizeDateField(formData, "data_nascimento")
 
   if (!nomeCompleto) {
-    throw new Error("Nome completo é obrigatório")
+    return { error: "Nome completo é obrigatório" }
   }
 
   if (!dataNascimento) {
-    throw new Error("Data de nascimento é obrigatória")
+    return { error: "Data de nascimento é obrigatória" }
   }
 
   const alunoData = {
@@ -185,11 +185,11 @@ export async function atualizarAluno(id: string, formData: FormData) {
 
   console.log("[v0] Tentando atualizar aluno:", id)
 
-  const { error } = await supabase.from("alunos").update(alunoData).eq("id", id)
+  const { error: updateError } = await supabase.from("alunos").update(alunoData).eq("id", id)
 
-  if (error) {
-    console.error("[v0] Erro ao atualizar aluno:", error)
-    throw new Error(error.message)
+  if (updateError) {
+    console.error("[v0] Erro ao atualizar aluno:", updateError)
+    return { error: updateError.message }
   }
 
   console.log("[v0] Aluno atualizado com sucesso")
