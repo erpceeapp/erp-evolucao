@@ -157,16 +157,31 @@ export default function CamposObrigatoriosPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      // Atualizar cada campo no banco
-      const updates = Object.entries(config).map(([campo, obrigatorio]) =>
-        supabase.from("config_campos_obrigatorios").update({ obrigatorio }).eq("campo", campo),
-      )
+      console.log("[v0] Iniciando salvamento de configurações")
+      console.log("[v0] Config a salvar:", config)
+
+      const updates = Object.entries(config).map(async ([campo, obrigatorio]) => {
+        console.log(`[v0] Salvando campo ${campo}: ${obrigatorio}`)
+
+        const { data, error } = await supabase
+          .from("config_campos_obrigatorios")
+          .upsert({ campo, obrigatorio, updated_at: new Date().toISOString() }, { onConflict: "campo" })
+
+        if (error) {
+          console.error(`[v0] Erro ao salvar campo ${campo}:`, error)
+          throw error
+        }
+
+        console.log(`[v0] Campo ${campo} salvo com sucesso`)
+        return data
+      })
 
       await Promise.all(updates)
 
+      console.log("[v0] Todas as configurações foram salvas")
       toast.success("Configuração salva com sucesso!")
     } catch (error) {
-      console.error("Erro ao salvar:", error)
+      console.error("[v0] Erro ao salvar:", error)
       toast.error("Erro ao salvar configuração")
     } finally {
       setSaving(false)
