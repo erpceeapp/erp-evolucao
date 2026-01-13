@@ -64,6 +64,17 @@ export async function generateAlunoPDF(aluno: Aluno): Promise<void> {
   doc.line(margin, yPosition, pageWidth - margin, yPosition)
   yPosition += 8
 
+  if (aluno.matricula) {
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "bold")
+    doc.text("Matrícula:", margin, yPosition)
+    doc.setFontSize(12)
+    doc.setTextColor(37, 99, 235) // Cor azul
+    doc.text(aluno.matricula, margin + 50, yPosition)
+    doc.setTextColor(0, 0, 0) // Resetar cor
+    yPosition += 8
+  }
+
   addField("Nome Completo", aluno.nome_completo)
   addField("CPF", aluno.cpf)
   addField("RG", aluno.rg)

@@ -44,8 +44,8 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
   const [formData, setFormData] = useState({
     turma_disciplina_id: "",
     data_aula: "",
-    horario_inicio: "",
-    horario_fim: "",
+    hora_inicio: "",
+    hora_fim: "",
     conteudo: "",
     observacoes: "",
   })
@@ -57,11 +57,13 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
     try {
       const supabase = createBrowserClient()
 
+      console.log("[v0] Registrando aula:", formData)
+
       const { error } = await supabase.from("aulas").insert({
         turma_disciplina_id: formData.turma_disciplina_id,
         data_aula: formData.data_aula,
-        horario_inicio: formData.horario_inicio,
-        horario_fim: formData.horario_fim,
+        hora_inicio: formData.hora_inicio,
+        hora_fim: formData.hora_fim,
         conteudo: formData.conteudo,
         observacoes: formData.observacoes || null,
       })
@@ -115,23 +117,23 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_inicio">Horário de Início *</Label>
+          <Label htmlFor="hora_inicio">Horário de Início *</Label>
           <Input
-            id="horario_inicio"
+            id="hora_inicio"
             type="time"
-            value={formData.horario_inicio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, horario_inicio: e.target.value }))}
+            value={formData.hora_inicio}
+            onChange={(e) => setFormData((prev) => ({ ...prev, hora_inicio: e.target.value }))}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_fim">Horário de Fim *</Label>
+          <Label htmlFor="hora_fim">Horário de Fim *</Label>
           <Input
-            id="horario_fim"
+            id="hora_fim"
             type="time"
-            value={formData.horario_fim}
-            onChange={(e) => setFormData((prev) => ({ ...prev, horario_fim: e.target.value }))}
+            value={formData.hora_fim}
+            onChange={(e) => setFormData((prev) => ({ ...prev, hora_fim: e.target.value }))}
             required
           />
         </div>

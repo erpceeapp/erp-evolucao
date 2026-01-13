@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 interface Aluno {
   id: string
   nome_completo: string
+  matricula: string | null
   data_nascimento: string
   cpf?: string
   email?: string
@@ -88,7 +89,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 flex gap-2">
           <Input
-            placeholder="Buscar por nome, CPF ou email..."
+            placeholder="Buscar por nome, matrícula, CPF ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -114,6 +115,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Matrícula</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Idade</TableHead>
               <TableHead>CPF</TableHead>
@@ -125,13 +127,16 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
           <TableBody>
             {alunos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   Nenhum aluno encontrado
                 </TableCell>
               </TableRow>
             ) : (
               alunos.map((aluno) => (
                 <TableRow key={aluno.id}>
+                  <TableCell>
+                    <div className="font-mono text-sm font-semibold text-blue-600">{aluno.matricula || "-"}</div>
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{aluno.nome_completo}</div>

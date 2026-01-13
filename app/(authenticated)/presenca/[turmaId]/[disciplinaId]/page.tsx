@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Users, Save, Check, X, BookOpen } from 'lucide-react'
+import { Users, Save, Check, X, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
@@ -32,7 +32,7 @@ export default function PresencaPage({
 }) {
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [turmaDisciplina, setTurmaDisciplina] = useState<TurmaDisciplina | null>(null)
-  const [presencas, setPresencas] = useState<Record<string, 'presente' | 'ausente' | 'justificado'>>({})
+  const [presencas, setPresencas] = useState<Record<string, "presente" | "ausente" | "justificado">>({})
   const [dataAula, setDataAula] = useState(new Date().toISOString().split("T")[0])
   const [horario, setHorario] = useState("")
   const [conteudo, setConteudo] = useState("")
@@ -50,7 +50,7 @@ export default function PresencaPage({
   async function loadData() {
     try {
       console.log("[v0] Loading presenca data for turma:", params.turmaId, "disciplina:", params.disciplinaId)
-      
+
       const { data: tdData, error: tdError } = await supabase
         .from("turma_disciplinas")
         .select("*")
@@ -91,9 +91,9 @@ export default function PresencaPage({
 
       setTurmaDisciplina({
         id: tdData.id,
-        turmas: turma || { nome: '', serie: '' },
-        disciplinas: disciplina || { nome: '', codigo: '' },
-        professores: professor || { nome_completo: '' }
+        turmas: turma || { nome: "", serie: "" },
+        disciplinas: disciplina || { nome: "", codigo: "" },
+        professores: professor || { nome_completo: "" },
       })
 
       // Buscar alunos da turma (matrículas ativas)
@@ -117,7 +117,7 @@ export default function PresencaPage({
       }
 
       // Buscar dados dos alunos separadamente
-      const alunoIds = matriculas.map(m => m.aluno_id)
+      const alunoIds = matriculas.map((m) => m.aluno_id)
       const { data: alunosData, error: alunosError } = await supabase
         .from("alunos")
         .select("id, nome_completo, email")
@@ -134,12 +134,11 @@ export default function PresencaPage({
       setAlunos(alunosData || [])
 
       // Inicializar presenças como 'presente'
-      const presencasIniciais: Record<string, 'presente' | 'ausente' | 'justificado'> = {}
+      const presencasIniciais: Record<string, "presente" | "ausente" | "justificado"> = {}
       alunosData?.forEach((aluno) => {
-        presencasIniciais[aluno.id] = 'presente'
+        presencasIniciais[aluno.id] = "presente"
       })
       setPresencas(presencasIniciais)
-
     } catch (error) {
       console.error("[v0] Erro ao carregar dados:", error)
       toast({
@@ -152,7 +151,7 @@ export default function PresencaPage({
     }
   }
 
-  function setPresencaStatus(alunoId: string, status: 'presente' | 'ausente' | 'justificado') {
+  function setPresencaStatus(alunoId: string, status: "presente" | "ausente" | "justificado") {
     setPresencas((prev) => ({
       ...prev,
       [alunoId]: status,
@@ -229,9 +228,9 @@ export default function PresencaPage({
   }
 
   const totalAlunos = alunos.length
-  const presentes = Object.values(presencas).filter(p => p === 'presente').length
-  const ausentes = Object.values(presencas).filter(p => p === 'ausente').length
-  const justificados = Object.values(presencas).filter(p => p === 'justificado').length
+  const presentes = Object.values(presencas).filter((p) => p === "presente").length
+  const ausentes = Object.values(presencas).filter((p) => p === "ausente").length
+  const justificados = Object.values(presencas).filter((p) => p === "justificado").length
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -241,7 +240,7 @@ export default function PresencaPage({
             <Users className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Registro de Presença</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Registrar Nova Aula</h1>
             <p className="text-gray-600">
               {turmaDisciplina?.disciplinas.nome} - {turmaDisciplina?.turmas.nome}
             </p>
@@ -256,7 +255,7 @@ export default function PresencaPage({
           </Button>
           <Button onClick={salvarPresenca} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
             <Save className="h-4 w-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar Presença"}
+            {saving ? "Salvando..." : "Salvar Aula"}
           </Button>
         </div>
       </div>
@@ -266,9 +265,7 @@ export default function PresencaPage({
           <CardContent className="text-center py-12">
             <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno encontrado</h3>
-            <p className="text-gray-600 mb-4">
-              Esta turma não possui alunos matriculados ativos.
-            </p>
+            <p className="text-gray-600 mb-4">Esta turma não possui alunos matriculados ativos.</p>
             <Button asChild>
               <Link href="/matriculas">Gerenciar Matrículas</Link>
             </Button>
@@ -299,10 +296,7 @@ export default function PresencaPage({
               <CardContent>
                 <div className="space-y-3">
                   {alunos.map((aluno) => (
-                    <div
-                      key={aluno.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                    >
+                    <div key={aluno.id} className="flex items-center justify-between p-4 rounded-lg border bg-card">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                           <span className="text-sm font-medium">{aluno.nome_completo.charAt(0)}</span>
@@ -316,27 +310,27 @@ export default function PresencaPage({
                         <Button
                           type="button"
                           size="sm"
-                          variant={presencas[aluno.id] === 'presente' ? 'default' : 'outline'}
-                          onClick={() => setPresencaStatus(aluno.id, 'presente')}
-                          className={presencas[aluno.id] === 'presente' ? 'bg-green-600 hover:bg-green-700' : ''}
+                          variant={presencas[aluno.id] === "presente" ? "default" : "outline"}
+                          onClick={() => setPresencaStatus(aluno.id, "presente")}
+                          className={presencas[aluno.id] === "presente" ? "bg-green-600 hover:bg-green-700" : ""}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
                         <Button
                           type="button"
                           size="sm"
-                          variant={presencas[aluno.id] === 'ausente' ? 'default' : 'outline'}
-                          onClick={() => setPresencaStatus(aluno.id, 'ausente')}
-                          className={presencas[aluno.id] === 'ausente' ? 'bg-red-600 hover:bg-red-700' : ''}
+                          variant={presencas[aluno.id] === "ausente" ? "default" : "outline"}
+                          onClick={() => setPresencaStatus(aluno.id, "ausente")}
+                          className={presencas[aluno.id] === "ausente" ? "bg-red-600 hover:bg-red-700" : ""}
                         >
                           <X className="h-4 w-4" />
                         </Button>
                         <Button
                           type="button"
                           size="sm"
-                          variant={presencas[aluno.id] === 'justificado' ? 'default' : 'outline'}
-                          onClick={() => setPresencaStatus(aluno.id, 'justificado')}
-                          className={presencas[aluno.id] === 'justificado' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                          variant={presencas[aluno.id] === "justificado" ? "default" : "outline"}
+                          onClick={() => setPresencaStatus(aluno.id, "justificado")}
+                          className={presencas[aluno.id] === "justificado" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
                         >
                           J
                         </Button>

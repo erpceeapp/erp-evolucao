@@ -52,13 +52,13 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
   // Buscar matrículas ativas da turma
   const { data: matriculas, count: totalAlunos } = await supabase
     .from("matriculas")
-    .select("id, aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, cpf)", { count: "exact" })
+    .select("id, aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, cpf, matricula)", { count: "exact" })
     .eq("turma_id", params.id)
     .eq("status", "ativa")
 
   const { data: todosAlunos } = await supabase
     .from("alunos")
-    .select("id, nome_completo, cpf, data_nascimento")
+    .select("id, nome_completo, cpf, matricula, data_nascimento")
     .eq("ativo", true)
     .order("nome_completo")
 
@@ -236,7 +236,12 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
                     {matriculas.slice(0, 10).map((matricula: any) => (
                       <div key={matricula.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                         <Users className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">{matricula.aluno.nome_completo}</span>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">{matricula.aluno.nome_completo}</span>
+                          {matricula.aluno.matricula && (
+                            <span className="text-xs text-gray-500 ml-2">• Mat. {matricula.aluno.matricula}</span>
+                          )}
+                        </div>
                       </div>
                     ))}
                     {(totalAlunos || 0) > 10 && (

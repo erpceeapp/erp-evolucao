@@ -1,9 +1,8 @@
 "use client"
 
-import { BookOpen, Plus, Calendar, Eye } from 'lucide-react'
+import { BookOpen, Plus, Calendar, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 
 interface AulasTabProps {
@@ -24,7 +23,7 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
             <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
               <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Chamada
+                Nova Aula
               </Link>
             </Button>
           </CardHeader>
@@ -40,9 +39,9 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                           <span className="font-medium text-gray-900">
                             {new Date(aula.data_aula + "T00:00:00").toLocaleDateString("pt-BR")}
                           </span>
-                          {aula.horario && (
+                          {aula.hora_inicio && (
                             <span className="text-sm text-gray-500">
-                              {aula.horario}
+                              {aula.hora_fim ? `${aula.hora_inicio} - ${aula.hora_fim}` : aula.hora_inicio}
                             </span>
                           )}
                         </div>
@@ -79,11 +78,13 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                 <div className="text-center py-12">
                   <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma aula registrada</h3>
-                  <p className="text-gray-600 mb-4">Comece registrando a primeira chamada desta disciplina.</p>
+                  <p className="text-gray-600 mb-4">
+                    Comece registrando a primeira aula com lista de presença desta disciplina.
+                  </p>
                   <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
                     <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Registrar Primeira Chamada
+                      Registrar Primeira Aula
                     </Link>
                   </Button>
                 </div>

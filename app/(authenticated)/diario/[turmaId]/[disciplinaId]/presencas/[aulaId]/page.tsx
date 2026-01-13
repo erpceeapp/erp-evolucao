@@ -1,29 +1,16 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from 'next/navigation'
-import { Eye, Calendar, Clock, BookOpen, Users, Check, X } from 'lucide-react'
-import { Button } from "@/components/ui/button"
+import { redirect } from "next/navigation"
+import { Eye, Calendar, Clock, BookOpen, Users, Check, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
 import PageHeader from "@/components/page-header"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: string) {
   const supabase = await createServerClient()
 
   // Buscar aula
-  const { data: aula } = await supabase
-    .from("aulas")
-    .select("*")
-    .eq("id", aulaId)
-    .single()
+  const { data: aula } = await supabase.from("aulas").select("*").eq("id", aulaId).single()
 
   if (!aula) return null
 
@@ -51,11 +38,8 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
     .eq("aula_id", aulaId)
 
   // Buscar alunos
-  const alunoIds = presencas?.map(p => p.aluno_id) || []
-  const { data: alunos } = await supabase
-    .from("alunos")
-    .select("id, nome_completo, email")
-    .in("id", alunoIds)
+  const alunoIds = presencas?.map((p) => p.aluno_id) || []
+  const { data: alunos } = await supabase.from("alunos").select("id, nome_completo, email").in("id", alunoIds)
 
   // Buscar matrículas para pegar número
   const { data: matriculas } = await supabase
@@ -65,18 +49,20 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
     .in("aluno_id", alunoIds)
 
   // Combinar dados
-  const presencasComAlunos = (presencas || []).map(presenca => {
-    const aluno = alunos?.find(a => a.id === presenca.aluno_id)
-    const matricula = matriculas?.find(m => m.aluno_id === presenca.aluno_id)
-    return {
-      ...presenca,
-      aluno,
-      numero_matricula: matricula?.numero_matricula
-    }
-  }).sort((a, b) => (a.aluno?.nome_completo || '').localeCompare(b.aluno?.nome_completo || ''))
+  const presencasComAlunos = (presencas || [])
+    .map((presenca) => {
+      const aluno = alunos?.find((a) => a.id === presenca.aluno_id)
+      const matricula = matriculas?.find((m) => m.aluno_id === presenca.aluno_id)
+      return {
+        ...presenca,
+        aluno,
+        numero_matricula: matricula?.numero_matricula,
+      }
+    })
+    .sort((a, b) => (a.aluno?.nome_completo || "").localeCompare(b.aluno?.nome_completo || ""))
 
-  const totalPresentes = presencas?.filter(p => p.presente).length || 0
-  const totalAusentes = presencas?.filter(p => !p.presente).length || 0
+  const totalPresentes = presencas?.filter((p) => p.presente).length || 0
+  const totalAusentes = presencas?.filter((p) => !p.presente).length || 0
 
   return {
     aula,
@@ -100,7 +86,7 @@ export default async function AulaDetalhePage({
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  
+
   if (!user) {
     redirect("/auth/login")
   }
@@ -137,7 +123,7 @@ export default async function AulaDetalhePage({
                   <div>
                     <p className="text-sm font-medium">Data</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(aula.data_aula).toLocaleDateString('pt-BR')}
+                      {new Date(aula.data_aula).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -146,21 +132,21 @@ export default async function AulaDetalhePage({
                   <div>
                     <p className="text-sm font-medium">Horário</p>
                     <p className="text-sm text-muted-foreground">
-                      {aula.horario || '-'}
+                      {aula.hora_inicio && aula.hora_fim
+                        ? `${aula.hora_inicio} - ${aula.hora_fim}`
+                        : aula.hora_inicio || "-"}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               {aula.conteudo_ministrado && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Conteúdo Ministrado</p>
                   </div>
-                  <p className="text-sm text-muted-foreground pl-6">
-                    {aula.conteudo_ministrado}
-                  </p>
+                  <p className="text-sm text-muted-foreground pl-6">{aula.conteudo_ministrado}</p>
                 </div>
               )}
             </CardContent>
@@ -187,9 +173,7 @@ export default async function AulaDetalhePage({
                       <TableCell>
                         <Badge variant="outline">{presenca.numero_matricula}</Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {presenca.aluno?.nome_completo}
-                      </TableCell>
+                      <TableCell className="font-medium">{presenca.aluno?.nome_completo}</TableCell>
                       <TableCell className="text-center">
                         {presenca.presente ? (
                           <Badge className="bg-green-600">
@@ -203,9 +187,7 @@ export default async function AulaDetalhePage({
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {presenca.justificativa || '-'}
-                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{presenca.justificativa || "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -226,7 +208,9 @@ export default async function AulaDetalhePage({
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Total de Alunos</span>
                 </div>
-                <Badge variant="outline" className="text-lg">{totalAlunos}</Badge>
+                <Badge variant="outline" className="text-lg">
+                  {totalAlunos}
+                </Badge>
               </div>
 
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -242,16 +226,15 @@ export default async function AulaDetalhePage({
                   <X className="h-4 w-4 text-red-600" />
                   <span className="text-sm font-medium text-red-700">Ausentes</span>
                 </div>
-                <Badge variant="destructive" className="text-lg">{totalAusentes}</Badge>
+                <Badge variant="destructive" className="text-lg">
+                  {totalAusentes}
+                </Badge>
               </div>
 
               <div className="pt-4 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Percentual de Presença</span>
-                  <Badge 
-                    variant={percentualPresenca >= 75 ? "default" : "secondary"}
-                    className="text-lg"
-                  >
+                  <Badge variant={percentualPresenca >= 75 ? "default" : "secondary"} className="text-lg">
                     {percentualPresenca}%
                   </Badge>
                 </div>
@@ -270,7 +253,9 @@ export default async function AulaDetalhePage({
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Turma</p>
-                <p className="text-sm">{turma.nome} - {turma.serie}</p>
+                <p className="text-sm">
+                  {turma.nome} - {turma.serie}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Disciplina</p>

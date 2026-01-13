@@ -37,7 +37,9 @@ export default async function AlunosPage({
 
   // Aplicar filtros
   if (busca) {
-    query = query.or(`nome_completo.ilike.%${busca}%,cpf.ilike.%${busca}%,email.ilike.%${busca}%`)
+    query = query.or(
+      `nome_completo.ilike.%${busca}%,cpf.ilike.%${busca}%,email.ilike.%${busca}%,matricula.ilike.%${busca}%`,
+    )
   }
 
   if (status !== "todos") {

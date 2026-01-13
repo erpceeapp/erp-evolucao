@@ -1,10 +1,10 @@
 import type React from "react"
-import { redirect, notFound } from 'next/navigation'
+import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText } from 'lucide-react'
+import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText } from "lucide-react"
 import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
 import { ExportAlunoPDFButton } from "@/components/alunos/export-aluno-pdf-button"
@@ -57,6 +57,9 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{aluno.nome_completo}</h1>
+            {aluno.matricula && (
+              <p className="text-lg text-blue-600 font-mono font-semibold mt-1">Matrícula: {aluno.matricula}</p>
+            )}
             <p className="text-gray-600 mt-1">Detalhes do aluno</p>
           </div>
           <div className="flex gap-2">
@@ -87,6 +90,12 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {aluno.matricula && (
+                  <div>
+                    <Label>Matrícula</Label>
+                    <p className="font-mono text-lg font-bold text-blue-600">{aluno.matricula}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Nome Completo</Label>

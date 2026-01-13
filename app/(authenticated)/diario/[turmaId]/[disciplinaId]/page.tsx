@@ -1,9 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from 'next/navigation'
-import { BookOpen, Plus, Calendar, Users, FileText } from 'lucide-react'
+import { redirect } from "next/navigation"
+import { BookOpen, Calendar, Users, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
@@ -39,8 +37,16 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
       supabase.from("disciplinas").select("id, nome, codigo, carga_horaria").eq("id", disciplinaId).single(),
       supabase.from("professores").select("id, nome_completo").eq("id", turmaDisciplinas.professor_id).single(),
-      supabase.from("aulas").select("*").eq("turma_disciplina_id", turmaDisciplinas.id).order("data_aula", { ascending: false }),
-      supabase.from("matriculas").select("id, numero_matricula, aluno_id").eq("turma_id", turmaId).eq("status", "ativa")
+      supabase
+        .from("aulas")
+        .select("*")
+        .eq("turma_disciplina_id", turmaDisciplinas.id)
+        .order("data_aula", { ascending: false }),
+      supabase
+        .from("matriculas")
+        .select("id, numero_matricula, aluno_id")
+        .eq("turma_id", turmaId)
+        .eq("status", "ativa"),
     ])
 
     if (turmaRes.error || disciplinaRes.error || professorRes.error) {
@@ -49,16 +55,13 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     }
 
     // Buscar alunos
-    const alunoIds = matriculasRes.data?.map(m => m.aluno_id) || []
-    const { data: alunos } = await supabase
-      .from("alunos")
-      .select("id, nome_completo, email")
-      .in("id", alunoIds)
+    const alunoIds = matriculasRes.data?.map((m) => m.aluno_id) || []
+    const { data: alunos } = await supabase.from("alunos").select("id, nome_completo, email").in("id", alunoIds)
 
     // Combinar matriculas com alunos
-    const matriculasComAlunos = (matriculasRes.data || []).map(matricula => ({
+    const matriculasComAlunos = (matriculasRes.data || []).map((matricula) => ({
       ...matricula,
-      alunos: alunos?.find(a => a.id === matricula.aluno_id)
+      alunos: alunos?.find((a) => a.id === matricula.aluno_id),
     }))
 
     // Buscar períodos letivos
@@ -75,7 +78,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
         ...turmaDisciplinas,
         turmas: turmaRes.data,
         disciplinas: disciplinaRes.data,
-        professores: professorRes.data
+        professores: professorRes.data,
       },
       aulas: aulasRes.data || [],
       matriculas: matriculasComAlunos,
@@ -121,7 +124,7 @@ export default async function DiarioDetalhePage({
           <Button asChild variant="outline">
             <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
               <Users className="h-4 w-4 mr-2" />
-              Presença
+              Nova Aula
             </Link>
           </Button>
         </div>

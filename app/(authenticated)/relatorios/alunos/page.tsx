@@ -10,10 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 async function getAlunosRelatorio() {
   const supabase = await createServerClient()
 
-  // Buscar todos os alunos
   const { data: alunos, error: alunosError } = await supabase
     .from("alunos")
-    .select("*")
+    .select("*, matriculas(*)")
     .order("nome_completo", { ascending: true })
 
   if (alunosError) {
@@ -119,6 +118,7 @@ export default async function RelatorioAlunosPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Matrícula</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>CPF</TableHead>
@@ -132,6 +132,9 @@ export default async function RelatorioAlunosPage() {
                 const matriculaAtiva = aluno.matriculas?.find((m) => m.status === "ativa")
                 return (
                   <TableRow key={aluno.id}>
+                    <TableCell>
+                      <span className="font-mono text-sm font-semibold text-blue-600">{aluno.matricula || "-"}</span>
+                    </TableCell>
                     <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
                     <TableCell>{aluno.email}</TableCell>
                     <TableCell>{aluno.cpf}</TableCell>

@@ -1,15 +1,9 @@
-import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { TurmasHeader } from "@/components/turmas/turmas-header"
 import { TurmaForm } from "@/components/turmas/turma-form"
 
 export default async function NovaTurmaPage() {
   const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
 
   // Buscar professores para o select
   const { data: professores } = await supabase

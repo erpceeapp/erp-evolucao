@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-import { Plus, Trash2 } from 'lucide-react'
+import { Calendar } from "lucide-react"
 
 interface ConfigurarPeriodosModalProps {
   open: boolean
@@ -38,7 +38,7 @@ export default function ConfigurarPeriodosModal({
           nome: p.nome,
           data_inicio: p.data_inicio,
           data_fim: p.data_fim,
-        }))
+        })),
       )
     }
   }, [periodosExistentes])
@@ -46,10 +46,20 @@ export default function ConfigurarPeriodosModal({
   const handleSave = async () => {
     setLoading(true)
     try {
+      console.log("[v0] Salvando períodos para ano letivo:", anoLetivo)
+      console.log("[v0] Períodos a salvar:", periodos)
+
       const supabase = createBrowserClient()
 
       // Deletar períodos existentes do ano
-      await supabase.from("periodos_letivos").delete().eq("ano_letivo", anoLetivo)
+      const { error: deleteError } = await supabase.from("periodos_letivos").delete().eq("ano_letivo", anoLetivo)
+
+      if (deleteError) {
+        console.error("[v0] Erro ao deletar períodos existentes:", deleteError)
+        throw deleteError
+      }
+
+      console.log("[v0] Períodos existentes deletados com sucesso")
 
       // Inserir novos períodos
       const periodosParaInserir = periodos.map((p) => ({
@@ -61,16 +71,22 @@ export default function ConfigurarPeriodosModal({
         ativo: true,
       }))
 
-      const { error } = await supabase.from("periodos_letivos").insert(periodosParaInserir)
+      console.log("[v0] Inserindo novos períodos:", periodosParaInserir)
 
-      if (error) throw error
+      const { error: insertError } = await supabase.from("periodos_letivos").insert(periodosParaInserir)
 
+      if (insertError) {
+        console.error("[v0] Erro ao inserir períodos:", insertError)
+        throw insertError
+      }
+
+      console.log("[v0] Períodos inseridos com sucesso")
       toast.success("Períodos configurados com sucesso!")
       onOpenChange(false)
       window.location.reload()
-    } catch (error) {
-      console.error("Erro ao salvar períodos:", error)
-      toast.error("Erro ao salvar períodos. Tente novamente.")
+    } catch (error: any) {
+      console.error("[v0] Erro ao salvar períodos:", error)
+      toast.error(`Erro ao salvar períodos: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -78,17 +94,22 @@ export default function ConfigurarPeriodosModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Configurar Períodos - Ano Letivo {anoLetivo}</DialogTitle>
+          <DialogTitle className="text-2xl">Configurar Períodos - Ano Letivo {anoLetivo}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {periodos.map((periodo, index) => (
-            <div key={index} className="p-4 border rounded-lg space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div key={index} className="p-5 border-2 rounded-lg bg-slate-50 space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Calendar className="w-5 h-5 text-cyan-600" />
+                <h3 className="font-semibold text-lg">{periodo.nome}</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label>Nome do Período</Label>
+                  <Label className="text-sm font-medium">Nome do Período</Label>
                   <Input
                     value={periodo.nome}
                     onChange={(e) => {
@@ -97,41 +118,47 @@ export default function ConfigurarPeriodosModal({
                       setPeriodos(newPeriodos)
                     }}
                     placeholder="Ex: 1º Bimestre"
+                    className="h-11"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Data Início</Label>
-                  <Input
-                    type="date"
-                    value={periodo.data_inicio}
-                    onChange={(e) => {
-                      const newPeriodos = [...periodos]
-                      newPeriodos[index].data_inicio = e.target.value
-                      setPeriodos(newPeriodos)
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Data Fim</Label>
-                  <Input
-                    type="date"
-                    value={periodo.data_fim}
-                    onChange={(e) => {
-                      const newPeriodos = [...periodos]
-                      newPeriodos[index].data_fim = e.target.value
-                      setPeriodos(newPeriodos)
-                    }}
-                  />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Data de Início</Label>
+                    <Input
+                      type="date"
+                      value={periodo.data_inicio}
+                      onChange={(e) => {
+                        const newPeriodos = [...periodos]
+                        newPeriodos[index].data_inicio = e.target.value
+                        setPeriodos(newPeriodos)
+                      }}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Data de Término</Label>
+                    <Input
+                      type="date"
+                      value={periodo.data_fim}
+                      onChange={(e) => {
+                        const newPeriodos = [...periodos]
+                        newPeriodos[index].data_fim = e.target.value
+                        setPeriodos(newPeriodos)
+                      }}
+                      className="h-11"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           ))}
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-11 px-6">
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700">
+            <Button onClick={handleSave} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700 h-11 px-6">
               {loading ? "Salvando..." : "Salvar Configuração"}
             </Button>
           </div>
