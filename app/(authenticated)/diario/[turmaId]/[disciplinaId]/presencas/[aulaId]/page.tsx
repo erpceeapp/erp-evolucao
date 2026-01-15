@@ -1,13 +1,20 @@
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Eye, Calendar, Clock, BookOpen, Users, Check, X } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { Eye, Calendar, Clock, BookOpen, Users, Check, X, Edit, Save, XCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import PageHeader from "@/components/page-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+;("use client")
+
+import { useEffect } from "react"
+
+import { useState } from "react"
 
 async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: string) {
-  const supabase = await createServerClient()
+  const supabase = createClient()
 
   // Buscar aula
   const { data: aula } = await supabase.from("aulas").select("*").eq("id", aulaId).single()
@@ -31,22 +38,49 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
     supabase.from("professores").select("nome_completo").eq("id", turmaDisciplina.professor_id).single(),
   ])
 
-  // Buscar presenças com dados dos alunos
-  const { data: presencas } = await supabase
-    .from("presencas")
-    .select("id, presente, aluno_id, justificativa")
-    .eq("aula_id", aulaId)
-
-  // Buscar alunos
-  const alunoIds = presencas?.map((p) => p.aluno_id) || []
-  const { data: alunos } = await supabase.from("alunos").select("id, nome_completo, email").in("id", alunoIds)
-
-  // Buscar matrículas para pegar número
   const { data: matriculas } = await supabase
     .from("matriculas")
     .select("aluno_id, numero_matricula")
     .eq("turma_id", turmaId)
-    .in("aluno_id", alunoIds)
+    .eq("status", "ativa")
+
+  const alunoIds = matriculas?.map((m) => m.aluno_id) || []
+
+  // Buscar alunos
+  const { data: alunos } = await supabase
+    .from("alunos")
+    .select("id, nome_completo, email, matricula")
+    .in("id", alunoIds)
+
+  // Buscar presenças existentes
+  const { data: presencasExistentes } = await supabase
+    .from("presencas")
+    .select("id, presente, aluno_id, justificativa")
+    .eq("aula_id", aulaId)
+
+  let presencas = presencasExistentes || []
+
+  if (!presencasExistentes || presencasExistentes.length === 0) {
+    console.log("[v0] Criando registros de presença para todos os alunos...")
+    const presencasParaCriar = alunoIds.map((alunoId) => ({
+      aula_id: aulaId,
+      aluno_id: alunoId,
+      presente: true, // Default: presente
+      justificativa: null,
+    }))
+
+    const { data: novasPresencas, error } = await supabase
+      .from("presencas")
+      .insert(presencasParaCriar)
+      .select("id, presente, aluno_id, justificativa")
+
+    if (error) {
+      console.error("[v0] Erro ao criar presenças:", error)
+    } else {
+      presencas = novasPresencas || []
+      console.log("[v0] Criadas", presencas.length, "presenças")
+    }
+  }
 
   // Combinar dados
   const presencasComAlunos = (presencas || [])
@@ -56,7 +90,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
       return {
         ...presenca,
         aluno,
-        numero_matricula: matricula?.numero_matricula,
+        numero_matricula: matricula?.numero_matricula || aluno?.matricula,
       }
     })
     .sort((a, b) => (a.aluno?.nome_completo || "").localeCompare(b.aluno?.nome_completo || ""))
@@ -76,28 +110,79 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   }
 }
 
-export default async function AulaDetalhePage({
+export default function AulaDetalhePage({
   params,
 }: {
   params: { turmaId: string; disciplinaId: string; aulaId: string }
 }) {
-  const supabase = await createServerClient()
+  const router = useRouter()
+  const [isEditing, setIsEditing] = useState(false)
+  const [presencas, setPresencas] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [data, setData] = useState<any>(null)
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  useEffect(() => {
+    loadData()
+  }, [])
 
-  if (!user) {
-    redirect("/auth/login")
+  async function loadData() {
+    const result = await getAulaDetalhes(params.aulaId, params.turmaId, params.disciplinaId)
+    if (result) {
+      setData(result)
+      setPresencas(result.presencas)
+    }
   }
 
-  const data = await getAulaDetalhes(params.aulaId, params.turmaId, params.disciplinaId)
+  function togglePresenca(presencaId: string) {
+    setPresencas((prev) => prev.map((p) => (p.id === presencaId ? { ...p, presente: !p.presente } : p)))
+  }
+
+  function updateJustificativa(presencaId: string, justificativa: string) {
+    setPresencas((prev) => prev.map((p) => (p.id === presencaId ? { ...p, justificativa } : p)))
+  }
+
+  async function salvarAlteracoes() {
+    setIsLoading(true)
+    const supabase = createClient()
+
+    try {
+      console.log("[v0] Salvando alterações de presença...")
+
+      for (const presenca of presencas) {
+        const { error } = await supabase
+          .from("presencas")
+          .update({
+            presente: presenca.presente,
+            justificativa: presenca.justificativa || null,
+          })
+          .eq("id", presenca.id)
+
+        if (error) {
+          console.error("[v0] Erro ao atualizar presença:", error)
+          throw error
+        }
+      }
+
+      toast.success("Presenças atualizadas com sucesso!")
+      setIsEditing(false)
+      await loadData()
+      router.refresh()
+    } catch (error: any) {
+      console.error("[v0] Erro ao salvar alterações:", error)
+      toast.error("Erro ao salvar alterações: " + error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (!data) {
-    redirect("/diario")
+    return <div className="container mx-auto p-6">Carregando...</div>
   }
 
-  const { aula, turma, disciplina, professor, presencas, totalPresentes, totalAusentes, totalAlunos } = data
+  const { aula, turma, disciplina, professor } = data
+  const totalPresentes = presencas.filter((p) => p.presente).length
+  const totalAusentes = presencas.filter((p) => !p.presente).length
+  const totalAlunos = presencas.length
   const percentualPresenca = totalAlunos > 0 ? Math.round((totalPresentes / totalAlunos) * 100) : 0
 
   return (
@@ -107,11 +192,46 @@ export default async function AulaDetalhePage({
         title="Detalhes da Aula"
         description={`${disciplina.nome} - ${turma.nome}`}
         backHref={`/diario/${params.turmaId}/${params.disciplinaId}/presencas`}
-      />
+      >
+        {!isEditing ? (
+          <Button onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Editar Presenças
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button onClick={salvarAlteracoes} disabled={isLoading}>
+              <Save className="h-4 w-4 mr-2" />
+              {isLoading ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditing(false)
+                loadData()
+              }}
+              disabled={isLoading}
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+          </div>
+        )}
+      </PageHeader>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Informações da Aula */}
         <div className="lg:col-span-2 space-y-6">
+          {isEditing && (
+            <Card className="border-orange-500 bg-orange-50">
+              <CardContent className="pt-6">
+                <p className="text-sm text-orange-700">
+                  Modo de edição ativado. Clique nos botões de presença/ausência para alterar o status dos alunos. Não
+                  esqueça de salvar as alterações.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Informações da Aula</CardTitle>
@@ -152,7 +272,6 @@ export default async function AulaDetalhePage({
             </CardContent>
           </Card>
 
-          {/* Lista de Presenças */}
           <Card>
             <CardHeader>
               <CardTitle>Lista de Presença</CardTitle>
@@ -175,7 +294,26 @@ export default async function AulaDetalhePage({
                       </TableCell>
                       <TableCell className="font-medium">{presenca.aluno?.nome_completo}</TableCell>
                       <TableCell className="text-center">
-                        {presenca.presente ? (
+                        {isEditing ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => togglePresenca(presenca.id)}
+                            className="h-auto p-0"
+                          >
+                            {presenca.presente ? (
+                              <Badge className="bg-green-600 cursor-pointer hover:bg-green-700">
+                                <Check className="h-3 w-3 mr-1" />
+                                Presente
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="cursor-pointer hover:bg-red-700">
+                                <X className="h-3 w-3 mr-1" />
+                                Ausente
+                              </Badge>
+                            )}
+                          </Button>
+                        ) : presenca.presente ? (
                           <Badge className="bg-green-600">
                             <Check className="h-3 w-3 mr-1" />
                             Presente
@@ -187,7 +325,19 @@ export default async function AulaDetalhePage({
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{presenca.justificativa || "-"}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={presenca.justificativa || ""}
+                            onChange={(e) => updateJustificativa(presenca.id, e.target.value)}
+                            placeholder="Adicionar justificativa..."
+                            className="w-full px-2 py-1 text-sm border rounded"
+                          />
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{presenca.justificativa || "-"}</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -196,7 +346,6 @@ export default async function AulaDetalhePage({
           </Card>
         </div>
 
-        {/* Resumo */}
         <div className="space-y-6">
           <Card>
             <CardHeader>

@@ -1,41 +1,98 @@
-import React from "react"
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Calendar, Plus, Filter, Eye, Grid3X3, List } from "lucide-react"
+"use client"
+
+import React, { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { Calendar, Plus, Filter, Eye, Grid3X3, List, Clock, Edit2, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
-async function getEventos() {
-  const supabase = await createServerClient()
+export default function AgendaPage() {
+  const [eventos, setEventos] = useState<any[]>([])
+  const [selectedEvento, setSelectedEvento] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [eventoToDelete, setEventoToDelete] = useState<any>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
 
-  const { data: eventos, error } = await supabase.from("eventos").select("*").order("data_inicio", { ascending: true })
+  useEffect(() => {
+    loadEventos()
+  }, [])
 
-  if (error) {
-    console.error("Erro ao buscar eventos:", error)
-    return []
+  async function loadEventos() {
+    const { data, error } = await supabase.from("eventos").select("*").order("data_inicio", { ascending: true })
+
+    if (error) {
+      console.error("[v0] Erro ao buscar eventos:", error)
+      toast.error("Erro ao carregar eventos")
+      return
+    }
+
+    setEventos(data || [])
   }
 
-  return eventos || []
-}
-
-export default async function AgendaPage() {
-  const supabase = await createServerClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    redirect("/auth/login")
+  function handleEventClick(evento: any) {
+    setSelectedEvento(evento)
+    setIsModalOpen(true)
   }
 
-  const eventos = await getEventos()
+  function handleEditEvento() {
+    if (selectedEvento) {
+      router.push(`/agenda/${selectedEvento.id}/editar`)
+    }
+  }
+
+  async function handleDeleteEvento() {
+    if (!eventoToDelete) return
+
+    setIsDeleting(true)
+    console.log("[v0] Deletando evento:", eventoToDelete.id)
+
+    const { error } = await supabase.from("eventos").delete().eq("id", eventoToDelete.id)
+
+    if (error) {
+      console.error("[v0] Erro ao deletar evento:", error)
+      toast.error("Erro ao excluir evento")
+      setIsDeleting(false)
+      return
+    }
+
+    console.log("[v0] Evento deletado com sucesso")
+    toast.success("Evento excluído com sucesso")
+    setIsDeleteDialogOpen(false)
+    setEventoToDelete(null)
+    setIsDeleting(false)
+
+    loadEventos()
+  }
+
+  function openDeleteDialog(evento: any, e: React.MouseEvent) {
+    e.stopPropagation()
+    setEventoToDelete(evento)
+    setIsDeleteDialogOpen(true)
+  }
+
   const hoje = new Date().toISOString().split("T")[0]
-  const eventosProximos = eventos.filter((evento) => evento.data_inicio >= hoje).slice(0, 5)
+  const eventosProximos = eventos.filter((evento) => evento.data_inicio >= hoje)
 
   return (
     <>
@@ -75,68 +132,69 @@ export default async function AgendaPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="mes">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
+          <TabsContent value="mes" className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
                 <AgendaCalendar eventos={eventos} />
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Próximos Eventos</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {eventosProximos.length > 0 ? (
-                      eventosProximos.map((evento) => (
-                        <div key={evento.id} className="p-3 border rounded-lg">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{evento.titulo}</h4>
-                              <p className="text-sm text-gray-600">{evento.descricao}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {new Date(evento.data_inicio).toLocaleDateString("pt-BR")}
-                              </p>
+            <Card>
+              <CardHeader>
+                <CardTitle>Todos os Eventos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {eventosProximos.length > 0 ? (
+                  <div className="space-y-3">
+                    {eventosProximos.map((evento) => (
+                      <div
+                        key={evento.id}
+                        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => handleEventClick(evento)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-semibold text-gray-900">{evento.titulo}</h4>
+                              <Badge variant={evento.tipo_evento === "feriado" ? "destructive" : "default"}>
+                                {evento.tipo_evento}
+                              </Badge>
                             </div>
-                            <Badge variant={evento.tipo_evento === "feriado" ? "destructive" : "default"}>
-                              {evento.tipo_evento}
-                            </Badge>
+                            <p className="text-sm text-gray-600 mb-2">{evento.descricao}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(evento.data_inicio).toLocaleDateString("pt-BR")}
+                                {evento.data_fim && evento.data_fim !== evento.data_inicio && (
+                                  <> até {new Date(evento.data_fim).toLocaleDateString("pt-BR")}</>
+                                )}
+                              </span>
+                              {evento.hora_inicio && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {evento.hora_inicio}
+                                  {evento.hora_fim && <> - {evento.hora_fim}</>}
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => openDeleteDialog(evento, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-sm">Nenhum evento próximo</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Ações Rápidas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                      <Link href="/diario">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Diário de Classe
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                      <Link href="/presenca">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Registrar Presença
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                      <Link href="/notas">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Lançar Notas
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-8">Nenhum evento cadastrado</p>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="semana">
@@ -212,6 +270,104 @@ export default async function AgendaPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Detalhes do Evento</span>
+              <Button variant="ghost" size="sm" onClick={() => setIsModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedEvento && (
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <h3 className="text-xl font-semibold">{selectedEvento.titulo}</h3>
+                  <Badge variant={selectedEvento.tipo_evento === "feriado" ? "destructive" : "default"}>
+                    {selectedEvento.tipo_evento}
+                  </Badge>
+                </div>
+                {selectedEvento.descricao && <p className="text-gray-600">{selectedEvento.descricao}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Data de Início</label>
+                  <p className="flex items-center gap-2 mt-1">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    {new Date(selectedEvento.data_inicio).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+
+                {selectedEvento.data_fim && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Data de Término</label>
+                    <p className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      {new Date(selectedEvento.data_fim).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                )}
+
+                {selectedEvento.hora_inicio && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Horário de Início</label>
+                    <p className="flex items-center gap-2 mt-1">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      {selectedEvento.hora_inicio}
+                    </p>
+                  </div>
+                )}
+
+                {selectedEvento.hora_fim && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Horário de Término</label>
+                    <p className="flex items-center gap-2 mt-1">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      {selectedEvento.hora_fim}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                  Fechar
+                </Button>
+                <Button onClick={handleEditEvento} className="bg-cyan-600 hover:bg-cyan-700">
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Editar Evento
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o evento "{eventoToDelete?.titulo}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEvento}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

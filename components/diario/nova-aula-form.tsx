@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +50,24 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
     observacoes: "",
   })
 
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0]
+    setFormData((prev) => ({ ...prev, data_aula: today }))
+  }, [])
+
+  const handleHoraInicioChange = (hora: string) => {
+    setFormData((prev) => ({ ...prev, hora_inicio: hora }))
+
+    if (hora) {
+      const [hours, minutes] = hora.split(":").map(Number)
+      const totalMinutes = hours * 60 + minutes + 50
+      const newHours = Math.floor(totalMinutes / 60) % 24
+      const newMinutes = totalMinutes % 60
+      const horaFim = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`
+      setFormData((prev) => ({ ...prev, hora_fim: horaFim }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -64,7 +82,7 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
         data_aula: formData.data_aula,
         hora_inicio: formData.hora_inicio,
         hora_fim: formData.hora_fim,
-        conteudo: formData.conteudo,
+        conteudo: formData.conteudo || null,
         observacoes: formData.observacoes || null,
       })
 
@@ -122,7 +140,7 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
             id="hora_inicio"
             type="time"
             value={formData.hora_inicio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, hora_inicio: e.target.value }))}
+            onChange={(e) => handleHoraInicioChange(e.target.value)}
             required
           />
         </div>
@@ -157,14 +175,13 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="conteudo">Conteúdo Ministrado *</Label>
+        <Label htmlFor="conteudo">Conteúdo Ministrado</Label>
         <Textarea
           id="conteudo"
           placeholder="Descreva o conteúdo que foi ministrado na aula..."
           value={formData.conteudo}
           onChange={(e) => setFormData((prev) => ({ ...prev, conteudo: e.target.value }))}
           rows={4}
-          required
         />
       </div>
 

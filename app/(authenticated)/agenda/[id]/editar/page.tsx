@@ -1,0 +1,147 @@
+import { createClient } from "@/lib/supabase/server"
+import { notFound, redirect } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft, Calendar, Clock } from "lucide-react"
+import Link from "next/link"
+
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function EditarEventoPage({ params }: PageProps) {
+  const { id } = await params
+  const supabase = await createClient()
+
+  // Buscar evento
+  const { data: evento, error } = await supabase.from("eventos").select("*").eq("id", id).single()
+
+  if (error || !evento) {
+    notFound()
+  }
+
+  async function updateEvento(formData: FormData) {
+    "use server"
+
+    const supabase = await createClient()
+    const titulo = formData.get("titulo") as string
+    const descricao = formData.get("descricao") as string
+    const data_inicio = formData.get("data_inicio") as string
+    const data_fim = formData.get("data_fim") as string
+    const hora_inicio = formData.get("hora_inicio") as string
+    const hora_fim = formData.get("hora_fim") as string
+
+    const { error } = await supabase
+      .from("eventos")
+      .update({
+        titulo,
+        descricao,
+        data_inicio,
+        data_fim,
+        hora_inicio,
+        hora_fim,
+      })
+      .eq("id", id)
+
+    if (error) {
+      console.error("[v0] Erro ao atualizar evento:", error)
+      throw new Error("Erro ao atualizar evento")
+    }
+
+    redirect("/agenda")
+  }
+
+  return (
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-6">
+        <Link href="/agenda">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Agenda
+          </Button>
+        </Link>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Editar Evento
+          </CardTitle>
+          <CardDescription>Atualize as informações do evento</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={updateEvento} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="titulo">
+                Título do Evento <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="titulo"
+                name="titulo"
+                defaultValue={evento.titulo}
+                placeholder="Ex: Reunião de Pais e Mestres"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição</Label>
+              <Textarea
+                id="descricao"
+                name="descricao"
+                defaultValue={evento.descricao || ""}
+                placeholder="Detalhes sobre o evento..."
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_inicio">
+                  Data Início <span className="text-red-500">*</span>
+                </Label>
+                <Input id="data_inicio" name="data_inicio" type="date" defaultValue={evento.data_inicio} required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="data_fim">Data Fim</Label>
+                <Input id="data_fim" name="data_fim" type="date" defaultValue={evento.data_fim || ""} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="hora_inicio" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Hora Início
+                </Label>
+                <Input id="hora_inicio" name="hora_inicio" type="time" defaultValue={evento.hora_inicio || ""} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hora_fim" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Hora Fim
+                </Label>
+                <Input id="hora_fim" name="hora_fim" type="time" defaultValue={evento.hora_fim || ""} />
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-4">
+              <Link href="/agenda">
+                <Button type="button" variant="outline">
+                  Cancelar
+                </Button>
+              </Link>
+              <Button type="submit">Salvar Alterações</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

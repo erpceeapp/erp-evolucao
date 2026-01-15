@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
+import { createProfessorUser } from "@/app/(authenticated)/professores/novo/actions"
 
 interface ProfessorData {
   nome_completo: string
@@ -96,10 +98,36 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
         if (error) throw error
         professorId = professor.id
       } else {
-        const { data, error } = await supabase.from("professores").insert([dataToSend]).select().single()
+        if (formData.email && formData.cpf) {
+          console.log("[v0] Chamando Server Action para criar usuário")
 
-        if (error) throw error
-        professorId = data.id
+          const result = await createProfessorUser({
+            email: formData.email,
+            cpf: formData.cpf,
+            nome_completo: formData.nome_completo,
+            telefone: formData.telefone,
+          })
+
+          if (result.error) {
+            throw new Error(result.error)
+          }
+
+          console.log("[v0] Usuário criado via Server Action:", result.userId)
+
+          // Inserir professor com user_id
+          const { data, error } = await supabase
+            .from("professores")
+            .insert([{ ...dataToSend, user_id: result.userId }])
+            .select()
+            .single()
+
+          if (error) throw error
+          professorId = data.id
+
+          toast.success(`Professor cadastrado! Senha temporária: CPF (${result.senhaTemporaria})`)
+        } else {
+          throw new Error("Email e CPF são obrigatórios para criar acesso ao sistema")
+        }
       }
 
       // Primeiro, remover todas as associações existentes
@@ -119,6 +147,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
 
       router.push("/professores")
     } catch (error: any) {
+      console.error("[v0] Erro ao salvar professor:", error)
       setError(error.message || "Erro ao salvar professor")
     } finally {
       setIsLoading(false)

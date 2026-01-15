@@ -34,7 +34,8 @@ export default function PresencaPage({
   const [turmaDisciplina, setTurmaDisciplina] = useState<TurmaDisciplina | null>(null)
   const [presencas, setPresencas] = useState<Record<string, "presente" | "ausente" | "justificado">>({})
   const [dataAula, setDataAula] = useState(new Date().toISOString().split("T")[0])
-  const [horario, setHorario] = useState("")
+  const [horaInicio, setHoraInicio] = useState("")
+  const [horaFim, setHoraFim] = useState("")
   const [conteudo, setConteudo] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -168,10 +169,10 @@ export default function PresencaPage({
       return
     }
 
-    if (!horario) {
+    if (!horaInicio || !horaFim) {
       toast({
         title: "Erro",
-        description: "O horário da aula é obrigatório",
+        description: "Os horários de início e fim são obrigatórios",
         variant: "destructive",
       })
       return
@@ -179,34 +180,53 @@ export default function PresencaPage({
 
     setSaving(true)
     try {
-      // Criar registro da aula
+      console.log("[v0] Salvando aula com dados:", {
+        turma_disciplina_id: turmaDisciplina!.id,
+        data_aula: dataAula,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+        conteudo: conteudo,
+      })
+
       const { data: aula, error: aulaError } = await supabase
         .from("aulas")
         .insert({
           turma_disciplina_id: turmaDisciplina!.id,
           data_aula: dataAula,
-          horario: horario,
-          conteudo_ministrado: conteudo,
+          hora_inicio: horaInicio,
+          hora_fim: horaFim,
+          conteudo: conteudo,
         })
         .select()
         .single()
 
-      if (aulaError) throw aulaError
+      if (aulaError) {
+        console.error("[v0] Erro ao criar aula:", aulaError)
+        throw aulaError
+      }
+
+      console.log("[v0] Aula criada com sucesso:", aula.id)
 
       // Registrar presenças
       const presencasData = Object.entries(presencas).map(([alunoId, status]) => ({
         aula_id: aula.id,
         aluno_id: alunoId,
-        status: status,
+        presente: status === "presente",
+        justificativa: status === "justificado" ? "Justificado" : null,
       }))
+
+      console.log("[v0] Registrando presenças:", presencasData.length)
 
       const { error: presencaError } = await supabase.from("presencas").insert(presencasData)
 
-      if (presencaError) throw presencaError
+      if (presencaError) {
+        console.error("[v0] Erro ao registrar presenças:", presencaError)
+        throw presencaError
+      }
 
       toast({
         title: "Sucesso",
-        description: "Presença registrada com sucesso!",
+        description: "Aula e presenças registradas com sucesso!",
       })
 
       router.push(`/diario/${params.turmaId}/${params.disciplinaId}`)
@@ -215,7 +235,7 @@ export default function PresencaPage({
       console.error("[v0] Erro ao salvar presença:", error)
       toast({
         title: "Erro",
-        description: "Erro ao registrar presença",
+        description: "Erro ao registrar aula e presença",
         variant: "destructive",
       })
     } finally {
@@ -354,12 +374,22 @@ export default function PresencaPage({
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Horário *</label>
+                  <label className="text-sm font-medium text-gray-700">Horário de Início *</label>
                   <Input
                     type="time"
-                    value={horario}
-                    onChange={(e) => setHorario(e.target.value)}
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
                     placeholder="Ex: 08:00"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Horário de Fim *</label>
+                  <Input
+                    type="time"
+                    value={horaFim}
+                    onChange={(e) => setHoraFim(e.target.value)}
+                    placeholder="Ex: 09:00"
                   />
                 </div>
 

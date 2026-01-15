@@ -31,7 +31,7 @@ async function getPresencasHistorico(turmaId: string, disciplinaId: string) {
   // Buscar aulas com contagem de presenças
   const { data: aulas } = await supabase
     .from("aulas")
-    .select("id, data_aula, hora_inicio, hora_fim, conteudo_ministrado")
+    .select("id, data_aula, hora_inicio, hora_fim, conteudo")
     .eq("turma_disciplina_id", turmaDisciplina.id)
     .order("data_aula", { ascending: false })
 
@@ -145,7 +145,7 @@ export default async function HistoricoPresencasPage({
                         ? `${aula.hora_inicio} - ${aula.hora_fim}`
                         : aula.hora_inicio || "-"}
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{aula.conteudo_ministrado || "-"}</TableCell>
+                    <TableCell className="max-w-xs truncate">{aula.conteudo || "-"}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{aula.totalAlunos}</Badge>
                     </TableCell>
