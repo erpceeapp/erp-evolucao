@@ -27,7 +27,7 @@ interface ProfessorData {
   especializacao: string
   registro_profissional: string
   data_admissao: string
-  salario: string
+  salario: string | number | null
   ativo: boolean
 }
 
@@ -62,11 +62,11 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     especializacao: professor?.especializacao || "",
     registro_profissional: professor?.registro_profissional || "",
     data_admissao: professor?.data_admissao || "",
-    salario: professor?.salario || "",
+    salario: professor?.salario || null,
     ativo: professor?.ativo ?? true,
   })
 
-  const handleInputChange = (field: keyof ProfessorData, value: string | boolean) => {
+  const handleInputChange = (field: keyof ProfessorData, value: string | boolean | number | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -84,10 +84,21 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     const supabase = createClient()
 
     try {
+      let salarioNumerico = null
+      if (formData.salario) {
+        // Se já for um número, usar diretamente
+        if (typeof formData.salario === "number") {
+          salarioNumerico = formData.salario
+        } else {
+          // Se for string, fazer o parse
+          salarioNumerico = Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", "."))
+        }
+      }
+
       // Preparar dados para envio
       const dataToSend = {
         ...formData,
-        salario: formData.salario ? Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", ".")) : null,
+        salario: salarioNumerico,
       }
 
       let professorId: string
