@@ -1,3 +1,5 @@
+"use client"
+
 import { createClient } from "@/lib/supabase/client"
 import { Eye, Calendar, Clock, BookOpen, Users, Check, X, Edit, Save, XCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +9,6 @@ import PageHeader from "@/components/page-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-;("use client")
 
 import { useEffect } from "react"
 
