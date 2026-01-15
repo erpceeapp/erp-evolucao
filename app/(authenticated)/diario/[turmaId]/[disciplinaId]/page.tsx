@@ -1,9 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { BookOpen, Calendar, Users, FileText } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { BookOpen, Calendar, FileText } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from "next/link"
 import PageHeader from "@/components/page-header"
 import AulasTab from "@/components/diario/aulas-tab"
 import NotasTab from "@/components/diario/notas-tab"
@@ -120,14 +118,14 @@ export default async function DiarioDetalhePage({
         description={`${turmaDisciplina.turmas.nome} - Prof. ${turmaDisciplina.professores.nome_completo}`}
         backHref="/diario"
       >
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
               <Users className="h-4 w-4 mr-2" />
               Nova Aula
             </Link>
           </Button>
-        </div>
+        </div> */}
       </PageHeader>
 
       <Tabs defaultValue="aulas" className="space-y-6">

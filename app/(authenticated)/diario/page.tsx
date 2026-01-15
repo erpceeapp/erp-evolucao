@@ -164,11 +164,8 @@ export default async function DiarioPage() {
                         </div>
 
                         <div className="flex gap-2 pt-2">
-                          <Button asChild size="sm" className="flex-1 bg-cyan-600 hover:bg-cyan-700">
+                          <Button asChild size="sm" className="w-full bg-cyan-600 hover:bg-cyan-700">
                             <Link href={`/diario/${item.turma_id}/${item.disciplina_id}`}>Ver Diário</Link>
-                          </Button>
-                          <Button asChild size="sm" variant="outline" className="flex-1 bg-transparent">
-                            <Link href={`/presenca/${item.turma_id}/${item.disciplina_id}`}>Presença</Link>
                           </Button>
                         </div>
                       </div>
