@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { GraduationCap, Eye, EyeOff } from "lucide-react"
+import { translateError } from "@/lib/error-messages"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -34,7 +35,8 @@ export default function LoginPage() {
       if (error) throw error
       router.push("/dashboard")
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao fazer login")
+      const errorMsg = error instanceof Error ? error.message : "Erro ao fazer login"
+      setError(translateError(errorMsg))
     } finally {
       setIsLoading(false)
     }

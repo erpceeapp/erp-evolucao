@@ -14,6 +14,7 @@ import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { createProfessorUser } from "@/app/(authenticated)/professores/novo/actions"
+import { translateError } from "@/lib/error-messages"
 
 interface ProfessorData {
   nome_completo: string
@@ -159,7 +160,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
       router.push("/professores")
     } catch (error: any) {
       console.error("[v0] Erro ao salvar professor:", error)
-      setError(error.message || "Erro ao salvar professor")
+      setError(translateError(error.message || "Erro ao salvar professor"))
     } finally {
       setIsLoading(false)
     }

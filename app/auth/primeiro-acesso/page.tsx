@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { GraduationCap, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 export default function PrimeiroAcessoPage() {
   const [newPassword, setNewPassword] = useState("")
@@ -94,7 +95,7 @@ export default function PrimeiroAcessoPage() {
       router.push("/dashboard")
     } catch (error: any) {
       console.error("Erro ao trocar senha:", error)
-      toast.error(error.message || "Erro ao trocar senha")
+      toast.error(translateError(error.message || "Erro ao trocar senha"))
     } finally {
       setIsLoading(false)
     }

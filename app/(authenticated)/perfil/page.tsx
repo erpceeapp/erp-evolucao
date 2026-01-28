@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 import { User, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
@@ -144,7 +145,7 @@ export default function PerfilPage() {
       setShowChangePassword(false)
     } catch (error: any) {
       console.error("Erro ao trocar senha:", error)
-      toast.error(error.message || "Erro ao trocar senha")
+      toast.error(translateError(error.message || "Erro ao trocar senha"))
     } finally {
       setChangingPassword(false)
     }
