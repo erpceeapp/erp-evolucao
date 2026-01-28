@@ -28,7 +28,7 @@ interface ProfessorData {
   especializacao: string
   registro_profissional: string
   data_admissao: string
-  salario: string | number | null
+  salario: string | number
   ativo: boolean
 }
 
@@ -63,7 +63,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     especializacao: professor?.especializacao || "",
     registro_profissional: professor?.registro_profissional || "",
     data_admissao: professor?.data_admissao || "",
-    salario: professor?.salario || null,
+    salario: professor?.salario || "",
     ativo: professor?.ativo ?? true,
   })
 
