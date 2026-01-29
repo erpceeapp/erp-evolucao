@@ -47,9 +47,12 @@ const errorTranslations: Record<string, string> = {
 export function translateError(errorMessage: string): string {
   if (!errorMessage) return "Ocorreu um erro desconhecido"
   
+  // Normalizar a mensagem removendo espaços extras
+  const normalizedMessage = errorMessage.trim()
+  
   // Tentar encontrar uma tradução exata primeiro
-  if (errorTranslations[errorMessage]) {
-    return errorTranslations[errorMessage]
+  if (errorTranslations[normalizedMessage]) {
+    return errorTranslations[normalizedMessage]
   }
   
   // Tentar encontrar uma tradução parcial (para mensagens que contenham parte do texto)
