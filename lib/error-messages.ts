@@ -6,6 +6,8 @@ const errorTranslations: Record<string, string> = {
   "Invalid email or password": "Email ou senha inválidos",
   "User not found": "Usuário não encontrado",
   "User already registered": "Usuário já cadastrado",
+  "A user with this email address has already been registered": "Já existe um usuário cadastrado com este email",
+  "email_exists": "Já existe um usuário cadastrado com este email",
   "Password is too short": "A senha é muito curta",
   "Password should be at least 6 characters": "A senha deve ter pelo menos 6 caracteres",
   "Email address is invalid": "Endereço de email inválido",
