@@ -119,7 +119,7 @@ export default function AgendaAlunoDetailPage() {
       .from("avisos_aluno")
       .select("*")
       .eq("aluno_id", alunoId)
-      .order("data", { ascending: false })
+      .order("data_aviso", { ascending: false })
 
     if (error) {
       console.error("[v0] Erro ao buscar avisos:", error)
@@ -134,10 +134,10 @@ export default function AgendaAlunoDetailPage() {
     id: aviso.id,
     titulo: aviso.titulo,
     descricao: aviso.descricao,
-    data_inicio: aviso.data,
-    data_fim: aviso.data,
-    hora_inicio: aviso.hora,
-    tipo_evento: aviso.categoria,
+    data_inicio: aviso.data_aviso,
+    data_fim: aviso.data_aviso,
+    hora_inicio: aviso.hora_aviso,
+    tipo_evento: aviso.tipo_aviso,
   }))
 
   function openNewAviso() {
@@ -157,9 +157,9 @@ export default function AgendaAlunoDetailPage() {
     setFormData({
       titulo: aviso.titulo,
       descricao: aviso.descricao || "",
-      categoria: aviso.categoria || "aviso",
-      data: aviso.data,
-      hora: aviso.hora || "",
+      categoria: aviso.tipo_aviso || "aviso",
+      data: aviso.data_aviso,
+      hora: aviso.hora_aviso || "",
     })
     setIsDetailModalOpen(false)
     setIsFormModalOpen(true)
@@ -183,9 +183,9 @@ export default function AgendaAlunoDetailPage() {
           .update({
             titulo: formData.titulo,
             descricao: formData.descricao || null,
-            categoria: formData.categoria,
-            data: formData.data,
-            hora: formData.hora || null,
+            tipo_aviso: formData.categoria,
+            data_aviso: formData.data,
+            hora_aviso: formData.hora || null,
           })
           .eq("id", editingAviso.id)
 
@@ -196,10 +196,10 @@ export default function AgendaAlunoDetailPage() {
           aluno_id: alunoId,
           titulo: formData.titulo,
           descricao: formData.descricao || null,
-          categoria: formData.categoria,
-          data: formData.data,
-          hora: formData.hora || null,
-          criado_por: user?.id,
+          tipo_aviso: formData.categoria,
+          data_aviso: formData.data,
+          hora_aviso: formData.hora || null,
+          created_by: user?.id,
         })
 
         if (error) throw error
@@ -354,9 +354,9 @@ export default function AgendaAlunoDetailPage() {
                           <h4 className="font-semibold text-gray-900">{aviso.titulo}</h4>
                           <Badge
                             variant="outline"
-                            className={categoriaCores[aviso.categoria] || categoriaCores.outro}
+                            className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
                           >
-                            {categorias.find((c) => c.value === aviso.categoria)?.label || aviso.categoria}
+                            {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
                           </Badge>
                         </div>
                         {aviso.descricao && (
@@ -365,12 +365,12 @@ export default function AgendaAlunoDetailPage() {
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(aviso.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                            {new Date(aviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
                           </span>
-                          {aviso.hora && (
+                          {aviso.hora_aviso && (
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {aviso.hora}
+                              {aviso.hora_aviso}
                             </span>
                           )}
                         </div>
@@ -410,9 +410,9 @@ export default function AgendaAlunoDetailPage() {
                   <h3 className="text-xl font-semibold">{selectedAviso.titulo}</h3>
                   <Badge
                     variant="outline"
-                    className={categoriaCores[selectedAviso.categoria] || categoriaCores.outro}
+                    className={categoriaCores[selectedAviso.tipo_aviso] || categoriaCores.outro}
                   >
-                    {categorias.find((c) => c.value === selectedAviso.categoria)?.label || selectedAviso.categoria}
+                    {categorias.find((c) => c.value === selectedAviso.tipo_aviso)?.label || selectedAviso.tipo_aviso}
                   </Badge>
                 </div>
                 {selectedAviso.descricao && (
@@ -425,16 +425,16 @@ export default function AgendaAlunoDetailPage() {
                   <label className="text-sm font-medium text-gray-500">Data</label>
                   <p className="flex items-center gap-2 mt-1">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    {new Date(selectedAviso.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                    {new Date(selectedAviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
                   </p>
                 </div>
 
-                {selectedAviso.hora && (
+                {selectedAviso.hora_aviso && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Horario</label>
                     <p className="flex items-center gap-2 mt-1">
                       <Clock className="h-4 w-4 text-gray-400" />
-                      {selectedAviso.hora}
+                      {selectedAviso.hora_aviso}
                     </p>
                   </div>
                 )}
