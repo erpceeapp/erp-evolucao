@@ -99,10 +99,13 @@ export default function AgendaAlunoDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    loadData()
+    if (alunoId) {
+      loadData()
+    }
   }, [alunoId])
 
   async function loadData() {
+    if (!alunoId) return
     setLoading(true)
 
     // Buscar aluno
