@@ -5,6 +5,11 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Rotas de API do responsavel - nao exigem autenticacao Supabase
+  if (pathname.startsWith("/api/auth/responsavel") || pathname.startsWith("/api/responsavel")) {
+    return NextResponse.next()
+  }
+
   // Rotas do portal do responsavel - autenticacao propria via JWT cookie
   if (pathname.startsWith("/responsavel")) {
     const token = request.cookies.get("responsavel-session")?.value
