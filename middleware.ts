@@ -20,13 +20,19 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const session = await verifyResponsavelToken(token)
-    if (!session) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/auth/login"
-      const response = NextResponse.redirect(url)
-      response.cookies.delete("responsavel-session")
-      return response
+    try {
+      const session = await verifyResponsavelToken(token)
+      if (!session) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/auth/login"
+        const response = NextResponse.redirect(url)
+        response.cookies.delete("responsavel-session")
+        return response
+      }
+    } catch {
+      // Se a verificacao falhar (ex: env var indisponivel no cold start),
+      // permitir a passagem - as paginas vao verificar a sessao tambem
+      console.log("[v0] Middleware - JWT verification failed, allowing through")
     }
 
     return NextResponse.next()

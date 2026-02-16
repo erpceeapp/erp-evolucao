@@ -16,6 +16,8 @@ export async function POST(request: Request) {
     // Limpar CPF (remover formatacao)
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
 
+    console.log("[v0] Login responsavel - email:", email_responsavel, "cpf:", cpfLimpo)
+
     const supabase = createAdminClient()
 
     // Buscar aluno pelo email do responsavel e CPF
@@ -26,6 +28,8 @@ export async function POST(request: Request) {
       .eq("cpf", cpfLimpo)
       .eq("ativo", true)
       .single()
+
+    console.log("[v0] Login responsavel - aluno encontrado:", aluno?.nome_completo, "erro:", error?.message)
 
     if (error || !aluno) {
       return NextResponse.json(
