@@ -35,6 +35,7 @@ export default function ResponsavelAgendaPage() {
   const [avisos, setAvisos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedAviso, setSelectedAviso] = useState<any>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -92,14 +93,75 @@ export default function ResponsavelAgendaPage() {
       {/* Calendario */}
       <Card>
         <CardContent className="pt-6">
-          <AgendaCalendar eventos={eventosCalendario} />
+          <AgendaCalendar
+            eventos={eventosCalendario}
+            onDayClick={(data) => setSelectedDate(selectedDate === data ? null : data)}
+          />
         </CardContent>
       </Card>
 
-      {/* Lista de avisos */}
+      {/* Avisos do dia selecionado */}
+      {selectedDate && (
+        <Card className="border-blue-200 bg-blue-50/30">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Avisos de {new Date(selectedDate + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+              </CardTitle>
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Fechar
+              </button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {avisos.filter((a) => a.data_aviso === selectedDate).length === 0 ? (
+              <p className="text-center text-gray-500 py-6">Nenhum aviso registrado nesta data.</p>
+            ) : (
+              <div className="space-y-3">
+                {avisos
+                  .filter((a) => a.data_aviso === selectedDate)
+                  .map((aviso) => (
+                    <div
+                      key={aviso.id}
+                      onClick={() => setSelectedAviso(aviso)}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-white border hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-gray-900 truncate">{aviso.titulo}</h4>
+                          <Badge
+                            variant="outline"
+                            className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
+                          >
+                            {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
+                          </Badge>
+                        </div>
+                        {aviso.descricao && (
+                          <p className="text-sm text-gray-600 line-clamp-2">{aviso.descricao}</p>
+                        )}
+                        {aviso.hora_aviso && (
+                          <span className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
+                            <Clock className="h-3 w-3" />
+                            {aviso.hora_aviso}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lista de todos os avisos */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Avisos Registrados</CardTitle>
+          <CardTitle className="text-lg">Todos os Avisos</CardTitle>
         </CardHeader>
         <CardContent>
           {avisos.length === 0 ? (

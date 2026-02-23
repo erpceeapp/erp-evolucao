@@ -19,15 +19,20 @@ interface Evento {
 
 interface AgendaCalendarProps {
   eventos: Evento[]
+  onDayClick?: (data: string) => void
 }
 
-export function AgendaCalendar({ eventos }: AgendaCalendarProps) {
+export function AgendaCalendar({ eventos, onDayClick }: AgendaCalendarProps) {
   const router = useRouter()
 
   const handleDayClick = (dia: number) => {
     if (dia > 0 && dia <= 31) {
       const data = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
-      router.push(`/agenda/novo-evento?data=${data}`)
+      if (onDayClick) {
+        onDayClick(data)
+      } else {
+        router.push(`/agenda/novo-evento?data=${data}`)
+      }
     }
   }
 
