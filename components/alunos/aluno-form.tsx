@@ -15,6 +15,7 @@ import { cadastrarAluno, atualizarAluno } from "@/app/(authenticated)/alunos/nov
 import { Separator } from "@/components/ui/separator"
 import { maskCPF, maskRG, maskCEP, maskPhone, maskCellPhone, removeMask } from "@/lib/input-masks"
 import { useRequiredFields } from "@/hooks/use-required-fields"
+import { translateError } from "@/lib/error-messages"
 
 interface AlunoData {
   // Dados básicos
@@ -226,7 +227,7 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
       // Se não houver erro, o redirect() foi chamado e a página será redirecionada
     } catch (error: any) {
       console.error("[v0] Erro no handleSubmit:", error)
-      setError(error.message || "Erro ao salvar aluno")
+      setError(translateError(error.message || "Erro ao salvar aluno"))
       setIsLoading(false)
     }
   }

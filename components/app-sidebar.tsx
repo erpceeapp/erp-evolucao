@@ -12,6 +12,7 @@ import {
   Book,
   UserCheck,
   Calendar,
+  BookUser,
   FileText,
   ChevronLeft,
   ChevronRight,
@@ -60,6 +61,12 @@ const menuItems = [
     icon: Calendar,
     label: "Agenda",
     href: "/agenda",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: BookUser,
+    label: "Agenda do Aluno",
+    href: "/agenda-aluno",
     roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
   },
   {

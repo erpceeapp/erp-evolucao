@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText } from "lucide-react"
+import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText, BookUser } from "lucide-react"
 import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
 import { ExportAlunoPDFButton } from "@/components/alunos/export-aluno-pdf-button"
@@ -70,6 +70,12 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
               </Link>
             </Button>
             <ExportAlunoPDFButton aluno={aluno} />
+            <Button variant="outline" asChild>
+              <Link href={`/agenda-aluno/${aluno.id}`}>
+                <BookUser className="h-4 w-4 mr-2" />
+                Agenda
+              </Link>
+            </Button>
             <Button asChild>
               <Link href={`/alunos/${aluno.id}/editar`}>
                 <Edit className="h-4 w-4 mr-2" />
