@@ -333,7 +333,20 @@ export default function AgendaAlunoDetailPage() {
         {/* Calendario */}
         <Card>
           <CardContent className="p-6">
-            <AgendaCalendar eventos={eventosCalendario} />
+            <AgendaCalendar
+              eventos={eventosCalendario}
+              onDayClick={(data) => {
+                setEditingAviso(null)
+                setFormData({
+                  titulo: "",
+                  descricao: "",
+                  categoria: "aviso",
+                  data,
+                  hora: "",
+                })
+                setIsFormModalOpen(true)
+              }}
+            />
           </CardContent>
         </Card>
 
