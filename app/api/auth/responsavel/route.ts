@@ -63,8 +63,8 @@ export async function POST(request: Request) {
       turmaNome = turma?.nome
     }
 
-    // Criar sessao JWT
-    await createResponsavelSession({
+    // Criar sessao JWT e obter o token
+    const token = await createResponsavelSession({
       email_responsavel: aluno.email_responsavel,
       aluno_id: aluno.id,
       aluno_nome: aluno.nome_completo,
@@ -72,10 +72,22 @@ export async function POST(request: Request) {
       turma_nome: turmaNome,
     })
 
-    return NextResponse.json({
+    // Criar resposta e definir o cookie manualmente
+    const response = NextResponse.json({
       success: true,
       aluno_nome: aluno.nome_completo,
     })
+
+    // Definir cookie na resposta (8 horas)
+    response.cookies.set("responsavel-session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 8,
+      path: "/",
+    })
+
+    return response
   } catch (error: any) {
     return NextResponse.json(
       { error: "Erro interno. Tente novamente mais tarde." },

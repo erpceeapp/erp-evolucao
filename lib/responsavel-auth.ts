@@ -18,22 +18,14 @@ export interface ResponsavelSession {
   turma_nome?: string
 }
 
-export async function createResponsavelSession(data: ResponsavelSession) {
+export async function createResponsavelSession(data: ResponsavelSession): Promise<string> {
   const token = await new SignJWT({ ...data })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${MAX_AGE}s`)
     .sign(getSecret())
 
-  const cookieStore = await cookies()
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: MAX_AGE,
-    path: "/",
-  })
-
+  // Retorna apenas o token - o cookie deve ser definido na resposta da API
   return token
 }
 
