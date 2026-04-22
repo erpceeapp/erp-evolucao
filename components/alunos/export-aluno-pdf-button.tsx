@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { FileDown } from 'lucide-react'
-import { generateAlunoPDF } from "@/lib/pdf-generator"
 import type { Database } from "@/types/supabase"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
@@ -20,13 +19,14 @@ export function ExportAlunoPDFButton({ aluno }: ExportAlunoPDFButtonProps) {
   const handleExport = async () => {
     try {
       setIsExporting(true)
+      // Import dinâmico para evitar problemas de SSR com jsPDF
+      const { generateAlunoPDF } = await import("@/lib/pdf-generator")
       await generateAlunoPDF(aluno)
       toast({
         title: "PDF exportado com sucesso",
         description: "O documento foi baixado para seu computador.",
       })
     } catch (error) {
-      console.error("Erro ao exportar PDF:", error)
       toast({
         title: "Erro ao exportar PDF",
         description: "Ocorreu um erro ao gerar o documento. Tente novamente.",
