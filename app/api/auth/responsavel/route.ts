@@ -17,40 +17,26 @@ export async function POST(request: Request) {
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
     const emailLimpo = email_responsavel.trim().toLowerCase()
 
-    console.log("[v0] Login responsavel - email:", emailLimpo, "cpf:", cpfLimpo)
-
     const supabase = createAdminClient()
 
-    // Buscar aluno pelo email do responsavel e CPF
-    // Primeiro buscar sem .single() para ver quantos resultados retornam
+    // Buscar todos os alunos do responsavel pelo email
     const { data: alunos, error: searchError } = await supabase
       .from("alunos")
       .select("id, nome_completo, cpf, email_responsavel, ativo")
       .ilike("email_responsavel", emailLimpo)
       .eq("ativo", true)
 
-    console.log("[v0] Alunos encontrados por email:", alunos?.length, "erro:", searchError?.message)
-    
-    if (alunos && alunos.length > 0) {
-      console.log("[v0] CPFs dos alunos encontrados:", alunos.map(a => ({ cpf: a.cpf, nome: a.nome_completo })))
+    if (searchError || !alunos) {
+      return NextResponse.json(
+        { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
+        { status: 401 }
+      )
     }
 
-    // Agora filtrar pelo CPF
-    const aluno = alunos?.find(a => a.cpf === cpfLimpo)
-
-    console.log("[v0] Aluno encontrado pelo CPF:", aluno?.nome_completo)
+    // Filtrar pelo CPF do aluno
+    const aluno = alunos.find(a => a.cpf === cpfLimpo)
 
     if (!aluno) {
-      // Se nao encontrou, tentar busca direta para debug
-      const { data: alunoDirecto, error: directError } = await supabase
-        .from("alunos")
-        .select("id, nome_completo, cpf, email_responsavel")
-        .eq("cpf", cpfLimpo)
-        .eq("ativo", true)
-        .maybeSingle()
-
-      console.log("[v0] Busca direta por CPF:", alunoDirecto?.nome_completo, "email cadastrado:", alunoDirecto?.email_responsavel, "erro:", directError?.message)
-
       return NextResponse.json(
         { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
         { status: 401 }

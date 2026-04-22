@@ -12,11 +12,16 @@ export async function middleware(request: NextRequest) {
 
   // Rotas do portal do responsavel - autenticacao propria via JWT cookie
   if (pathname.startsWith("/responsavel")) {
+    // Pagina de login do responsavel nao precisa de autenticacao
+    if (pathname === "/responsavel/login") {
+      return NextResponse.next()
+    }
+
     const token = request.cookies.get("responsavel-session")?.value
 
     if (!token) {
       const url = request.nextUrl.clone()
-      url.pathname = "/auth/login"
+      url.pathname = "/responsavel/login"
       return NextResponse.redirect(url)
     }
 
@@ -24,15 +29,16 @@ export async function middleware(request: NextRequest) {
       const session = await verifyResponsavelToken(token)
       if (!session) {
         const url = request.nextUrl.clone()
-        url.pathname = "/auth/login"
+        url.pathname = "/responsavel/login"
         const response = NextResponse.redirect(url)
         response.cookies.delete("responsavel-session")
         return response
       }
     } catch {
-      // Se a verificacao falhar (ex: env var indisponivel no cold start),
-      // permitir a passagem - as paginas vao verificar a sessao tambem
-      console.log("[v0] Middleware - JWT verification failed, allowing through")
+      // Se a verificacao falhar, redirecionar para login
+      const url = request.nextUrl.clone()
+      url.pathname = "/responsavel/login"
+      return NextResponse.redirect(url)
     }
 
     return NextResponse.next()
