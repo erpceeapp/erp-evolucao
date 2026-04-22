@@ -80,43 +80,33 @@ export function NotasTable({
         for (let bimestre = 1; bimestre <= 4; bimestre++) {
           const notaValue = notas[matriculaId][bimestre]
           if (notaValue !== "") {
-            // Check if nota already exists
-            const notaExistente = notasExistentes.find((n) => n.matricula_id === matriculaId && n.bimestre === bimestre)
+            // Buscar nota existente no banco para obter o ID correto
+            const notaExistente = notasExistentes.find(
+              (n) => n.matricula_id === matriculaId && n.bimestre === bimestre
+            )
 
-            if (notaExistente) {
-              // Update existing nota
-              notasToSave.push({
-                id: notaExistente.id,
-                nota: Number(notaValue),
-              })
-            } else {
-              // Insert new nota
-              notasToSave.push({
-                matricula_id: matriculaId,
-                disciplina_id: disciplinaId,
-                bimestre: bimestre,
-                nota: Number(notaValue),
-                tipo_avaliacao: "Avaliação",
-                data_avaliacao: new Date().toISOString().split("T")[0],
-              })
-            }
+            notasToSave.push({
+              ...(notaExistente?.id && { id: notaExistente.id }),
+              matricula_id: matriculaId,
+              disciplina_id: disciplinaId,
+              bimestre: bimestre,
+              nota: Number(notaValue),
+              tipo_avaliacao: "Avaliacao",
+              data_avaliacao: new Date().toISOString().split("T")[0],
+            })
           }
         }
       }
 
-      const updates = notasToSave.filter((n) => n.id)
-      const inserts = notasToSave.filter((n) => !n.id)
+      if (notasToSave.length > 0) {
+        // Usar upsert para inserir ou atualizar baseado na constraint UNIQUE
+        const { error } = await supabase
+          .from("notas")
+          .upsert(notasToSave, {
+            onConflict: "matricula_id,disciplina_id,bimestre",
+            ignoreDuplicates: false,
+          })
 
-      // Perform updates
-      for (const update of updates) {
-        const { error } = await supabase.from("notas").update({ nota: update.nota }).eq("id", update.id)
-
-        if (error) throw error
-      }
-
-      // Perform inserts
-      if (inserts.length > 0) {
-        const { error } = await supabase.from("notas").insert(inserts)
         if (error) throw error
       }
 
@@ -125,7 +115,6 @@ export function NotasTable({
       // Reload page to get fresh data
       window.location.reload()
     } catch (error: any) {
-      console.error("Erro ao salvar notas:", error)
       toast.error("Erro ao salvar notas: " + error.message)
     } finally {
       setSaving(false)
