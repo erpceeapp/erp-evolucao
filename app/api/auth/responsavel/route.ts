@@ -15,19 +15,42 @@ export async function POST(request: Request) {
 
     // Limpar CPF (remover formatacao)
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
+    const emailLimpo = email_responsavel.trim().toLowerCase()
+
+    console.log("[v0] Login responsavel - email:", emailLimpo, "cpf:", cpfLimpo)
 
     const supabase = createAdminClient()
 
     // Buscar aluno pelo email do responsavel e CPF
-    const { data: aluno, error } = await supabase
+    // Primeiro buscar sem .single() para ver quantos resultados retornam
+    const { data: alunos, error: searchError } = await supabase
       .from("alunos")
-      .select("id, nome_completo, cpf, email_responsavel")
-      .ilike("email_responsavel", email_responsavel.trim())
-      .eq("cpf", cpfLimpo)
+      .select("id, nome_completo, cpf, email_responsavel, ativo")
+      .ilike("email_responsavel", emailLimpo)
       .eq("ativo", true)
-      .single()
 
-    if (error || !aluno) {
+    console.log("[v0] Alunos encontrados por email:", alunos?.length, "erro:", searchError?.message)
+    
+    if (alunos && alunos.length > 0) {
+      console.log("[v0] CPFs dos alunos encontrados:", alunos.map(a => ({ cpf: a.cpf, nome: a.nome_completo })))
+    }
+
+    // Agora filtrar pelo CPF
+    const aluno = alunos?.find(a => a.cpf === cpfLimpo)
+
+    console.log("[v0] Aluno encontrado pelo CPF:", aluno?.nome_completo)
+
+    if (!aluno) {
+      // Se nao encontrou, tentar busca direta para debug
+      const { data: alunoDirecto, error: directError } = await supabase
+        .from("alunos")
+        .select("id, nome_completo, cpf, email_responsavel")
+        .eq("cpf", cpfLimpo)
+        .eq("ativo", true)
+        .maybeSingle()
+
+      console.log("[v0] Busca direta por CPF:", alunoDirecto?.nome_completo, "email cadastrado:", alunoDirecto?.email_responsavel, "erro:", directError?.message)
+
       return NextResponse.json(
         { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
         { status: 401 }
