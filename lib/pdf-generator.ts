@@ -2,6 +2,18 @@ import type { Database } from "@/types/supabase"
 
 type Aluno = Database["public"]["Tables"]["alunos"]["Row"]
 
+type NotasDisciplina = {
+  nome: string
+  codigo: string
+  notas: {
+    1?: number
+    2?: number
+    3?: number
+    4?: number
+  }
+  media: string
+}
+
 const formatDateSafe = (dateString: string | null | undefined): string | null => {
   if (!dateString) return null
 
@@ -13,7 +25,7 @@ const formatDateSafe = (dateString: string | null | undefined): string | null =>
   return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`
 }
 
-export async function generateAlunoPDF(aluno: Aluno): Promise<void> {
+export async function generateAlunoPDF(aluno: Aluno, notas?: NotasDisciplina[]): Promise<void> {
   // Importação dinâmica do jsPDF
   const { jsPDF } = await import("jspdf")
 
@@ -231,6 +243,55 @@ export async function generateAlunoPDF(aluno: Aluno): Promise<void> {
     yPosition += splitText.length * 5
   }
 
+  // Notas (se fornecidas)
+  if (notas && notas.length > 0) {
+    yPosition += 10
+    if (yPosition > 200) {
+      doc.addPage()
+      yPosition = 20
+    }
+
+    addText("NOTAS E DESEMPENHO", 12, true)
+    yPosition += 3
+    doc.line(margin, yPosition, pageWidth - margin, yPosition)
+    yPosition += 8
+
+    // Cabecalho da tabela de notas
+    doc.setFontSize(8)
+    doc.setFont("helvetica", "bold")
+    doc.text("Disciplina", margin, yPosition)
+    doc.text("1o Bim", margin + 60, yPosition)
+    doc.text("2o Bim", margin + 80, yPosition)
+    doc.text("3o Bim", margin + 100, yPosition)
+    doc.text("4o Bim", margin + 120, yPosition)
+    doc.text("Media", margin + 140, yPosition)
+    yPosition += 5
+
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+
+    notas.forEach((disciplina) => {
+      if (yPosition > 270) {
+        doc.addPage()
+        yPosition = 20
+      }
+
+      const nomeAbreviado = disciplina.nome.length > 25
+        ? disciplina.nome.substring(0, 25) + "..."
+        : disciplina.nome
+
+      doc.text(nomeAbreviado, margin, yPosition)
+      doc.text(disciplina.notas[1]?.toFixed(1) || "-", margin + 60, yPosition)
+      doc.text(disciplina.notas[2]?.toFixed(1) || "-", margin + 80, yPosition)
+      doc.text(disciplina.notas[3]?.toFixed(1) || "-", margin + 100, yPosition)
+      doc.text(disciplina.notas[4]?.toFixed(1) || "-", margin + 120, yPosition)
+      doc.setFont("helvetica", "bold")
+      doc.text(disciplina.media, margin + 140, yPosition)
+      doc.setFont("helvetica", "normal")
+      yPosition += 5
+    })
+  }
+
   // Campo de Assinatura
   yPosition += 20
   if (yPosition > 250) {
@@ -242,7 +303,7 @@ export async function generateAlunoPDF(aluno: Aluno): Promise<void> {
   doc.line(margin, yPosition, pageWidth / 2 - 10, yPosition)
   yPosition += 6
   doc.setFontSize(9)
-  doc.text("Assinatura do Responsável", margin, yPosition)
+  doc.text("Assinatura do Responsavel", margin, yPosition)
 
   doc.line(pageWidth / 2 + 10, yPosition - 6, pageWidth - margin, yPosition - 6)
   doc.text("Data: ___/___/______", pageWidth / 2 + 10, yPosition)

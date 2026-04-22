@@ -74,9 +74,9 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
 export default async function NotasDetailPage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
-  const { turmaId, disciplinaId } = params
+  const { turmaId, disciplinaId } = await params
   const supabase = await createServerClient()
 
   const {

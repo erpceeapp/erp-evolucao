@@ -1,29 +1,69 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { GraduationCap, Search } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { GraduationCap, BookOpen, Users } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/page-header"
 import Link from "next/link"
 
-async function getAlunos() {
+async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
 
-  // Buscar alunos ativos
-  const { data: alunos, error } = await supabase
-    .from("alunos")
-    .select("id, nome_completo, matricula, cpf, email, nivel, ativo")
+  // Buscar turmas ativas
+  const { data: turmas, error: turmasError } = await supabase
+    .from("turmas")
+    .select("id, nome, serie, turno, ano_letivo, ativo")
     .eq("ativo", true)
-    .order("nome_completo")
+    .order("nome")
 
-  if (error) {
-    console.error("Erro ao buscar alunos:", error)
+  if (turmasError) {
     return []
   }
 
-  return alunos || []
+  // Buscar turma_disciplinas com disciplinas
+  const turmaIds = turmas?.map((t) => t.id) || []
+  
+  const { data: turmaDisciplinas, error: tdError } = await supabase
+    .from("turma_disciplinas")
+    .select("id, turma_id, disciplina_id")
+    .in("turma_id", turmaIds)
+
+  if (tdError) {
+    return turmas?.map((t) => ({ ...t, disciplinas: [] })) || []
+  }
+
+  // Buscar disciplinas
+  const disciplinaIds = [...new Set(turmaDisciplinas?.map((td) => td.disciplina_id) || [])]
+  
+  const { data: disciplinas } = await supabase
+    .from("disciplinas")
+    .select("id, nome, codigo")
+    .in("id", disciplinaIds)
+
+  // Buscar contagem de matriculas por turma
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("turma_id")
+    .in("turma_id", turmaIds)
+    .eq("status", "ativa")
+
+  // Organizar dados
+  const turmasComDisciplinas = turmas?.map((turma) => {
+    const disciplinasDaTurma = turmaDisciplinas
+      ?.filter((td) => td.turma_id === turma.id)
+      .map((td) => disciplinas?.find((d) => d.id === td.disciplina_id))
+      .filter(Boolean) || []
+
+    const totalAlunos = matriculas?.filter((m) => m.turma_id === turma.id).length || 0
+
+    return {
+      ...turma,
+      disciplinas: disciplinasDaTurma,
+      totalAlunos,
+    }
+  })
+
+  return turmasComDisciplinas || []
 }
 
 export default async function NotasPage() {
@@ -36,84 +76,72 @@ export default async function NotasPage() {
     redirect("/auth/login")
   }
 
-  const alunos = await getAlunos()
+  const turmas = await getTurmasComDisciplinas()
 
   return (
     <>
       <PageHeader
         icon={GraduationCap}
-        title="Gestão de Notas"
-        subtitle="Selecione um aluno para visualizar e gerenciar suas notas"
+        title="Gestao de Notas"
+        subtitle="Selecione uma turma e disciplina para lancar notas"
         backHref="/dashboard"
       />
       <div className="container mx-auto p-6 space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Alunos</CardTitle>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input placeholder="Buscar aluno..." className="pl-10 w-64" />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {alunos.length === 0 ? (
-              <div className="text-center py-8">
-                <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum aluno encontrado</h3>
-                <p className="text-gray-600">Cadastre alunos para começar a gerenciar notas.</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Matrícula</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Série</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {alunos.map((aluno) => (
-                    <TableRow key={aluno.id} className="cursor-pointer hover:bg-gray-50">
-                      <TableCell className="font-mono text-sm">
-                        <Link href={`/notas/aluno/${aluno.id}`} className="block w-full">
-                          {aluno.matricula || "-"}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <Link href={`/notas/aluno/${aluno.id}`} className="block w-full">
-                          {aluno.nome_completo}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/notas/aluno/${aluno.id}`} className="block w-full">
-                          {aluno.nivel || "-"}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        <Link href={`/notas/aluno/${aluno.id}`} className="block w-full">
-                          {aluno.email || "-"}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Link href={`/notas/aluno/${aluno.id}`} className="block w-full">
-                          <Badge variant={aluno.ativo ? "default" : "secondary"}>
-                            {aluno.ativo ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        {turmas.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma turma encontrada</h3>
+              <p className="text-gray-600">Cadastre turmas e vincule disciplinas para comecar a lancar notas.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {turmas.map((turma) => (
+              <Card key={turma.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{turma.nome}</CardTitle>
+                      <CardDescription>
+                        {turma.serie} - {turma.turno} - {turma.ano_letivo}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {turma.totalAlunos}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {turma.disciplinas.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      Nenhuma disciplina vinculada
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Disciplinas
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {turma.disciplinas.map((disciplina: any) => (
+                          <Link
+                            key={disciplina.id}
+                            href={`/notas/${turma.id}/${disciplina.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors"
+                          >
+                            <BookOpen className="h-3.5 w-3.5" />
+                            {disciplina.nome}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

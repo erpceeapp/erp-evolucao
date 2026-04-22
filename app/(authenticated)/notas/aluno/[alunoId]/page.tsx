@@ -5,11 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import PageHeader from "@/components/page-header"
+import { ExportBoletimButton } from "@/components/notas/export-boletim-button"
 
 async function getAlunoNotasData(alunoId: string) {
   const supabase = await createServerClient()
-
-  console.log("[v0] Buscando notas para aluno:", alunoId)
 
   // Buscar dados do aluno
   const { data: aluno, error: alunoError } = await supabase
@@ -19,42 +18,37 @@ async function getAlunoNotasData(alunoId: string) {
     .single()
 
   if (alunoError || !aluno) {
-    console.error("[v0] Erro ao buscar aluno:", alunoError)
     return null
   }
 
-  console.log("[v0] Aluno encontrado:", aluno.nome_completo)
-
+  // Buscar matriculas
   const { data: matriculas, error: matriculasError } = await supabase
     .from("matriculas")
-    .select("id, turma_id, status")
+    .select("id, turma_id, status, ano_letivo")
     .eq("aluno_id", alunoId)
 
   if (matriculasError) {
-    console.error("[v0] Erro ao buscar matrículas:", matriculasError)
-    return { aluno, disciplinas: [] }
+    return { aluno, disciplinas: [], turma: null, anoLetivo: null }
   }
-
-  console.log("[v0] Total de matrículas encontradas:", matriculas?.length || 0)
-  console.log(
-    "[v0] Status das matrículas:",
-    matriculas?.map((m) => m.status),
-  )
 
   const matriculasAtivas =
     matriculas?.filter(
-      (m) => m.status !== "cancelado" && m.status !== "cancelada" && m.status !== "inativo" && m.status !== "inativa",
+      (m) => m.status !== "cancelado" && m.status !== "cancelada" && m.status !== "inativo" && m.status !== "inativa"
     ) || []
 
-  console.log("[v0] Matrículas ativas encontradas:", matriculasAtivas.length)
-
   if (matriculasAtivas.length === 0) {
-    console.log("[v0] Nenhuma matrícula ativa encontrada para o aluno")
-    return { aluno, disciplinas: [] }
+    return { aluno, disciplinas: [], turma: null, anoLetivo: null }
   }
 
   const turmaIds = matriculasAtivas.map((m) => m.turma_id)
-  console.log("[v0] Turma IDs:", turmaIds)
+  const anoLetivo = matriculasAtivas[0]?.ano_letivo
+
+  // Buscar turma
+  const { data: turma } = await supabase
+    .from("turmas")
+    .select("id, nome")
+    .eq("id", turmaIds[0])
+    .single()
 
   // Buscar turma_disciplinas
   const { data: turmaDisciplinas, error: tdError } = await supabase
@@ -63,19 +57,14 @@ async function getAlunoNotasData(alunoId: string) {
     .in("turma_id", turmaIds)
 
   if (tdError || !turmaDisciplinas) {
-    console.error("[v0] Erro ao buscar turma_disciplinas:", tdError)
-    return { aluno, disciplinas: [] }
+    return { aluno, disciplinas: [], turma: turma?.nome, anoLetivo }
   }
 
-  console.log("[v0] turma_disciplinas encontradas:", turmaDisciplinas.length)
-
   if (turmaDisciplinas.length === 0) {
-    console.log("[v0] Nenhuma disciplina vinculada às turmas do aluno")
-    return { aluno, disciplinas: [] }
+    return { aluno, disciplinas: [], turma: turma?.nome, anoLetivo }
   }
 
   const disciplinaIds = [...new Set(turmaDisciplinas.map((td) => td.disciplina_id))]
-  console.log("[v0] Disciplina IDs únicos:", disciplinaIds)
 
   // Buscar disciplinas
   const { data: disciplinas, error: discError } = await supabase
@@ -84,11 +73,8 @@ async function getAlunoNotasData(alunoId: string) {
     .in("id", disciplinaIds)
 
   if (discError) {
-    console.error("[v0] Erro ao buscar disciplinas:", discError)
-    return { aluno, disciplinas: [] }
+    return { aluno, disciplinas: [], turma: turma?.nome, anoLetivo }
   }
-
-  console.log("[v0] Disciplinas encontradas:", disciplinas?.length || 0)
 
   // Buscar notas do aluno
   const matriculaIds = matriculasAtivas.map((m) => m.id)
@@ -98,10 +84,14 @@ async function getAlunoNotasData(alunoId: string) {
     .in("matricula_id", matriculaIds)
 
   if (notasError) {
-    console.error("[v0] Erro ao buscar notas:", notasError)
+    // Continue without notas
   }
 
-  console.log("[v0] Notas encontradas:", notas?.length || 0)
+  // Buscar escola
+  const { data: escola } = await supabase
+    .from("escola")
+    .select("nome, endereco, telefone, email")
+    .single()
 
   // Organizar notas por disciplina
   const disciplinasComNotas = (disciplinas || []).map((disciplina) => {
@@ -124,12 +114,17 @@ async function getAlunoNotasData(alunoId: string) {
     }
   })
 
-  console.log("[v0] Disciplinas com notas organizadas:", disciplinasComNotas.length)
-
-  return { aluno, disciplinas: disciplinasComNotas }
+  return { 
+    aluno, 
+    disciplinas: disciplinasComNotas, 
+    turma: turma?.nome, 
+    anoLetivo,
+    escola 
+  }
 }
 
-export default async function AlunoNotasPage({ params }: { params: { alunoId: string } }) {
+export default async function AlunoNotasPage({ params }: { params: Promise<{ alunoId: string }> }) {
+  const { alunoId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -139,29 +134,44 @@ export default async function AlunoNotasPage({ params }: { params: { alunoId: st
     redirect("/auth/login")
   }
 
-  const data = await getAlunoNotasData(params.alunoId)
+  const data = await getAlunoNotasData(alunoId)
 
   if (!data) {
     redirect("/notas")
   }
 
-  const { aluno, disciplinas } = data
+  const { aluno, disciplinas, turma, anoLetivo, escola } = data
+
+  const alunoBoletim = {
+    nome_completo: aluno.nome_completo,
+    matricula: aluno.matricula,
+    nivel: aluno.nivel,
+    turma: turma || undefined,
+    ano_letivo: anoLetivo || undefined,
+  }
 
   return (
     <>
       <PageHeader
         icon={GraduationCap}
         title={`Notas - ${aluno.nome_completo}`}
-        subtitle={`Matrícula: ${aluno.matricula || "N/A"} | Série: ${aluno.nivel || "N/A"}`}
+        subtitle={`Matricula: ${aluno.matricula || "N/A"} | Serie: ${aluno.nivel || "N/A"}${turma ? ` | Turma: ${turma}` : ""}`}
         backHref="/notas"
       />
       <div className="container mx-auto p-6 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Notas por Disciplina
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Notas por Disciplina
+              </CardTitle>
+              <ExportBoletimButton
+                aluno={alunoBoletim}
+                disciplinas={disciplinas}
+                escola={escola}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {disciplinas.length === 0 ? (
@@ -169,7 +179,7 @@ export default async function AlunoNotasPage({ params }: { params: { alunoId: st
                 <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma disciplina encontrada</h3>
                 <p className="text-gray-600">
-                  O aluno não possui disciplinas vinculadas ou não está matriculado em nenhuma turma ativa.
+                  O aluno nao possui disciplinas vinculadas ou nao esta matriculado em nenhuma turma ativa.
                 </p>
               </div>
             ) : (
@@ -177,11 +187,11 @@ export default async function AlunoNotasPage({ params }: { params: { alunoId: st
                 <TableHeader>
                   <TableRow>
                     <TableHead>Disciplina</TableHead>
-                    <TableHead className="text-center">1º Bimestre</TableHead>
-                    <TableHead className="text-center">2º Bimestre</TableHead>
-                    <TableHead className="text-center">3º Bimestre</TableHead>
-                    <TableHead className="text-center">4º Bimestre</TableHead>
-                    <TableHead className="text-center">Média</TableHead>
+                    <TableHead className="text-center">1o Bimestre</TableHead>
+                    <TableHead className="text-center">2o Bimestre</TableHead>
+                    <TableHead className="text-center">3o Bimestre</TableHead>
+                    <TableHead className="text-center">4o Bimestre</TableHead>
+                    <TableHead className="text-center">Media</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
