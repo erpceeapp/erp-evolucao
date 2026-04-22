@@ -33,18 +33,24 @@ export default function ResponsavelLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email_responsavel: email, cpf }),
+        credentials: "include",
       })
 
+      console.log("[v0] Response status:", response.status)
+      console.log("[v0] Response headers:", [...response.headers.entries()])
+
       const data = await response.json()
+      console.log("[v0] Response data:", data)
 
       if (!response.ok) {
         setError(data.error || "Dados invalidos. Verifique e tente novamente.")
         return
       }
 
-      // Login bem-sucedido, redirecionar para o portal
-      router.push("/responsavel/dashboard")
-      router.refresh()
+      console.log("[v0] Login OK, redirecionando...")
+      
+      // Login bem-sucedido, usar window.location para garantir reload completo
+      window.location.href = "/responsavel/dashboard"
     } catch {
       setError("Erro ao conectar. Tente novamente.")
     } finally {
