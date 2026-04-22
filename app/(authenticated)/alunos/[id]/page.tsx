@@ -7,7 +7,13 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText, BookUser } from "lucide-react"
 import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
-import { ExportAlunoPDFButton } from "@/components/alunos/export-aluno-pdf-button"
+import dynamic from "next/dynamic"
+
+// Import dinâmico para evitar SSR do jsPDF
+const ExportAlunoPDFButton = dynamic(
+  () => import("@/components/alunos/export-aluno-pdf-button").then((mod) => mod.ExportAlunoPDFButton),
+  { ssr: false }
+)
 
 export default async function AlunoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
