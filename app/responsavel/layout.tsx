@@ -17,15 +17,10 @@ export default function ResponsavelLayout({ children }: { children: React.ReactN
   const pathname = usePathname()
   const [loggingOut, setLoggingOut] = useState(false)
 
-  // Pagina de login nao usa o layout do portal
-  if (pathname === "/responsavel/login") {
-    return <>{children}</>
-  }
-
   const handleLogout = async () => {
     setLoggingOut(true)
     await fetch("/api/auth/responsavel/logout", { method: "POST" })
-    router.push("/responsavel/login")
+    window.location.href = "/auth/login"
   }
 
   return (
