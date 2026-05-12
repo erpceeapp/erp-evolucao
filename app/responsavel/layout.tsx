@@ -20,7 +20,7 @@ export default function ResponsavelLayout({ children }: { children: React.ReactN
   const handleLogout = async () => {
     setLoggingOut(true)
     await fetch("/api/auth/responsavel/logout", { method: "POST" })
-    router.push("/auth/login")
+    window.location.href = "/auth/login"
   }
 
   return (

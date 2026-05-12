@@ -62,16 +62,18 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email_responsavel: email, cpf: cpfLimpo }),
+        credentials: "include",
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Erro ao fazer login")
+        setError(data.error || "Dados invalidos. Verifique o email e o CPF do aluno.")
         return
       }
 
-      router.push("/responsavel/dashboard")
+      // Usar window.location para garantir que o cookie seja lido antes de navegar
+      window.location.href = "/responsavel/dashboard"
     } catch {
       setError("Falha na conexao. Verifique sua internet.")
     } finally {

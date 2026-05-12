@@ -30,9 +30,9 @@ export async function middleware(request: NextRequest) {
         return response
       }
     } catch {
-      // Se a verificacao falhar (ex: env var indisponivel no cold start),
-      // permitir a passagem - as paginas vao verificar a sessao tambem
-      console.log("[v0] Middleware - JWT verification failed, allowing through")
+      const url = request.nextUrl.clone()
+      url.pathname = "/auth/login"
+      return NextResponse.redirect(url)
     }
 
     return NextResponse.next()

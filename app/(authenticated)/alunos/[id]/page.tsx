@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText, BookUser } from "lucide-react"
 import Link from "next/link"
 import { AlunosHeader } from "@/components/alunos/alunos-header"
-import { ExportAlunoPDFButton } from "@/components/alunos/export-aluno-pdf-button"
+import { ExportAlunoPDFWrapper } from "@/components/alunos/export-aluno-pdf-wrapper"
 
 export default async function AlunoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -69,7 +69,7 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
                 Voltar
               </Link>
             </Button>
-            <ExportAlunoPDFButton aluno={aluno} />
+            <ExportAlunoPDFWrapper aluno={aluno} />
             <Button variant="outline" asChild>
               <Link href={`/agenda-aluno/${aluno.id}`}>
                 <BookUser className="h-4 w-4 mr-2" />

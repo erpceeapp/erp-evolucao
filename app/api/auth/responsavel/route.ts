@@ -15,23 +15,28 @@ export async function POST(request: Request) {
 
     // Limpar CPF (remover formatacao)
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
-
-    console.log("[v0] Login responsavel - email:", email_responsavel, "cpf:", cpfLimpo)
+    const emailLimpo = email_responsavel.trim().toLowerCase()
 
     const supabase = createAdminClient()
 
-    // Buscar aluno pelo email do responsavel e CPF
-    const { data: aluno, error } = await supabase
+    // Buscar todos os alunos do responsavel pelo email
+    const { data: alunos, error: searchError } = await supabase
       .from("alunos")
-      .select("id, nome_completo, cpf, email_responsavel")
-      .ilike("email_responsavel", email_responsavel.trim())
-      .eq("cpf", cpfLimpo)
+      .select("id, nome_completo, cpf, email_responsavel, ativo")
+      .ilike("email_responsavel", emailLimpo)
       .eq("ativo", true)
-      .single()
 
-    console.log("[v0] Login responsavel - aluno encontrado:", aluno?.nome_completo, "erro:", error?.message)
+    if (searchError || !alunos) {
+      return NextResponse.json(
+        { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
+        { status: 401 }
+      )
+    }
 
-    if (error || !aluno) {
+    // Filtrar pelo CPF do aluno
+    const aluno = alunos.find(a => a.cpf === cpfLimpo)
+
+    if (!aluno) {
       return NextResponse.json(
         { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
         { status: 401 }
@@ -58,8 +63,8 @@ export async function POST(request: Request) {
       turmaNome = turma?.nome
     }
 
-    // Criar sessao JWT
-    await createResponsavelSession({
+    // Criar sessao JWT e obter o token
+    const token = await createResponsavelSession({
       email_responsavel: aluno.email_responsavel,
       aluno_id: aluno.id,
       aluno_nome: aluno.nome_completo,
@@ -67,12 +72,23 @@ export async function POST(request: Request) {
       turma_nome: turmaNome,
     })
 
-    return NextResponse.json({
+    // Criar resposta e definir o cookie manualmente
+    const response = NextResponse.json({
       success: true,
       aluno_nome: aluno.nome_completo,
     })
+
+    // Definir cookie na resposta (8 horas)
+    response.cookies.set("responsavel-session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 8,
+      path: "/",
+    })
+
+    return response
   } catch (error: any) {
-    console.error("[v0] Erro no login do responsavel:", error)
     return NextResponse.json(
       { error: "Erro interno. Tente novamente mais tarde." },
       { status: 500 }

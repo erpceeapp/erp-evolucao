@@ -4,7 +4,8 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { BookOpen, User } from "lucide-react"
+import { BookOpen } from "lucide-react"
+import { ExportBoletimButton } from "@/components/notas/export-boletim-button"
 
 async function getAlunoNotas(alunoId: string) {
   const supabase = createAdminClient()
@@ -20,16 +21,24 @@ async function getAlunoNotas(alunoId: string) {
   // Buscar matriculas
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("id, turma_id, status")
+    .select("id, turma_id, status, ano_letivo")
     .eq("aluno_id", alunoId)
 
   const matriculasAtivas = (matriculas || []).filter(
     (m) => m.status !== "cancelado" && m.status !== "cancelada" && m.status !== "inativo" && m.status !== "inativa"
   )
 
-  if (matriculasAtivas.length === 0) return { aluno, disciplinas: [] }
+  if (matriculasAtivas.length === 0) return { aluno, disciplinas: [], turma: null, anoLetivo: null }
 
   const turmaIds = matriculasAtivas.map((m) => m.turma_id)
+  const anoLetivo = matriculasAtivas[0]?.ano_letivo
+
+  // Buscar turma
+  const { data: turma } = await supabase
+    .from("turmas")
+    .select("id, nome")
+    .eq("id", turmaIds[0])
+    .single()
 
   // Buscar turma_disciplinas
   const { data: turmaDisciplinas } = await supabase
@@ -37,7 +46,9 @@ async function getAlunoNotas(alunoId: string) {
     .select("id, turma_id, disciplina_id")
     .in("turma_id", turmaIds)
 
-  if (!turmaDisciplinas || turmaDisciplinas.length === 0) return { aluno, disciplinas: [] }
+  if (!turmaDisciplinas || turmaDisciplinas.length === 0) {
+    return { aluno, disciplinas: [], turma: turma?.nome, anoLetivo }
+  }
 
   const disciplinaIds = [...new Set(turmaDisciplinas.map((td) => td.disciplina_id))]
 
@@ -53,6 +64,12 @@ async function getAlunoNotas(alunoId: string) {
     .from("notas")
     .select("id, matricula_id, disciplina_id, bimestre, nota, observacoes")
     .in("matricula_id", matriculaIds)
+
+  // Buscar escola
+  const { data: escola } = await supabase
+    .from("escola")
+    .select("nome, endereco, telefone, email")
+    .single()
 
   // Organizar notas por disciplina
   const disciplinasComNotas = (disciplinas || []).map((disciplina) => {
@@ -75,7 +92,7 @@ async function getAlunoNotas(alunoId: string) {
     }
   })
 
-  return { aluno, disciplinas: disciplinasComNotas }
+  return { aluno, disciplinas: disciplinasComNotas, turma: turma?.nome, anoLetivo, escola }
 }
 
 export default async function ResponsavelNotasPage() {
@@ -92,19 +109,34 @@ export default async function ResponsavelNotasPage() {
     )
   }
 
-  const { aluno, disciplinas } = data
+  const { aluno, disciplinas, turma, anoLetivo, escola } = data
+
+  const alunoBoletim = {
+    nome_completo: aluno.nome_completo,
+    matricula: aluno.matricula,
+    nivel: aluno.nivel,
+    turma: turma || undefined,
+    ano_letivo: anoLetivo || undefined,
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="bg-green-100 p-2 rounded-full">
-          <BookOpen className="h-6 w-6 text-green-600" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-green-100 p-2 rounded-full">
+            <BookOpen className="h-6 w-6 text-green-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Notas e Desempenho</h1>
+            <p className="text-sm text-gray-500">{aluno.nome_completo}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notas e Desempenho</h1>
-          <p className="text-sm text-gray-500">{aluno.nome_completo}</p>
-        </div>
+        <ExportBoletimButton
+          aluno={alunoBoletim}
+          disciplinas={disciplinas}
+          escola={escola}
+        />
       </div>
 
       <Card>
