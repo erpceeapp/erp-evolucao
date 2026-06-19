@@ -174,11 +174,11 @@ Testes Automatizados
 ## ⚡ Tips & Tricks
 
 ### Para Debug de Performance
-```bash
+\`\`\`bash
 # Ver console logs de performance no DevTools
 # Network Tab > Slow 3G
 # Performance Tab > Record > Analyze
-```
+\`\`\`
 
 ### Para Monitorar Queries Lentas
 1. Supabase Dashboard > SQL Editor > Performance
@@ -186,13 +186,13 @@ Testes Automatizados
 3. Adicionar índices conforme recomendado
 
 ### Para Atualizar o Cache
-```typescript
+\`\`\`typescript
 // Em uma Server Action
 import { revalidatePath } from 'next/cache'
 revalidatePath('/disciplinas') // Atualiza página inteira
 // ou
 revalidateTag('disciplinas') // Atualiza apenas o cache do tag
-```
+\`\`\`
 
 ---
 

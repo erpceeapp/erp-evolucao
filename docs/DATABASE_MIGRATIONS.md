@@ -5,13 +5,13 @@
 ### 1. ✅ 025_add_notas_constraints.sql
 **Status**: EXECUTADO COM SUCESSO
 
-```sql
+\`\`\`sql
 ALTER TABLE notas
 ADD CONSTRAINT notas_unique_matricula_disciplina_bimestre
 UNIQUE (matricula_id, disciplina_id, bimestre);
 
 CREATE INDEX IF NOT EXISTS idx_notas_matricula_disciplina ON notas(matricula_id, disciplina_id);
-```
+\`\`\`
 
 **Objetivo**: Garantir que não existam duplicatas de notas e otimizar queries por aluno/disciplina
 
@@ -23,13 +23,13 @@ CREATE INDEX IF NOT EXISTS idx_notas_matricula_disciplina ON notas(matricula_id,
 ### 2. ✅ 026_improve_rls_policies.sql
 **Status**: EXECUTADO COM SUCESSO
 
-```sql
+\`\`\`sql
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alunos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notas ENABLE ROW LEVEL SECURITY;
 
 -- Policies implementadas para type_usuario
-```
+\`\`\`
 
 **Objetivo**: Melhorar segurança com RLS baseado em `tipo_usuario`
 
@@ -64,35 +64,35 @@ ALTER TABLE notas ENABLE ROW LEVEL SECURITY;
 ## Como Reverter Mudanças (se necessário)
 
 ### Reverter Constraint de Notas
-```sql
+\`\`\`sql
 ALTER TABLE notas DROP CONSTRAINT notas_unique_matricula_disciplina_bimestre;
 DROP INDEX IF EXISTS idx_notas_matricula_disciplina;
-```
+\`\`\`
 
 ### Reverter RLS Policies
-```sql
+\`\`\`sql
 ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE alunos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE notas DISABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users view own profile" ON profiles;
 DROP POLICY IF EXISTS "Read notas based on role" ON notas;
-```
+\`\`\`
 
 ### Remover Índices
-```sql
+\`\`\`sql
 DROP INDEX IF EXISTS idx_alunos_nome_completo;
 DROP INDEX IF EXISTS idx_alunos_cpf;
 DROP INDEX IF EXISTS idx_alunos_email;
 -- ... e assim por diante
-```
+\`\`\`
 
 ---
 
 ## Próximas Migrations Recomendadas
 
 ### Fase 2: Soft Deletes
-```sql
+\`\`\`sql
 -- Adicionar campo deleted_at em tabelas principais
 ALTER TABLE alunos ADD COLUMN deleted_at TIMESTAMP NULL;
 ALTER TABLE professores ADD COLUMN deleted_at TIMESTAMP NULL;
@@ -101,10 +101,10 @@ ALTER TABLE notas ADD COLUMN deleted_at TIMESTAMP NULL;
 -- Views para filtrar registros deletados
 CREATE VIEW alunos_ativos AS
 SELECT * FROM alunos WHERE deleted_at IS NULL;
-```
+\`\`\`
 
 ### Fase 3: Auditoria
-```sql
+\`\`\`sql
 -- Tabela de auditoria
 CREATE TABLE audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,10 +115,10 @@ CREATE TABLE audit_log (
   dados_novos JSONB,
   timestamp TIMESTAMP DEFAULT now()
 );
-```
+\`\`\`
 
 ### Fase 4: Normalização
-```sql
+\`\`\`sql
 -- Separar endereços em tabela própria
 CREATE TABLE enderecos (
   id UUID PRIMARY KEY,
@@ -134,7 +134,7 @@ CREATE TABLE enderecos (
 
 -- Referenciar de alunos e responsáveis
 ALTER TABLE alunos ADD COLUMN endereco_id UUID REFERENCES enderecos(id);
-```
+\`\`\`
 
 ---
 
@@ -166,7 +166,7 @@ Após executar os scripts, validar:
 
 ### Queries Úteis
 
-```sql
+\`\`\`sql
 -- Ver índices não utilizados
 SELECT schemaname, tablename, indexname
 FROM pg_indexes
@@ -185,7 +185,7 @@ SELECT query, mean_time, calls, total_time
 FROM pg_stat_statements
 ORDER BY mean_time DESC
 LIMIT 10;
-```
+\`\`\`
 
 ---
 

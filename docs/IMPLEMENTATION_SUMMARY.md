@@ -47,13 +47,13 @@
 - Status: getStatusBadge para diferentes tipos de status
 
 **Exemplo de uso:**
-```typescript
+\`\`\`typescript
 import { formatCPF, formatDateBR, formatNota } from '@/lib/formatters'
 
 const cpf = formatCPF('12345678901') // 123.456.789-01
 const data = formatDateBR('2024-01-15') // 15/01/2024
 const nota = formatNota(7.5) // 7.5
-```
+\`\`\`
 
 ---
 
@@ -63,13 +63,13 @@ const nota = formatNota(7.5) // 7.5
 #### Script: `scripts/new_scripts/025_add_notas_constraints.sql`
 
 Mudanças no banco de dados:
-```sql
+\`\`\`sql
 ALTER TABLE notas
 ADD CONSTRAINT notas_unique_matricula_disciplina_bimestre
 UNIQUE (matricula_id, disciplina_id, bimestre);
 
 CREATE INDEX idx_notas_matricula_disciplina ON notas(matricula_id, disciplina_id);
-```
+\`\`\`
 
 **Benefício**: 
 - Previne duplicatas de notas
@@ -146,7 +146,7 @@ Documentação completa com:
 
 6 funções de cache criadas:
 
-```typescript
+\`\`\`typescript
 // Disciplinas - cache 1 hora
 getCachedDisciplinas()
 
@@ -164,7 +164,7 @@ getCachedLinksDocumentos()
 
 // Informações da escola - cache 24 horas
 getCachedEscola()
-```
+\`\`\`
 
 **Benefício**: Reduz queries ao banco, responses mais rápidas
 

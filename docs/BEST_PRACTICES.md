@@ -6,17 +6,17 @@ Este documento fornece guidelines para manter e expandir as otimizações implem
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Especificar campos em SELECT (nunca usar *)
 [ ] Adicionar índice se filtrar por novo campo
 [ ] Paralelizar com Promise.all() se múltiplas queries
 [ ] Adicionar cache se dados mudam pouco
 [ ] Testar performance com DevTools
-```
+\`\`\`
 
 ### Template de Query Otimizada
 
-```typescript
+\`\`\`typescript
 // ✅ BOM - Otimizado
 export async function getAlunosByTurma(turmaId: string) {
   const supabase = await createClient()
@@ -31,13 +31,13 @@ export async function getAlunosByTurma(turmaId: string) {
   
   return { data, error }
 }
-```
+\`\`\`
 
 ## 2. Ao Adicionar Novo Campo Buscável
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Campo vai ser filtrado/buscado frequentemente?
   [ ] SIM → Adicionar índice B-tree
   [ ] NÃO → Pular
@@ -49,11 +49,11 @@ export async function getAlunosByTurma(turmaId: string) {
 [ ] Campo será combinado com outro em WHERE/JOIN?
   [ ] SIM → Considerar índice composto
   [ ] NÃO → Pular
-```
+\`\`\`
 
 ### Script de Índice
 
-```sql
+\`\`\`sql
 -- Para campo simples
 CREATE INDEX IF NOT EXISTS idx_tabela_campo ON tabela(campo);
 
@@ -64,13 +64,13 @@ WHERE status = 'ativa';
 -- Para múltiplos campos (composto)
 CREATE INDEX IF NOT EXISTS idx_tabela_campo1_campo2 
 ON tabela(campo1, campo2);
-```
+\`\`\`
 
 ## 3. Ao Criar Novo Tipo/Interface
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Tipo é reutilizado em múltiplos arquivos?
   [ ] SIM → Adicionar em types/entities.ts
   [ ] NÃO → OK deixar local
@@ -78,11 +78,11 @@ ON tabela(campo1, campo2);
 [ ] Tipo representa uma entidade do BD?
   [ ] SIM → Adicionar em types/entities.ts
   [ ] NÃO → OK deixar local
-```
+\`\`\`
 
 ### Template
 
-```typescript
+\`\`\`typescript
 // Em types/entities.ts
 export interface NovaEntidade {
   id: string
@@ -91,13 +91,13 @@ export interface NovaEntidade {
   data_criacao: string
   data_atualizacao: string
 }
-```
+\`\`\`
 
 ## 4. Ao Usar Dados Repetitivos
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Estes dados mudam frequentemente (a cada minuto)?
   [ ] SIM → Não cache, query normal
   [ ] NÃO → Continuar
@@ -108,11 +108,11 @@ export interface NovaEntidade {
 
 [ ] Estes dados quase nunca mudam?
   [ ] SIM → Usar unstable_cache com TTL longo (24h)
-```
+\`\`\`
 
 ### Implementar Cache
 
-```typescript
+\`\`\`typescript
 // Em lib/cache-helpers.ts
 export const getCachedMinhaEntidade = unstable_cache(
   async () => {
@@ -136,13 +136,13 @@ export async function MeuComponente() {
   const { data } = await getCachedMinhaEntidade()
   return <div>{/* ... */}</div>
 }
-```
+\`\`\`
 
 ## 5. Ao Formatar Dados
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Preciso formatar CPF/Telefone/CEP?
   [ ] SIM → Importar de lib/formatters.ts
   [ ] NÃO → Continuar
@@ -153,11 +153,11 @@ export async function MeuComponente() {
 
 [ ] Preciso validar Nota/Idade?
   [ ] SIM → Importar de lib/formatters.ts
-```
+\`\`\`
 
 ### Usando Formatadores
 
-```typescript
+\`\`\`typescript
 import { 
   formatCPF, 
   formatDateBR, 
@@ -174,13 +174,13 @@ export function StudentCard({ aluno }: { aluno: Aluno }) {
     </div>
   )
 }
-```
+\`\`\`
 
 ## 6. Após Criar/Editar Dados
 
 ### Checklist
 
-```
+\`\`\`
 [ ] Usuário criou/editou novo registro?
   [ ] SIM → Revalidar a página/componente
   [ ] NÃO → Pular
@@ -188,11 +188,11 @@ export function StudentCard({ aluno }: { aluno: Aluno }) {
 [ ] O registro afeta componentes em cache?
   [ ] SIM → Revalidar cache também
   [ ] NÃO → OK
-```
+\`\`\`
 
 ### Revalidar Cache
 
-```typescript
+\`\`\`typescript
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -205,36 +205,36 @@ export async function criarAluno(formData: FormData) {
   // Revalidar página inteira
   revalidatePath('/alunos')
 }
-```
+\`\`\`
 
 ## 7. Monitorando Performance
 
 ### Verificações Diárias
 
-```
+\`\`\`
 [ ] Dashboard carrega em < 1s?
 [ ] Pagina de alunos carrega em < 2s?
 [ ] Buscas retornam em < 500ms?
 [ ] Nenhum console.error de queries?
-```
+\`\`\`
 
 ### Verificações Semanais
 
-```
+\`\`\`
 [ ] Verificar índices não utilizados em Supabase
 [ ] Revisar slow queries no Supabase > Performance
 [ ] Verificar cache hit rate
 [ ] Revisar logs de erro
-```
+\`\`\`
 
 ### Verificações Mensais
 
-```
+\`\`\`
 [ ] Analisar tendências de performance
 [ ] Revisar ROI de otimizações
 [ ] Planejar próximas otimizações
 [ ] Atualizar documentação se necessário
-```
+\`\`\`
 
 ## 8. Red Flags - Sinais de Performance Ruim
 
@@ -271,7 +271,7 @@ export async function criarAluno(formData: FormData) {
 
 ### Monitoramento com Web Vitals
 
-```typescript
+\`\`\`typescript
 import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals'
 
 export function initWebVitals() {
@@ -281,11 +281,11 @@ export function initWebVitals() {
   getLCP(console.log)
   getTTFB(console.log)
 }
-```
+\`\`\`
 
 ### Sentry para Erros
 
-```typescript
+\`\`\`typescript
 import * as Sentry from '@sentry/nextjs'
 
 // Em layout.tsx
@@ -293,7 +293,7 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
   tracesSampleRate: 0.1,
 })
-```
+\`\`\`
 
 ## 10. Roadmap de Manutenção
 
@@ -318,7 +318,7 @@ Sentry.init({
 
 ### Importações Comuns
 
-```typescript
+\`\`\`typescript
 // Types
 import type { Aluno, Professor, Turma } from '@/types/entities'
 
@@ -333,11 +333,11 @@ import { revalidatePath } from 'next/cache'
 
 // Supabase
 import { createClient } from '@/lib/supabase/server'
-```
+\`\`\`
 
 ### Padrões Comuns
 
-```typescript
+\`\`\`typescript
 // Query otimizada
 const { data } = await supabase
   .from("tabela")
@@ -357,7 +357,7 @@ const { data } = await getCachedEntidade()
 
 // Revalidar após criar
 revalidatePath('/pagina')
-```
+\`\`\`
 
 ---
 
