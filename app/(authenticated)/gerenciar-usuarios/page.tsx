@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import toast from "sonner"
+import { toast } from "sonner"
 import { Edit, Users } from "lucide-react"
 import PageHeader from "@/components/page-header"
 
