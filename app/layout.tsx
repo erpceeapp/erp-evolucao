@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "v0 App",
+  title: "Centro Educacional Evolução",
   description: "Created with v0",
   generator: "v0.app",
 }
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`font-sans ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
         <Analytics />
       </body>

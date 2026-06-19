@@ -88,7 +88,7 @@ export default function CadastroPage() {
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">ERP Educacional</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Centro Educacional Evolução</h1>
           <p className="text-gray-600">Sistema de Gestão Escolar</p>
         </div>
 
