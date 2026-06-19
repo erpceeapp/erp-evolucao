@@ -137,7 +137,7 @@ Este documento lista todas as otimizações aplicadas no sistema ERP conforme an
 
 ### 1. Usar Types Centralizados
 
-```typescript
+\`\`\`typescript
 import { Aluno, Professor } from '@/types/entities'
 
 const aluno: Aluno = {
@@ -145,22 +145,22 @@ const aluno: Aluno = {
   nome_completo: 'João Silva',
   // ...
 }
-```
+\`\`\`
 
 ### 2. Usar Formatadores
 
-```typescript
+\`\`\`typescript
 import { formatCPF, formatDateBR, formatNota, calcularIdade } from '@/lib/formatters'
 
 const cpf = formatCPF('12345678901') // 123.456.789-01
 const data = formatDateBR('2024-01-15') // 15/01/2024
 const nota = formatNota(7.5) // 7.5
 const idade = calcularIdade('2010-05-20') // 14
-```
+\`\`\`
 
 ### 3. Usar Cache Helpers
 
-```typescript
+\`\`\`typescript
 import { getCachedDisciplinas } from '@/lib/cache-helpers'
 
 export async function MeuComponente() {
@@ -175,11 +175,11 @@ export async function MeuComponente() {
     </select>
   )
 }
-```
+\`\`\`
 
 ### 4. Revalidar Cache Após Alteração
 
-```typescript
+\`\`\`typescript
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -193,7 +193,7 @@ export async function criarDisciplina(nome: string) {
   revalidatePath('/disciplinas')
   // Ou revalidate cache específico se usar revalidateTag
 }
-```
+\`\`\`
 
 ---
 

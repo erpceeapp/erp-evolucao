@@ -4,88 +4,88 @@
 
 ### 1. SELECT com Campos Específicos
 **❌ RUIM - Transfere dados desnecessários**
-```typescript
+\`\`\`typescript
 const { data: alunos } = await supabase
   .from("alunos")
   .select("*")
-```
+\`\`\`
 
 **✅ BOM - Especifica apenas campos necessários**
-```typescript
+\`\`\`typescript
 const { data: alunos } = await supabase
   .from("alunos")
   .select("id, nome_completo, cpf, email")
-```
+\`\`\`
 
 ### 2. Filtros no Banco de Dados
 **❌ RUIM - Filtra no client-side**
-```typescript
+\`\`\`typescript
 const { data: todos } = await supabase.from("alunos").select("*")
 const ativos = todos.filter(a => a.ativo === true)
-```
+\`\`\`
 
 **✅ BOM - Filtra no servidor**
-```typescript
+\`\`\`typescript
 const { data: alunos } = await supabase
   .from("alunos")
   .select("id, nome_completo, email")
   .eq("ativo", true)
-```
+\`\`\`
 
 ### 3. Paginação
 **❌ RUIM - Busca tudo**
-```typescript
+\`\`\`typescript
 const { data: alunos } = await supabase
   .from("alunos")
   .select("*")
-```
+\`\`\`
 
 **✅ BOM - Pagina resultado**
-```typescript
+\`\`\`typescript
 const page = 1
 const pageSize = 20
 const { data: alunos } = await supabase
   .from("alunos")
   .select("id, nome_completo, email")
   .range((page - 1) * pageSize, page * pageSize - 1)
-```
+\`\`\`
 
 ### 4. Busca de Texto
 **❌ RUIM - Busca aproximada (lenta)**
-```typescript
+\`\`\`typescript
 .like("nome_completo", "%maria%")
-```
+\`\`\`
 
 **✅ BOM - Busca com ILIKE (case-insensitive) ou índice full-text**
-```typescript
+\`\`\`typescript
 .ilike("nome_completo", "%maria%") // Melhor com índice
-```
+\`\`\`
 
 ### 5. Joins Desnecessários
 **❌ RUIM - Join que não precisa**
-```typescript
+\`\`\`typescript
 .select("alunos(id, nome), turmas(*), matriculas(*)")
-```
+\`\`\`
 
 **✅ BOM - Seleciona apenas o necessário**
-```typescript
+\`\`\`typescript
 .select("id, nome_completo, turma_id") // Se só precisa do ID, não join
-```
+\`\`\`
 
 ### 6. Múltiplas Queries
 **❌ RUIM - Queries sequenciais**
-```typescript
+\`\`\`typescript
 const { data: turma } = await supabase.from("turmas").select("*").eq("id", id)
 const { data: alunos } = await supabase.from("alunos").select("*").eq("turma_id", id)
-```
+\`\`\`
 
 **✅ BOM - Promise.all para parallelizar**
-```typescript
+\`\`\`typescript
 const [turmaRes, alunosRes] = await Promise.all([
   supabase.from("turmas").select("id, nome").eq("id", id),
   supabase.from("alunos").select("id, nome_completo").eq("turma_id", id)
 ])
-```
+\`\`\`
 
 ## Índices Criados
 
@@ -106,7 +106,7 @@ Esses índices foram criados para otimizar queries comuns:
 
 O caching deve ser implementado para dados que mudam pouco:
 
-```typescript
+\`\`\`typescript
 import { unstable_cache } from 'next/cache'
 
 // Cache dados por 1 hora (3600 segundos)
@@ -124,13 +124,13 @@ const getDisciplinas = unstable_cache(
 
 // Usar no componente
 const disciplinas = await getDisciplinas()
-```
+\`\`\`
 
 ## Revalidação de Cache
 
 Após criar/editar dados, revalidar o cache:
 
-```typescript
+\`\`\`typescript
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -141,7 +141,7 @@ export async function criarDisciplina(nome: string) {
   // Invalidar cache
   revalidatePath('/disciplinas')
 }
-```
+\`\`\`
 
 ## Monitoramento
 

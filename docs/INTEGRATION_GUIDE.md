@@ -6,7 +6,7 @@ Este guia mostra como integrar os novos helpers e formatadores no seu código ex
 
 Antes de importar types em todos os arquivos, use a centralização:
 
-```typescript
+\`\`\`typescript
 // ❌ Evitar - Definir interface em cada arquivo
 interface Aluno {
   id: string
@@ -20,13 +20,13 @@ import { Aluno } from '@/types/entities'
 export function AlunoCard({ aluno }: { aluno: Aluno }) {
   return <div>{aluno.nome_completo}</div>
 }
-```
+\`\`\`
 
 ## 2. Usando Formatadores
 
 ### Exemplo: Formatar CPF e Telefone
 
-```typescript
+\`\`\`typescript
 import { formatCPF, formatTelefone, cleanCPF } from '@/lib/formatters'
 
 export function AlunoDetails() {
@@ -42,11 +42,11 @@ export function AlunoDetails() {
     </div>
   )
 }
-```
+\`\`\`
 
 ### Exemplo: Formatar Datas
 
-```typescript
+\`\`\`typescript
 import { formatDateBR, formatDateTime, calcularIdade } from '@/lib/formatters'
 
 export function StudentProfile({ dataNascimento, dataMatricula }: any) {
@@ -58,11 +58,11 @@ export function StudentProfile({ dataNascimento, dataMatricula }: any) {
     </div>
   )
 }
-```
+\`\`\`
 
 ### Exemplo: Formatar Notas
 
-```typescript
+\`\`\`typescript
 import { formatNota, converterNotaEscala, isNotaValida } from '@/lib/formatters'
 
 export function NotasTable({ notas }: any) {
@@ -85,13 +85,13 @@ export function NotasTable({ notas }: any) {
     </table>
   )
 }
-```
+\`\`\`
 
 ## 3. Usando Cache Helpers
 
 ### Exemplo: Carregando Disciplinas
 
-```typescript
+\`\`\`typescript
 // ❌ Antes - Query a cada renderização
 export async function DisciplinaSelect() {
   const supabase = await createClient()
@@ -123,11 +123,11 @@ export async function DisciplinaSelect() {
     </select>
   )
 }
-```
+\`\`\`
 
 ### Exemplo: Usando Múltiplos Caches
 
-```typescript
+\`\`\`typescript
 import { 
   getCachedTurmas, 
   getCachedDisciplinas,
@@ -164,11 +164,11 @@ export async function NovasMatriculasForm() {
     </form>
   )
 }
-```
+\`\`\`
 
 ## 4. Revalidando Cache Após Alterações
 
-```typescript
+\`\`\`typescript
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -190,13 +190,13 @@ export async function criarDisciplina(formData: FormData) {
   // Revalidar a página para atualizar cache
   revalidatePath('/disciplinas')
 }
-```
+\`\`\`
 
 ## 5. Otimizando Queries Existentes
 
 ### Antes - Select com *
 
-```typescript
+\`\`\`typescript
 export async function getAlunos() {
   const supabase = await createClient()
   
@@ -208,11 +208,11 @@ export async function getAlunos() {
   
   return alunos
 }
-```
+\`\`\`
 
 ### Depois - Select Específico
 
-```typescript
+\`\`\`typescript
 export async function getAlunos() {
   const supabase = await createClient()
   
@@ -225,7 +225,7 @@ export async function getAlunos() {
   
   return alunos
 }
-```
+\`\`\`
 
 ### Impacto
 
@@ -235,7 +235,7 @@ export async function getAlunos() {
 
 ## 6. Padrão de Server Actions com Validação
 
-```typescript
+\`\`\`typescript
 'use server'
 
 import { revalidatePath } from 'next/cache'
@@ -280,11 +280,11 @@ export async function criarAluno(formData: FormData): Promise<{ success: boolean
     return { success: false, error: 'Erro ao criar aluno' }
   }
 }
-```
+\`\`\`
 
 ## 7. Componente com Type-Safety
 
-```typescript
+\`\`\`typescript
 import { Aluno } from '@/types/entities'
 import { formatCPF, formatDateBR, calcularIdade } from '@/lib/formatters'
 
@@ -323,7 +323,7 @@ export function AlunoCard({ aluno, onEdit, onDelete }: AlunoCardProps) {
     </div>
   )
 }
-```
+\`\`\`
 
 ## 8. Checklist de Migração
 
