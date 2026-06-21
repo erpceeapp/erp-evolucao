@@ -21,6 +21,7 @@ import {
   BarChart3,
   Settings,
   UserCircle,
+  UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -32,6 +33,7 @@ const menuItems = [
     href: "/dashboard",
     roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
   },
+  { icon: UserCog, label: "Usuários", href: "/usuarios", roles: ["admin"] },
   { icon: Users, label: "Alunos", href: "/alunos", roles: ["admin", "diretor", "coordenacao", "secretaria"] },
   {
     icon: GraduationCap,
@@ -117,7 +119,6 @@ export function AppSidebar() {
         const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
         if (profile) {
-          console.log("[v0] AppSidebar - User tipo_usuario:", profile.tipo_usuario)
           setUserTipo(profile.tipo_usuario)
         }
       }
@@ -145,7 +146,7 @@ export function AppSidebar() {
     if (href === "/dashboard") {
       return pathname === href
     }
-    return pathname.startsWith(href)
+    return pathname === href || pathname.startsWith(href + "/")
   }
 
   const filteredMenuItems = userTipo
