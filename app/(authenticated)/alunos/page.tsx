@@ -2,16 +2,18 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import Link from "next/link"
-import { AlunosHeader } from "@/components/alunos/alunos-header"
+import { PageHeader } from "@/components/page-header"
 import { AlunosTable } from "@/components/alunos/alunos-table"
 import { Suspense } from "react"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
 interface SearchParams {
   busca?: string
   status?: string
   page?: string
+  limit?: string
 }
 
 export default async function AlunosPage({
@@ -27,10 +29,10 @@ export default async function AlunosPage({
   }
 
   const params = await searchParams
-  const busca = params.busca || ""
-  const status = params.status || "todos"
-  const page = Number.parseInt(params.page || "1")
-  const itemsPerPage = 10
+  const busca = sanitizeSearchParam(params.busca)
+  const status = sanitizeSearchParam(params.status) || "ativo"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar alunos
   let query = supabase.from("alunos").select("*", { count: "exact" }).order("nome_completo")
@@ -60,22 +62,21 @@ export default async function AlunosPage({
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AlunosHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Alunos</h1>
-            <p className="text-gray-600 mt-1">Gerencie o cadastro de alunos da escola</p>
-          </div>
+    <>
+      <PageHeader
+        icon={Users}
+        title="Alunos"
+        description="Gerencie o cadastro de alunos da escola"
+        showBackButton={false}
+        actions={
           <Button asChild>
             <Link href="/alunos/novo">
               <Plus className="h-4 w-4 mr-2" />
               Novo Aluno
             </Link>
           </Button>
-        </div>
+        }
+      />
 
         <Card>
           <CardHeader>
@@ -92,13 +93,14 @@ export default async function AlunosPage({
                 alunos={alunos || []}
                 currentPage={page}
                 totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalCount={count || 0}
                 busca={busca}
                 status={status}
               />
             </Suspense>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </>
   )
 }
