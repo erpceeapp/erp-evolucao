@@ -98,7 +98,7 @@ export default async function ResponsavelDashboard() {
       {/* Links rapidos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/responsavel/agenda">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+          <Card className="cursor-pointer border-l-4 border-l-blue-500">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <BookUser className="h-8 w-8 text-blue-500" />
@@ -111,7 +111,7 @@ export default async function ResponsavelDashboard() {
           </Card>
         </Link>
         <Link href="/responsavel/notas">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-green-500">
+          <Card className="cursor-pointer border-l-4 border-l-green-500">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <BookOpen className="h-8 w-8 text-green-500" />

@@ -1,12 +1,13 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { BookOpen, Plus, Search, AlertCircle, Settings } from "lucide-react"
+import { BookOpen, Plus, Search, AlertCircle, Settings, NotebookPen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
+import { PageHeader } from "@/components/page-header"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
@@ -98,24 +99,20 @@ export default async function DiarioPage() {
   const totalTurmas = turmasComDisciplinas.length + turmasSemDisciplinas.length
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-cyan-100 rounded-lg">
-            <BookOpen className="h-6 w-6 text-cyan-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Diário de Classe</h1>
-            <p className="text-gray-600">Registre aulas e acompanhe o progresso</p>
-          </div>
-        </div>
-        <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-          <Link href="/diario/nova-aula">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Aula
-          </Link>
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        icon={NotebookPen}
+        title="Diário de Classe"
+        description="Registre aulas e acompanhe o progresso"
+        actions={
+          <Button asChild>
+            <Link href="/diario/nova-aula">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Aula
+            </Link>
+          </Button>
+        }
+      />
 
       {turmasSemDisciplinas.length > 0 && (
         <Alert>
@@ -145,7 +142,7 @@ export default async function DiarioPage() {
               <h3 className="font-semibold text-gray-700">Turmas Prontas para Uso</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {turmasComDisciplinas.map((item) => (
-                  <Card key={`${item.turma_id}-${item.disciplina_id}`} className="hover:shadow-md transition-shadow">
+                  <Card key={`${item.turma_id}-${item.disciplina_id}`}>
                     <CardContent className="p-4">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between">
@@ -226,6 +223,6 @@ export default async function DiarioPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 }

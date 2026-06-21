@@ -44,7 +44,15 @@ export default function LoginPage() {
       if (error) throw error
       router.push("/dashboard")
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Erro ao fazer login"
+      let errorMsg: string
+      if (error instanceof Error) {
+        errorMsg = typeof error.message === "string" && error.message ? error.message : "Erro ao fazer login"
+      } else if (error && typeof error === "object" && "message" in error) {
+        const msg = (error as Record<string, unknown>).message
+        errorMsg = typeof msg === "string" && msg ? msg : "Erro ao fazer login"
+      } else {
+        errorMsg = "Erro ao fazer login"
+      }
       setError(translateError(errorMsg))
     } finally {
       setIsLoading(false)
@@ -103,13 +111,13 @@ export default function LoginPage() {
         </div>
 
         {/* Toggle Funcionario / Responsavel */}
-        <div className="flex mb-4 bg-white rounded-lg p-1 shadow-sm border">
+        <div className="flex mb-4 bg-white rounded-lg p-1 border">
           <button
             type="button"
             onClick={() => switchMode("funcionario")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               mode === "funcionario"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
@@ -121,7 +129,7 @@ export default function LoginPage() {
             onClick={() => switchMode("responsavel")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               mode === "responsavel"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >

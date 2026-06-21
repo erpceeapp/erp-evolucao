@@ -75,9 +75,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
     if (!isEditing && !formData.numero_matricula) {
       const generateMatriculaNumber = () => {
         const year = formData.ano_letivo.slice(-2)
-        const random = Math.floor(Math.random() * 10000)
-          .toString()
-          .padStart(4, "0")
+        const random = crypto.randomUUID().replace(/-/g, "").slice(-4)
         return `${year}${random}`
       }
       setFormData((prev) => ({ ...prev, numero_matricula: generateMatriculaNumber() }))
@@ -198,9 +196,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
       } else {
         // Criar múltiplas matrículas
         const matriculas = alunosSelecionados.map((aluno) => ({
-          numero_matricula: `${formData.ano_letivo.slice(-2)}${Math.floor(Math.random() * 10000)
-            .toString()
-            .padStart(4, "0")}`,
+          numero_matricula: `${formData.ano_letivo.slice(-2)}${crypto.randomUUID().replace(/-/g, "").slice(-4)}`,
           aluno_id: aluno.id,
           turma_id: formData.turma_id,
           ano_letivo: Number.parseInt(formData.ano_letivo),
@@ -221,7 +217,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
     }
   }
 
-  const capacidadeAtingida = capacidadeInfo && capacidadeInfo.atual >= capacidadeInfo.maxima
+  const capacidadeAtingida = capacidadeInfo ? capacidadeInfo.atual >= capacidadeInfo.maxima : false
 
   return (
     <form onSubmit={handleSubmit}>
@@ -316,7 +312,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
                 </div>
 
                 {showAlunoSearch && searchAluno && (
-                  <div className="border rounded-lg max-h-60 overflow-y-auto bg-white shadow-lg">
+                  <div className="border rounded-lg max-h-60 overflow-y-auto bg-white">
                     {alunosFiltrados.length > 0 ? (
                       alunosFiltrados.map((aluno) => (
                         <button
@@ -384,7 +380,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
               </div>
 
               {showTurmaSearch && searchTurma && (
-                <div className="border rounded-lg max-h-60 overflow-y-auto bg-white shadow-lg">
+                <div className="border rounded-lg max-h-60 overflow-y-auto bg-white">
                   {turmasFiltradas.length > 0 ? (
                     turmasFiltradas.map((turma) => (
                       <button
