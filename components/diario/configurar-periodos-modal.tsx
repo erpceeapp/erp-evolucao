@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Calendar } from "lucide-react"
 
@@ -49,7 +49,7 @@ export default function ConfigurarPeriodosModal({
       console.log("[v0] Salvando períodos para ano letivo:", anoLetivo)
       console.log("[v0] Períodos a salvar:", periodos)
 
-      const supabase = createBrowserClient()
+      const supabase = createClient()
 
       // Deletar períodos existentes do ano
       const { error: deleteError } = await supabase.from("periodos_letivos").delete().eq("ano_letivo", anoLetivo)

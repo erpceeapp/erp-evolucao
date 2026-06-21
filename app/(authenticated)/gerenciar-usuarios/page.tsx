@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { Edit, Users } from "lucide-react"
 import PageHeader from "@/components/page-header"
+import { updateProfile } from "./actions"
 
 interface Profile {
   id: string
@@ -104,23 +105,18 @@ export default function GerenciarUsuariosPage() {
     setSaving(true)
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          nome_completo: editFormData.nome_completo,
-          telefone: editFormData.telefone,
-          tipo_usuario: editFormData.tipo_usuario,
-        })
-        .eq("id", editingProfile.id)
+      const result = await updateProfile(editingProfile.id, editFormData)
 
-      if (error) throw error
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
       toast.success("Usuário atualizado com sucesso!")
       setEditingProfile(null)
       await loadProfiles()
     } catch (error) {
       console.error("Erro ao salvar usuário:", error)
-      toast.error("Erro ao salvar usuário")
+      toast.error(error instanceof Error ? error.message : "Erro ao salvar usuário")
     } finally {
       setSaving(false)
     }

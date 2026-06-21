@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { salvarAulaPresenca } from "../../actions"
 
 interface Aluno {
   id: string
@@ -50,8 +51,6 @@ export default function PresencaPage({
 
   async function loadData() {
     try {
-      console.log("[v0] Loading presenca data for turma:", params.turmaId, "disciplina:", params.disciplinaId)
-
       const { data: tdData, error: tdError } = await supabase
         .from("turma_disciplinas")
         .select("*")
@@ -180,49 +179,18 @@ export default function PresencaPage({
 
     setSaving(true)
     try {
-      console.log("[v0] Salvando aula com dados:", {
-        turma_disciplina_id: turmaDisciplina!.id,
-        data_aula: dataAula,
-        hora_inicio: horaInicio,
-        hora_fim: horaFim,
-        conteudo: conteudo,
+      const result = await salvarAulaPresenca({
+        turmaDisciplinaId: turmaDisciplina!.id,
+        dataAula,
+        horaInicio,
+        horaFim,
+        conteudo,
+        presencas,
+        turmaId: params.turmaId,
+        disciplinaId: params.disciplinaId,
       })
 
-      const { data: aula, error: aulaError } = await supabase
-        .from("aulas")
-        .insert({
-          turma_disciplina_id: turmaDisciplina!.id,
-          data_aula: dataAula,
-          hora_inicio: horaInicio,
-          hora_fim: horaFim,
-          conteudo: conteudo,
-        })
-        .select()
-        .single()
-
-      if (aulaError) {
-        console.error("[v0] Erro ao criar aula:", aulaError)
-        throw aulaError
-      }
-
-      console.log("[v0] Aula criada com sucesso:", aula.id)
-
-      // Registrar presenças
-      const presencasData = Object.entries(presencas).map(([alunoId, status]) => ({
-        aula_id: aula.id,
-        aluno_id: alunoId,
-        presente: status === "presente",
-        justificativa: status === "justificado" ? "Justificado" : null,
-      }))
-
-      console.log("[v0] Registrando presenças:", presencasData.length)
-
-      const { error: presencaError } = await supabase.from("presencas").insert(presencasData)
-
-      if (presencaError) {
-        console.error("[v0] Erro ao registrar presenças:", presencaError)
-        throw presencaError
-      }
+      if (result.error) throw new Error(result.error)
 
       toast({
         title: "Sucesso",
@@ -232,10 +200,9 @@ export default function PresencaPage({
       router.push(`/diario/${params.turmaId}/${params.disciplinaId}`)
       router.refresh()
     } catch (error) {
-      console.error("[v0] Erro ao salvar presença:", error)
       toast({
         title: "Erro",
-        description: "Erro ao registrar aula e presença",
+        description: error instanceof Error ? error.message : "Erro ao registrar aula e presenca",
         variant: "destructive",
       })
     } finally {

@@ -2,16 +2,18 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus, ArrowLeft } from "lucide-react"
+import { Plus, ArrowLeft, Book } from "lucide-react"
 import Link from "next/link"
-import { TurmasHeader } from "@/components/turmas/turmas-header"
+import { PageHeader } from "@/components/page-header"
 import { DisciplinasTable } from "@/components/disciplinas/disciplinas-table"
 import { Suspense } from "react"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
 interface SearchParams {
   busca?: string
   status?: string
   page?: string
+  limit?: string
 }
 
 export default async function DisciplinasPage({
@@ -29,10 +31,10 @@ export default async function DisciplinasPage({
   }
 
   // Parâmetros de busca
-  const busca = params.busca || ""
-  const status = params.status || "todos"
-  const page = Number.parseInt(params.page || "1")
-  const itemsPerPage = 10
+  const busca = sanitizeSearchParam(params.busca)
+  const status = sanitizeSearchParam(params.status)
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar disciplinas
   let query = supabase.from("disciplinas").select("*, professores(id, nome_completo)", { count: "exact" }).order("nome")
@@ -60,15 +62,13 @@ export default async function DisciplinasPage({
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TurmasHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Disciplinas</h1>
-            <p className="text-gray-600 mt-1">Gerencie as disciplinas oferecidas pela escola</p>
-          </div>
+    <>
+      <PageHeader
+        icon={Book}
+        title="Disciplinas"
+        description="Gerencie as disciplinas oferecidas pela escola"
+        showBackButton={false}
+        actions={
           <div className="flex gap-2">
             <Button variant="outline" asChild>
               <Link href="/turmas">
@@ -83,7 +83,8 @@ export default async function DisciplinasPage({
               </Link>
             </Button>
           </div>
-        </div>
+        }
+      />
 
         <Card>
           <CardHeader>
@@ -100,13 +101,14 @@ export default async function DisciplinasPage({
                 disciplinas={disciplinas || []}
                 currentPage={page}
                 totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalCount={count || 0}
                 busca={busca}
                 status={status}
               />
             </Suspense>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </>
   )
 }

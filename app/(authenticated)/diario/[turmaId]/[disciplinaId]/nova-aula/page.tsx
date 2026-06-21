@@ -44,7 +44,7 @@ export default async function NovaAulaPage({
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={BookOpen}
         title="Nova Aula"
@@ -60,6 +60,6 @@ export default async function NovaAulaPage({
           <NovaAulaForm turmaDisciplina={turmaDisciplina} />
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 }

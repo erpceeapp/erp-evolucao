@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight, Users } from "lucide-react"
+import { Search, Edit, Eye, Users } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -28,12 +29,14 @@ interface TurmasTableProps {
   turmas: Turma[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   ano: string
   status: string
 }
 
-export function TurmasTable({ turmas, currentPage, totalPages, busca, ano, status }: TurmasTableProps) {
+export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCount, busca, ano, status }: TurmasTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -78,6 +81,13 @@ export function TurmasTable({ turmas, currentPage, totalPages, busca, ano, statu
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
+    router.push(`/turmas?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
     router.push(`/turmas?${params.toString()}`)
   }
 
@@ -212,33 +222,14 @@ export function TurmasTable({ turmas, currentPage, totalPages, busca, ano, statu
       </div>
 
       {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

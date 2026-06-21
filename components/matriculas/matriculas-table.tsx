@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { Search, Edit, Eye, Trash2 } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
@@ -41,6 +42,8 @@ interface MatriculasTableProps {
   turmas: Turma[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   status: string
   ano: string
@@ -52,6 +55,8 @@ export function MatriculasTable({
   turmas,
   currentPage,
   totalPages,
+  pageSize,
+  totalCount,
   busca,
   status,
   ano,
@@ -102,6 +107,13 @@ export function MatriculasTable({
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
+    router.push(`/matriculas?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
     router.push(`/matriculas?${params.toString()}`)
   }
 
@@ -282,33 +294,14 @@ export function MatriculasTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

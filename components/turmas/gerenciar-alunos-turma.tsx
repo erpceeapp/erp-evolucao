@@ -76,9 +76,8 @@ export function GerenciarAlunosTurma({
 
     try {
       // Gerar número de matrícula
-      const numeroMatricula = `${currentYear.toString().slice(-2)}${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")}`
+      const randomPart = crypto.randomUUID().replace(/-/g, "").slice(-4)
+      const numeroMatricula = `${currentYear.toString().slice(-2)}${randomPart}`
 
       const { error } = await supabase.from("matriculas").insert({
         numero_matricula: numeroMatricula,

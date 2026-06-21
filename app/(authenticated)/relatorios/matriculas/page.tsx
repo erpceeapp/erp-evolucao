@@ -48,8 +48,7 @@ export default async function RelatorioMatriculasPage() {
         subtitle="Matrículas por período, turma e status"
         backHref="/relatorios"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
@@ -127,7 +126,6 @@ export default async function RelatorioMatriculasPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
     </>
   )
 }

@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import { useState } from "react"
+import { salvarPresencas } from "./actions"
 
 async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: string) {
   const supabase = createClient()
@@ -144,33 +145,27 @@ export default function AulaDetalhePage({
 
   async function salvarAlteracoes() {
     setIsLoading(true)
-    const supabase = createClient()
 
     try {
-      console.log("[v0] Salvando alterações de presença...")
+      const path = `/diario/${params.turmaId}/${params.disciplinaId}/presencas`
+      const result = await salvarPresencas(
+        params.aulaId,
+        presencas.map((p) => ({
+          id: p.id,
+          presente: p.presente,
+          justificativa: p.justificativa || null,
+        })),
+        path
+      )
 
-      for (const presenca of presencas) {
-        const { error } = await supabase
-          .from("presencas")
-          .update({
-            presente: presenca.presente,
-            justificativa: presenca.justificativa || null,
-          })
-          .eq("id", presenca.id)
-
-        if (error) {
-          console.error("[v0] Erro ao atualizar presença:", error)
-          throw error
-        }
-      }
+      if (result.error) throw new Error(result.error)
 
       toast.success("Presenças atualizadas com sucesso!")
       setIsEditing(false)
       await loadData()
       router.refresh()
     } catch (error: any) {
-      console.error("[v0] Erro ao salvar alterações:", error)
-      toast.error("Erro ao salvar alterações: " + error.message)
+      toast.error("Erro ao salvar alterações: " + (error.message || "Erro desconhecido"))
     } finally {
       setIsLoading(false)
     }
@@ -187,7 +182,7 @@ export default function AulaDetalhePage({
   const percentualPresenca = totalAlunos > 0 ? Math.round((totalPresentes / totalAlunos) * 100) : 0
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={Eye}
         title="Detalhes da Aula"
@@ -415,6 +410,6 @@ export default function AulaDetalhePage({
           </Card>
         </div>
       </div>
-    </div>
+    </>
   )
 }

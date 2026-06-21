@@ -1,6 +1,7 @@
 "use server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 
 export async function createProfessorUser(professorData: {
   email: string
@@ -9,6 +10,22 @@ export async function createProfessorUser(professorData: {
   telefone: string
 }) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: "Usuário não autenticado" }
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "diretor"].includes(profile.tipo_usuario)) {
+      return { error: "Apenas administradores e diretores podem criar professores" }
+    }
+
     // Senha padrão é o CPF sem formatação
     const senhaTemporaria = professorData.cpf.replace(/[^0-9]/g, "")
 
@@ -53,11 +70,8 @@ export async function createProfessorUser(professorData: {
       )
 
       if (updateError) {
-        console.error("[v0] Erro ao atualizar usuário existente:", updateError)
         return { error: updateError.message }
       }
-
-      console.log("[v0] Usuário existente reutilizado com sucesso:", existingUser.id)
 
       return {
         success: true,
@@ -80,11 +94,8 @@ export async function createProfessorUser(professorData: {
     })
 
     if (authError) {
-      console.error("[v0] Erro ao criar usuário:", authError)
       return { error: authError.message }
     }
-
-    console.log("[v0] Usuário criado com sucesso:", authData.user?.id)
 
     return {
       success: true,

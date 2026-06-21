@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { AlunosHeader } from "@/components/alunos/alunos-header"
+import { Users } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
 import { AlunoForm } from "@/components/alunos/aluno-form"
 
 export default async function EditarAlunoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,17 +22,15 @@ export default async function EditarAlunoPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AlunosHeader />
+    <>
+      <PageHeader
+        icon={Users}
+        title="Editar Aluno"
+        description={`Atualize os dados de ${aluno.nome_completo}`}
+        backHref={`/alunos/${id}`}
+      />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Editar Aluno</h1>
-          <p className="text-gray-600 mt-1">Atualize os dados de {aluno.nome_completo}</p>
-        </div>
-
-        <AlunoForm aluno={aluno} isEditing={true} />
-      </main>
-    </div>
+      <AlunoForm aluno={aluno} isEditing={true} />
+    </>
   )
 }

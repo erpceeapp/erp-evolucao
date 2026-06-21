@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, GraduationCap, DollarSign } from "lucide-react"
 import Link from "next/link"
-import { ProfessoresHeader } from "@/components/professores/professores-header"
+import { PageHeader } from "@/components/page-header"
 
 export default async function ProfessorDetalhePage({ params }: { params: { id: string } }) {
   if (params.id === "novo") {
@@ -18,6 +18,16 @@ export default async function ProfessorDetalhePage({ params }: { params: { id: s
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) {
     redirect("/auth/login")
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  if (!profile || !["admin", "secretaria", "diretor", "coordenacao", "professor"].includes(profile.tipo_usuario)) {
+    redirect("/dashboard")
   }
 
   // Buscar dados do professor
@@ -56,22 +66,14 @@ export default async function ProfessorDetalhePage({ params }: { params: { id: s
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProfessoresHeader />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{professor.nome_completo}</h1>
-            <p className="text-gray-600 mt-1">Detalhes do professor</p>
-          </div>
+    <>
+      <PageHeader
+        icon={GraduationCap}
+        title={professor.nome_completo}
+        description="Detalhes do professor"
+        backHref="/professores"
+        actions={
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/professores">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Link>
-            </Button>
             <Button asChild>
               <Link href={`/professores/${professor.id}/editar`}>
                 <Edit className="h-4 w-4 mr-2" />
@@ -79,9 +81,10 @@ export default async function ProfessorDetalhePage({ params }: { params: { id: s
               </Link>
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Informações Principais */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -218,9 +221,8 @@ export default async function ProfessorDetalhePage({ params }: { params: { id: s
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   )
 }
 

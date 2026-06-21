@@ -96,7 +96,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
       const allowedTipos = ["coordenação", "secretaria", "diretor", "admin"]
 
       const hasPermission =
-        (profile.role && allowedRoles.includes(profile.role.toLowerCase())) ||
+        (profile.tipo_usuario && allowedRoles.includes(profile.tipo_usuario.toLowerCase())) ||
         (profile.tipo_usuario && allowedTipos.includes(profile.tipo_usuario))
 
       if (!hasPermission) {

@@ -103,9 +103,6 @@ export function LinksDocumentosManager() {
     e.preventDefault()
 
     try {
-      console.log("[v0] Salvando link, modo:", editingLink ? "atualização" : "criação")
-      console.log("[v0] Dados do formulário:", formData)
-
       if (editingLink) {
         // Atualizar
         const { error } = await supabase

@@ -2,18 +2,20 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, UserCheck } from "lucide-react"
 import Link from "next/link"
-import { MatriculasHeader } from "@/components/matriculas/matriculas-header"
+import { PageHeader } from "@/components/page-header"
 import { MatriculasTable } from "@/components/matriculas/matriculas-table"
 import { Suspense } from "react"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
 interface SearchParams {
   busca?: string
   status?: string
+  page?: string
   ano?: string
   turma?: string
-  page?: string
+  limit?: string
 }
 
 export default async function MatriculasPage({
@@ -29,12 +31,12 @@ export default async function MatriculasPage({
   }
 
   // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const status = searchParams.status || "todos"
-  const ano = searchParams.ano || ""
-  const turma = searchParams.turma || ""
-  const page = Number.parseInt(searchParams.page || "1")
-  const itemsPerPage = 10
+  const busca = sanitizeSearchParam(searchParams.busca)
+  const status = sanitizeSearchParam(searchParams.status)
+  const ano = sanitizeSearchParam(searchParams.ano)
+  const turma = sanitizeSearchParam(searchParams.turma)
+  const page = validatePageParam(searchParams.page)
+  const itemsPerPage = validateLimitParam(searchParams.limit)
 
   let query = supabase
     .from("matriculas")
@@ -78,22 +80,21 @@ export default async function MatriculasPage({
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <MatriculasHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Sistema de Matrículas</h1>
-            <p className="text-gray-600 mt-1">Gerencie matrículas, transferências e rematrículas</p>
-          </div>
+    <>
+      <PageHeader
+        icon={UserCheck}
+        title="Matrículas"
+        description="Gerencie matrículas, transferências e rematrículas"
+        showBackButton={false}
+        actions={
           <Button asChild>
             <Link href="/matriculas/nova">
               <Plus className="h-4 w-4 mr-2" />
               Nova Matrícula
             </Link>
           </Button>
-        </div>
+        }
+      />
 
         <Card>
           <CardHeader>
@@ -111,6 +112,8 @@ export default async function MatriculasPage({
                 turmas={turmas || []}
                 currentPage={page}
                 totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalCount={count || 0}
                 busca={busca}
                 status={status}
                 ano={ano}
@@ -119,7 +122,6 @@ export default async function MatriculasPage({
             </Suspense>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </>
   )
 }

@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/page-header"
 import { AgendaCalendar } from "@/components/agenda/agenda-calendar"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { deleteEvento } from "./actions"
 
 export default function AgendaPage() {
   const [eventos, setEventos] = useState<any[]>([])
@@ -65,18 +66,15 @@ export default function AgendaPage() {
     if (!eventoToDelete) return
 
     setIsDeleting(true)
-    console.log("[v0] Deletando evento:", eventoToDelete.id)
 
-    const { error } = await supabase.from("eventos").delete().eq("id", eventoToDelete.id)
+    const result = await deleteEvento(eventoToDelete.id)
 
-    if (error) {
-      console.error("[v0] Erro ao deletar evento:", error)
-      toast.error("Erro ao excluir evento")
+    if (result.error) {
+      toast.error(result.error)
       setIsDeleting(false)
       return
     }
 
-    console.log("[v0] Evento deletado com sucesso")
     toast.success("Evento excluído com sucesso")
     setIsDeleteDialogOpen(false)
     setEventoToDelete(null)
@@ -102,8 +100,7 @@ export default function AgendaPage() {
         subtitle="Gerencie eventos e calendário acadêmico"
         backHref="/dashboard"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
             Filtros
@@ -269,7 +266,6 @@ export default function AgendaPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-2xl">

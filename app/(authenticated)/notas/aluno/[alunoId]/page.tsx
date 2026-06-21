@@ -158,8 +158,7 @@ export default async function AlunoNotasPage({ params }: { params: Promise<{ alu
         subtitle={`Matricula: ${aluno.matricula || "N/A"} | Serie: ${aluno.nivel || "N/A"}${turma ? ` | Turma: ${turma}` : ""}`}
         backHref="/notas"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <Card>
+      <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
@@ -254,7 +253,6 @@ export default async function AlunoNotasPage({ params }: { params: Promise<{ alu
             )}
           </CardContent>
         </Card>
-      </div>
     </>
   )
 }

@@ -84,8 +84,7 @@ export default async function RelatorioTurmasPage() {
         subtitle="Informações das turmas e disciplinas"
         backHref="/relatorios"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button variant="outline">
               <Filter className="h-4 w-4 mr-2" />
@@ -148,7 +147,7 @@ export default async function RelatorioTurmasPage() {
                       <TableCell>
                         {turma.disciplinas.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {turma.disciplinas.slice(0, 2).map((disc: any, idx) => (
+                            {turma.disciplinas.slice(0, 2).map((disc: any, idx: number) => (
                               <Badge key={idx} variant="secondary" className="text-xs">
                                 {disc.disciplinas?.codigo || "N/A"}
                               </Badge>
@@ -175,7 +174,6 @@ export default async function RelatorioTurmasPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
-    </>
+      </>
   )
 }

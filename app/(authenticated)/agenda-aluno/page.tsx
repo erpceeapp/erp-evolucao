@@ -78,8 +78,7 @@ export default function AgendaAlunoPage() {
         subtitle="Registre avisos, ocorrencias e comunicados individuais para os alunos"
         backHref="/dashboard"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Filtros */}
+      {/* Filtros */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-4">
@@ -169,7 +168,6 @@ export default function AgendaAlunoPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </>
+      </>
   )
 }

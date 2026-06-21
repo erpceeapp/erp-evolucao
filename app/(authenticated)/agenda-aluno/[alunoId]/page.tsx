@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { salvarAviso, deletarAviso } from "../actions"
 import {
   BookUser,
   Plus,
@@ -140,8 +141,11 @@ export default function AgendaAlunoDetailPage() {
     data_inicio: aviso.data_aviso,
     data_fim: aviso.data_aviso,
     hora_inicio: aviso.hora_aviso,
+    hora_fim: null,
     tipo_evento: aviso.tipo_aviso,
-  }))
+    local: null,
+    created_at: aviso.created_at,
+  })) as any[]
 
   function openNewAviso() {
     setEditingAviso(null)
@@ -177,38 +181,19 @@ export default function AgendaAlunoDetailPage() {
     setSaving(true)
 
     try {
-      // Buscar o user logado para registrar como autor
-      const { data: { user } } = await supabase.auth.getUser()
+      const result = await salvarAviso({
+        alunoId,
+        titulo: formData.titulo,
+        descricao: formData.descricao || null,
+        tipo_aviso: formData.categoria,
+        data_aviso: formData.data,
+        hora_aviso: formData.hora || null,
+        editingAvisoId: editingAviso?.id,
+      })
 
-      if (editingAviso) {
-        const { error } = await supabase
-          .from("avisos_aluno")
-          .update({
-            titulo: formData.titulo,
-            descricao: formData.descricao || null,
-            tipo_aviso: formData.categoria,
-            data_aviso: formData.data,
-            hora_aviso: formData.hora || null,
-          })
-          .eq("id", editingAviso.id)
+      if (result.error) throw new Error(result.error)
 
-        if (error) throw error
-        toast.success("Aviso atualizado com sucesso")
-      } else {
-        const { error } = await supabase.from("avisos_aluno").insert({
-          aluno_id: alunoId,
-          titulo: formData.titulo,
-          descricao: formData.descricao || null,
-          tipo_aviso: formData.categoria,
-          data_aviso: formData.data,
-          hora_aviso: formData.hora || null,
-          created_by: user?.id,
-        })
-
-        if (error) throw error
-        toast.success("Aviso registrado com sucesso")
-      }
-
+      toast.success(editingAviso ? "Aviso atualizado com sucesso" : "Aviso registrado com sucesso")
       setIsFormModalOpen(false)
       loadData()
     } catch (error: any) {
@@ -222,13 +207,10 @@ export default function AgendaAlunoDetailPage() {
     if (!avisoToDelete) return
     setIsDeleting(true)
 
-    const { error } = await supabase
-      .from("avisos_aluno")
-      .delete()
-      .eq("id", avisoToDelete.id)
+    const result = await deletarAviso(avisoToDelete.id, alunoId)
 
-    if (error) {
-      toast.error(translateError(error.message || "Erro ao excluir aviso"))
+    if (result.error) {
+      toast.error(translateError(result.error || "Erro ao excluir aviso"))
       setIsDeleting(false)
       return
     }
@@ -288,8 +270,7 @@ export default function AgendaAlunoDetailPage() {
         subtitle="Avisos, ocorrencias e comunicados do aluno"
         backHref="/agenda-aluno"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Card com dados do aluno */}
+      {/* Card com dados do aluno */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -410,7 +391,6 @@ export default function AgendaAlunoDetailPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Modal de detalhes do aviso */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>

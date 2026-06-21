@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Building2, Save } from "lucide-react"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
+import { saveEscolaData } from "./actions"
 
 interface EscolaData {
   id?: string
@@ -35,7 +36,7 @@ export default function EscolaPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userTipo, setUserTipo] = useState<string | null>(null)
-  const supabase = createBrowserClient()
+  const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
@@ -80,22 +81,16 @@ export default function EscolaPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const { data: existingData } = await supabase.from("escola").select("id").limit(1).single()
+      const result = await saveEscolaData(escola)
 
-      if (existingData) {
-        const { error } = await supabase.from("escola").update(escola).eq("id", existingData.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from("escola").insert([escola])
-
-        if (error) throw error
+      if (result.error) {
+        throw new Error(result.error)
       }
 
       alert("Dados da escola salvos com sucesso!")
     } catch (error) {
       console.error("Erro ao salvar:", error)
-      alert("Erro ao salvar dados da escola")
+      alert(error instanceof Error ? error.message : "Erro ao salvar dados da escola")
     } finally {
       setSaving(false)
     }

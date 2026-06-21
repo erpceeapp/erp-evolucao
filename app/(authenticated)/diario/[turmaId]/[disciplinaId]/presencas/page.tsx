@@ -87,8 +87,12 @@ export default async function HistoricoPresencasPage({
 
   const { turma, disciplina, professor, aulas } = data
 
+  if (!turma || !disciplina || !professor) {
+    redirect("/diario")
+  }
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={History}
         title="Histórico de Presenças"
@@ -174,6 +178,6 @@ export default async function HistoricoPresencasPage({
           </CardContent>
         </Card>
       )}
-    </div>
+    </>
   )
 }
