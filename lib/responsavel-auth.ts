@@ -5,8 +5,8 @@ const COOKIE_NAME = "responsavel-session"
 const MAX_AGE = 60 * 60 * 8 // 8 horas
 
 function getSecret() {
-  const secret = process.env.SUPABASE_JWT_SECRET
-  if (!secret) throw new Error("SUPABASE_JWT_SECRET not set")
+  const secret = process.env.RESPONSAVEL_JWT_SECRET
+  if (!secret) throw new Error("RESPONSAVEL_JWT_SECRET not set. Use a different secret from SUPABASE_JWT_SECRET.")
   return new TextEncoder().encode(secret)
 }
 

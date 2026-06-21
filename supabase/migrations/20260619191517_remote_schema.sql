@@ -544,7 +544,7 @@ ALTER TABLE public.escola ADD CONSTRAINT escola_diretor_id_fkey FOREIGN KEY (dir
 ALTER TABLE public.eventos ADD CONSTRAINT eventos_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 ALTER TABLE public.links_documentos ADD CONSTRAINT links_documentos_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id);
 ALTER TABLE public.professores ADD CONSTRAINT professores_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_tipo_usuario_check CHECK (tipo_usuario = ANY (ARRAY['secretaria'::text, 'professor'::text, 'coordenacao'::text, 'diretor'::text]));
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_tipo_usuario_check CHECK (tipo_usuario = ANY (ARRAY['admin'::text, 'secretaria'::text, 'professor'::text, 'coordenacao'::text, 'diretor'::text]));
 GRANT ALL ON public.profiles TO anon;
 GRANT ALL ON public.profiles TO authenticated;
 GRANT ALL ON public.profiles TO service_role;

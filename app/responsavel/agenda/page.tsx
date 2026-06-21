@@ -64,8 +64,11 @@ export default function ResponsavelAgendaPage() {
     data_inicio: aviso.data_aviso,
     data_fim: aviso.data_aviso,
     hora_inicio: aviso.hora_aviso,
+    hora_fim: null,
     tipo_evento: aviso.tipo_aviso,
-  }))
+    local: null,
+    created_at: aviso.created_at,
+  })) as any[]
 
   if (loading) {
     return (

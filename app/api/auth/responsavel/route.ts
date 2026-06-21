@@ -19,24 +19,16 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient()
 
-    // Buscar todos os alunos do responsavel pelo email
-    const { data: alunos, error: searchError } = await supabase
+    // Buscar aluno pelo email do responsavel E CPF em uma unica query
+    const { data: aluno, error: searchError } = await supabase
       .from("alunos")
-      .select("id, nome_completo, cpf, email_responsavel, ativo")
+      .select("id, nome_completo, cpf, email_responsavel")
       .ilike("email_responsavel", emailLimpo)
+      .eq("cpf", cpfLimpo)
       .eq("ativo", true)
+      .maybeSingle()
 
-    if (searchError || !alunos) {
-      return NextResponse.json(
-        { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
-        { status: 401 }
-      )
-    }
-
-    // Filtrar pelo CPF do aluno
-    const aluno = alunos.find(a => a.cpf === cpfLimpo)
-
-    if (!aluno) {
+    if (searchError || !aluno) {
       return NextResponse.json(
         { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
         { status: 401 }
@@ -81,7 +73,7 @@ export async function POST(request: Request) {
     // Definir cookie na resposta (8 horas)
     response.cookies.set("responsavel-session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 8,
       path: "/",
