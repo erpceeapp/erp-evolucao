@@ -31,11 +31,13 @@ Before running any command — be it `pnpm`, `npx`, `git`, `docker`, `supabase`,
 
 ## Commit protocol
 
+**Every single commit requires explicit user authorization. No exceptions.**
+
 Given the identified project modifications (git status):
 
 1. Analyze all changes.
 2. List all changes by scope (front, back, infrastructure, architecture, etc.).
-3. Inform the user of the file batches along with commit messages for each batch, following semantic commit conventions.
+3. Present the user with file batches along with commit messages for each batch, following semantic commit conventions.
     - Each batch must contain: **batch number**, **commit message** (Portuguese, semantic format), and **list of files**.
     - Format example:
 
@@ -49,6 +51,8 @@ Given the identified project modifications (git status):
       ```
 
     - Each batch must depend on the previous batch.
-4. **NEVER commit without explicit user permission.** The user must first confirm the batch plan.
-5. After the commitments are executed, present a direct report with all the commitments made.
-6. Ask the user if they want to perform a push action or if you can do it for them.
+    - When multiple commits are needed, show ALL batches upfront before the first commit.
+4. **Wait for user to explicitly approve each batch before committing.**
+5. **Only commit the approved batch, then repeat for the next.**
+6. After all commits are executed, present a report with all commits made.
+7. Ask the user if they want to perform a push action or if you can do it for them.
