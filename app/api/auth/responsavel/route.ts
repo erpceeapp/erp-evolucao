@@ -1,7 +1,14 @@
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { createResponsavelSession } from "@/lib/responsavel-auth"
 import { NextResponse } from "next/server"
 import { rateLimit } from "@/lib/rate-limit"
+
+type AlunoResponsavel = {
+  id: string
+  nome_completo: string
+  cpf: string
+  email_responsavel: string
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,16 +34,15 @@ export async function POST(request: Request) {
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
     const emailLimpo = email_responsavel.trim().toLowerCase()
 
-    const supabase = createAdminClient()
+    const supabase = createResponsavelClient()
 
-    // Buscar aluno pelo email do responsavel E CPF em uma unica query
-    const { data: aluno, error: searchError } = await supabase
-      .from("alunos")
-      .select("id, nome_completo, cpf, email_responsavel")
-      .ilike("email_responsavel", emailLimpo)
-      .eq("cpf", cpfLimpo)
-      .eq("ativo", true)
-      .maybeSingle()
+    // Usa SECURITY DEFINER RPC para buscar aluno
+    const { data: aluno, error: searchError } = (await supabase
+      .rpc("buscar_aluno_responsavel", {
+        p_email: emailLimpo,
+        p_cpf: cpfLimpo,
+      })
+      .maybeSingle()) as unknown as { data: AlunoResponsavel | null; error: any }
 
     if (searchError || !aluno) {
       return NextResponse.json(
@@ -45,23 +51,20 @@ export async function POST(request: Request) {
       )
     }
 
-    // Buscar turma do aluno
-    const { data: matricula } = await supabase
-      .from("matriculas")
-      .select("turma_id")
-      .eq("aluno_id", aluno.id)
-      .neq("status", "cancelada")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
+    // Buscar turma do aluno via RPC SECURITY DEFINER
+    const { data: matricula } = (await supabase
+      .rpc("get_matricula_ativa", {
+        p_aluno_id: aluno.id,
+      })
+      .single()) as unknown as { data: { id: string; turma_id: string; status: string; numero_matricula: string } | null; error: any }
 
     let turmaNome: string | undefined
     if (matricula?.turma_id) {
-      const { data: turma } = await supabase
-        .from("turmas")
-        .select("nome")
-        .eq("id", matricula.turma_id)
-        .single()
+      const { data: turma } = (await supabase
+        .rpc("get_turma", {
+          p_turma_id: matricula.turma_id,
+        })
+        .single()) as unknown as { data: { nome: string; serie: string; turno: string } | null; error: any }
       turmaNome = turma?.nome
     }
 
