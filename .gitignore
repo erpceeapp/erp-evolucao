@@ -35,3 +35,7 @@ supabase/seed.sql
 .env.keys
 .env.local
 .env.*.local
+
+# opencode agent artifacts
+.superpowers/
+docs/superpowers/
