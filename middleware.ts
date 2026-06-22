@@ -2,7 +2,7 @@ import { updateSession } from "@/lib/supabase/middleware"
 import { verifyResponsavelToken } from "@/lib/responsavel-auth"
 import { NextResponse, type NextRequest } from "next/server"
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Rotas de API do responsavel - nao exigem autenticacao Supabase
