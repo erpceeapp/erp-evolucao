@@ -1,5 +1,5 @@
 import { getResponsavelSession } from "@/lib/responsavel-auth"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,91 +8,79 @@ import { BookOpen } from "lucide-react"
 import { ExportBoletimButton } from "@/components/notas/export-boletim-button"
 
 async function getAlunoNotas(alunoId: string) {
-  const supabase = createAdminClient()
+  const supabase = createResponsavelClient()
 
-  const { data: aluno } = await supabase
-    .from("alunos")
-    .select("id, nome_completo, matricula, nivel")
-    .eq("id", alunoId)
+  // Buscar aluno via RPC
+  const { data: alunoData } = await supabase
+    .rpc("get_aluno_basico", { p_aluno_id: alunoId })
     .single()
 
-  if (!aluno) return null
+  if (!alunoData) return null
 
-  // Buscar matriculas
-  const { data: matriculas } = await supabase
-    .from("matriculas")
-    .select("id, turma_id, status, ano_letivo")
-    .eq("aluno_id", alunoId)
-
-  const matriculasAtivas = (matriculas || []).filter(
-    (m) => m.status !== "cancelado" && m.status !== "cancelada" && m.status !== "inativo" && m.status !== "inativa"
-  )
-
-  if (matriculasAtivas.length === 0) return { aluno, disciplinas: [], turma: null, anoLetivo: null }
-
-  const turmaIds = matriculasAtivas.map((m) => m.turma_id)
-  const anoLetivo = matriculasAtivas[0]?.ano_letivo
-
-  // Buscar turma
-  const { data: turma } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .eq("id", turmaIds[0])
-    .single()
-
-  // Buscar turma_disciplinas
-  const { data: turmaDisciplinas } = await supabase
-    .from("turma_disciplinas")
-    .select("id, turma_id, disciplina_id")
-    .in("turma_id", turmaIds)
-
-  if (!turmaDisciplinas || turmaDisciplinas.length === 0) {
-    return { aluno, disciplinas: [], turma: turma?.nome, anoLetivo }
+  const aluno = alunoData as {
+    id: string
+    nome_completo: string
+    matricula: string
+    nivel: string
   }
 
-  const disciplinaIds = [...new Set(turmaDisciplinas.map((td) => td.disciplina_id))]
-
-  // Buscar disciplinas
-  const { data: disciplinas } = await supabase
-    .from("disciplinas")
-    .select("id, nome, codigo")
-    .in("id", disciplinaIds)
-
-  // Buscar notas
-  const matriculaIds = matriculasAtivas.map((m) => m.id)
-  const { data: notas } = await supabase
-    .from("notas")
-    .select("id, matricula_id, disciplina_id, bimestre, nota, observacoes")
-    .in("matricula_id", matriculaIds)
-
-  // Buscar escola
-  const { data: escola } = await supabase
-    .from("escola")
-    .select("nome, endereco, telefone, email")
+  // Buscar notas completas via RPC
+  const { data: notasData } = await supabase
+    .rpc("get_aluno_notas", { p_aluno_id: alunoId })
     .single()
 
-  // Organizar notas por disciplina
-  const disciplinasComNotas = (disciplinas || []).map((disciplina) => {
-    const notasDisciplina = (notas || []).filter((n) => n.disciplina_id === disciplina.id)
+  if (!notasData) return { aluno, disciplinas: [], turma: null, anoLetivo: null, escola: null }
 
-    const notasPorBimestre = {
-      1: notasDisciplina.find((n) => n.bimestre === 1),
-      2: notasDisciplina.find((n) => n.bimestre === 2),
-      3: notasDisciplina.find((n) => n.bimestre === 3),
-      4: notasDisciplina.find((n) => n.bimestre === 4),
+  const notas = notasData as {
+    aluno: any
+    disciplinas: Array<{
+      id: string
+      nome: string
+      codigo: string
+      notas: Record<string, { nota: number; observacoes: string } | null>
+    }>
+  }
+
+  // Buscar escola via RPC
+  const { data: escolaData } = await supabase
+    .rpc("get_escola")
+    .single()
+
+  const escola = escolaData as { nome: string; endereco: string; telefone: string; email: string } | null
+
+  // Processar disciplinas para o formato esperado pela pagina
+  const disciplinas = (notas.disciplinas || []).map((disciplina) => {
+    function toNotaVal(v: { nota: number; observacoes: string } | null | undefined): { nota: number } | undefined {
+      if (!v || v.nota == null) return undefined
+      return { nota: Number(v.nota) }
     }
 
-    const notasValidas = notasDisciplina.filter((n) => n.nota != null).map((n) => Number(n.nota))
+    const notasPorBimestre = {
+      1: toNotaVal(disciplina.notas?.["1"]),
+      2: toNotaVal(disciplina.notas?.["2"]),
+      3: toNotaVal(disciplina.notas?.["3"]),
+      4: toNotaVal(disciplina.notas?.["4"]),
+    }
+
+    const notasValidas = [notasPorBimestre[1], notasPorBimestre[2], notasPorBimestre[3], notasPorBimestre[4]]
+      .filter((n): n is { nota: number } => n !== undefined && n.nota != null)
+      .map((n) => Number(n.nota))
+
     const media = notasValidas.length > 0 ? notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length : null
 
     return {
-      ...disciplina,
+      id: disciplina.id,
+      nome: disciplina.nome,
+      codigo: disciplina.codigo,
       notas: notasPorBimestre,
       media: media ? media.toFixed(2) : "-",
     }
   })
 
-  return { aluno, disciplinas: disciplinasComNotas, turma: turma?.nome, anoLetivo, escola }
+  const turmaNome = null
+  const anoLetivo = new Date().getFullYear()
+
+  return { aluno, disciplinas, turma: turmaNome, anoLetivo, escola }
 }
 
 export default async function ResponsavelNotasPage() {

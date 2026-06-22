@@ -1,5 +1,5 @@
 import { getResponsavelSession } from "@/lib/responsavel-auth"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { NextResponse } from "next/server"
 
 export async function GET() {
@@ -8,21 +8,29 @@ export async function GET() {
     return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
   }
 
-  const supabase = createAdminClient()
+  const supabase = createResponsavelClient()
 
-  // Buscar dados do aluno
-  const { data: aluno } = await supabase
-    .from("alunos")
-    .select("id, nome_completo, email_responsavel")
-    .eq("id", session.aluno_id)
+  // Buscar dados do aluno via RPC
+  const { data: alunoData } = await supabase
+    .rpc("get_aluno_basico", { p_aluno_id: session.aluno_id })
     .single()
 
-  // Buscar avisos do aluno
-  const { data: avisos } = await supabase
-    .from("avisos_aluno")
-    .select("id, titulo, descricao, tipo_aviso, data_aviso, hora_aviso, created_at")
-    .eq("aluno_id", session.aluno_id)
-    .order("data_aviso", { ascending: false })
+  const aluno = alunoData as { id: string; nome_completo: string; email_responsavel: string } | null
 
-  return NextResponse.json({ aluno, avisos: avisos || [] })
+  // Buscar avisos via RPC
+  const { data: avisosData } = await supabase
+    .rpc("get_avisos_aluno", { p_aluno_id: session.aluno_id })
+    .single()
+
+  const avisos = (Array.isArray(avisosData) ? avisosData : []) as Array<{
+    id: string
+    titulo: string
+    descricao: string
+    tipo_aviso: string
+    data_aviso: string
+    hora_aviso: string
+    created_at: string
+  }>
+
+  return NextResponse.json({ aluno, avisos })
 }
