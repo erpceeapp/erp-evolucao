@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose"
 import { cookies } from "next/headers"
+import { createResponsavelClient } from "./supabase/responsavel-client"
 
 const COOKIE_NAME = "responsavel-session"
 const MAX_AGE = 60 * 60 * 8 // 8 horas
@@ -37,6 +38,11 @@ export async function getResponsavelSession(): Promise<ResponsavelSession | null
 
   try {
     const { payload } = await jwtVerify(token, getSecret())
+
+    // Verificar se a sessao foi revogada
+    const revoked = await checkSessionRevoked(payload.iat, payload.aluno_id as string)
+    if (revoked) return null
+
     return {
       email_responsavel: payload.email_responsavel as string,
       aluno_id: payload.aluno_id as string,
@@ -46,6 +52,27 @@ export async function getResponsavelSession(): Promise<ResponsavelSession | null
     }
   } catch {
     return null
+  }
+}
+
+export async function checkSessionRevoked(iat: number | undefined, alunoId: string): Promise<boolean> {
+  if (!iat) return false // JWT sem iat = antigo, permitir por compatibilidade
+
+  try {
+    const supabase = createResponsavelClient()
+    const { data: ultimaRevogacao } = await supabase
+      .rpc("get_ultima_revogacao", { p_aluno_id: alunoId })
+      .single()
+
+    if (!ultimaRevogacao) return false // nunca foi revogado
+
+    // iat esta em segundos (Unix timestamp), ultimaRevogacao e ISO string
+    const revogacaoMs = new Date(ultimaRevogacao as string).getTime()
+    const iatMs = iat * 1000
+
+    return iatMs < revogacaoMs
+  } catch {
+    return false // se falhar, permitir acesso (fail open)
   }
 }
 
