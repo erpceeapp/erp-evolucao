@@ -1,9 +1,19 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createResponsavelSession } from "@/lib/responsavel-auth"
 import { NextResponse } from "next/server"
+import { rateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
+    const { success } = rateLimit(ip, 5, 60_000)
+    if (!success) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tente novamente em 1 minuto." },
+        { status: 429 }
+      )
+    }
+
     const { email_responsavel, cpf } = await request.json()
 
     if (!email_responsavel || !cpf) {
