@@ -105,6 +105,13 @@
 
 .rbc-month-row {
   border-top: 1px solid var(--border);
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.rbc-row-content {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .rbc-row-bg {

@@ -7,7 +7,6 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "@/styles/agenda-rbc.css"
-import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toRbcEvent, getTipoColor, type DbEvento, type RbcEvent } from "@/lib/agenda/rbc-adapter"
 
 const locales = { "pt-BR": ptBR }
@@ -35,11 +34,22 @@ const messages = {
   noEventsInRange: "Nenhum evento neste período",
 }
 
+function CalendarHeader({ label }: { label: string }) {
+  return (
+    <div className="px-4 pt-3 pb-1 border-b">
+      <span className="text-base font-semibold capitalize">{label}</span>
+    </div>
+  )
+}
+
 const DragAndDropCalendar = withDragAndDrop(Calendar)
 
 interface AgendaRbcProps {
   eventos: DbEvento[]
-  defaultView?: View
+  date: Date
+  view: View
+  onNavigate: (date: Date) => void
+  onViewChange: (view: View) => void
   onSelectEvent?: (evento: RbcEvent) => void
   onSelectSlot?: (start: Date, end: Date) => void
   onEventDrop?: (evento: RbcEvent, start: Date, end: Date) => void
@@ -51,7 +61,10 @@ interface AgendaRbcProps {
 
 export function AgendaRbc({
   eventos,
-  defaultView = Views.MONTH,
+  date,
+  view,
+  onNavigate,
+  onViewChange,
   onSelectEvent,
   onSelectSlot,
   onEventDrop,
@@ -72,75 +85,49 @@ export function AgendaRbc({
     },
   })
 
+  const commonProps = {
+    localizer,
+    culture: "pt-BR",
+    events: rbcEvents,
+    date,
+    view,
+    views: [Views.MONTH, Views.WEEK, Views.DAY],
+    messages,
+    eventPropGetter: eventPropGetter as any,
+    onSelectEvent: onSelectEvent as any,
+    onSelectSlot: ({ start, end }: { start: Date; end: Date }) => onSelectSlot?.(start, end),
+    onNavigate,
+    onView: onViewChange,
+    selectable: true,
+    popup: true,
+    components: { toolbar: CalendarHeader },
+    style: { height: 600, ...style },
+    formats: {
+      dayFormat: (d: Date) => format(d, "EEE", { locale: ptBR }),
+      weekdayFormat: (d: Date) => format(d, "EEE", { locale: ptBR }),
+      monthHeaderFormat: (d: Date) => `${format(d, "MMMM", { locale: ptBR })} de ${format(d, "yyyy")}`,
+      dayHeaderFormat: (d: Date) =>
+        `${format(d, "EEEE", { locale: ptBR })} - ${format(d, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`,
+      agendaHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
+        `${format(start, "dd/MM", { locale: ptBR })} - ${format(end, "dd/MM/yyyy", { locale: ptBR })}`,
+    },
+    tooltipAccessor: (event: any) => {
+      const parts = [event.title]
+      if (event.resource.descricao) parts.push(`\n${event.resource.descricao}`)
+      if (event.resource.hora_inicio) {
+        parts.push(`\n${event.resource.hora_inicio}${event.resource.hora_fim ? ` - ${event.resource.hora_fim}` : ""}`)
+      }
+      return parts.join("")
+    },
+  }
+
   if (!draggable) {
-    return (
-      <Calendar
-        localizer={localizer}
-        culture="pt-BR"
-        events={rbcEvents}
-        defaultView={defaultView}
-        views={[Views.MONTH, Views.WEEK, Views.DAY]}
-        messages={messages}
-        eventPropGetter={eventPropGetter}
-        onSelectEvent={onSelectEvent}
-        onSelectSlot={({ start, end }) => onSelectSlot?.(start, end)}
-        selectable
-        popup
-        components={{ toolbar: AgendaToolbar }}
-        style={{ height: 600, ...style }}
-        formats={{
-          dayFormat: (date: Date) => format(date, "EEE", { locale: ptBR }),
-          weekdayFormat: (date: Date) => format(date, "EEE", { locale: ptBR }),
-          monthHeaderFormat: (date: Date) => `${format(date, "MMMM", { locale: ptBR })} de ${format(date, "yyyy")}`,
-          dayHeaderFormat: (date: Date) =>
-            `${format(date, "EEEE", { locale: ptBR })} - ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`,
-          agendaHeaderFormat: ({ start, end }) =>
-            `${format(start, "dd/MM", { locale: ptBR })} - ${format(end, "dd/MM/yyyy", { locale: ptBR })}`,
-        }}
-        tooltipAccessor={(event: any) => {
-          const parts = [event.title]
-          if (event.resource.descricao) parts.push(`\n${event.resource.descricao}`)
-          if (event.resource.hora_inicio) {
-            parts.push(`\n${event.resource.hora_inicio}${event.resource.hora_fim ? ` - ${event.resource.hora_fim}` : ""}`)
-          }
-          return parts.join("")
-        }}
-      />
-    )
+    return <Calendar {...commonProps} />
   }
 
   return (
     <DragAndDropCalendar
-      localizer={localizer}
-      culture="pt-BR"
-      events={rbcEvents}
-      defaultView={defaultView}
-      views={[Views.MONTH, Views.WEEK, Views.DAY]}
-      messages={messages}
-      eventPropGetter={eventPropGetter as any}
-      onSelectEvent={onSelectEvent as any}
-      onSelectSlot={({ start, end }: { start: Date; end: Date }) => onSelectSlot?.(start, end)}
-      selectable
-      popup
-      components={{ toolbar: AgendaToolbar }}
-      style={{ height: 600, ...style }}
-      formats={{
-        dayFormat: (date: Date) => format(date, "EEE", { locale: ptBR }),
-        weekdayFormat: (date: Date) => format(date, "EEE", { locale: ptBR }),
-        monthHeaderFormat: (date: Date) => `${format(date, "MMMM", { locale: ptBR })} de ${format(date, "yyyy")}`,
-        dayHeaderFormat: (date: Date) =>
-          `${format(date, "EEEE", { locale: ptBR })} - ${format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`,
-        agendaHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
-          `${format(start, "dd/MM", { locale: ptBR })} - ${format(end, "dd/MM/yyyy", { locale: ptBR })}`,
-      }}
-      tooltipAccessor={(event: any) => {
-        const parts = [event.title]
-        if (event.resource.descricao) parts.push(`\n${event.resource.descricao}`)
-        if (event.resource.hora_inicio) {
-          parts.push(`\n${event.resource.hora_inicio}${event.resource.hora_fim ? ` - ${event.resource.hora_fim}` : ""}`)
-        }
-        return parts.join("")
-      }}
+      {...commonProps}
       onEventDrop={({ event, start, end }: any) => onEventDrop?.(event, start, end)}
       onEventResize={({ event, start, end }: any) => onEventResize?.(event, start, end)}
       draggableAccessor={() => true}

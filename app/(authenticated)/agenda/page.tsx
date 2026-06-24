@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Calendar, Plus, Edit2, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,12 +26,17 @@ import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { AgendaRbc } from "@/components/agenda/agenda-rbc"
+import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toast } from "sonner"
 import { createEvento, updateEvento, deleteEvento } from "./actions"
 import { toDbUpdate, type DbEvento, type RbcEvent } from "@/lib/agenda/rbc-adapter"
+import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from "date-fns"
+import type { View } from "react-big-calendar"
 
 export default function AgendaPage() {
   const [eventos, setEventos] = useState<DbEvento[]>([])
+  const [calendarDate, setCalendarDate] = useState(new Date())
+  const [calendarView, setCalendarView] = useState<View>("month")
   const [selectedEvento, setSelectedEvento] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [eventoToDelete, setEventoToDelete] = useState<any>(null)
@@ -93,7 +98,6 @@ export default function AgendaPage() {
     const { data, error } = await supabase.from("eventos").select("*").order("data_inicio", { ascending: true })
 
     if (error) {
-      console.error("[v0] Erro ao buscar eventos:", error)
       toast.error("Erro ao carregar eventos")
       return
     }
@@ -101,7 +105,31 @@ export default function AgendaPage() {
     setEventos(data || [])
   }
 
-  function handleEventClick(rbcEvent: RbcEvent) {
+  const handleNavigate = useCallback((action: "TODAY" | "PREV" | "NEXT" | "DATE", date?: Date) => {
+    if (action === "TODAY") {
+      setCalendarDate(new Date())
+    } else if (action === "PREV") {
+      setCalendarDate((prev) => {
+        if (calendarView === "month") return subMonths(prev, 1)
+        if (calendarView === "week") return subWeeks(prev, 1)
+        return subDays(prev, 1)
+      })
+    } else if (action === "NEXT") {
+      setCalendarDate((prev) => {
+        if (calendarView === "month") return addMonths(prev, 1)
+        if (calendarView === "week") return addWeeks(prev, 1)
+        return addDays(prev, 1)
+      })
+    } else if (action === "DATE" && date) {
+      setCalendarDate(date)
+    }
+  }, [calendarView])
+
+  const handleViewChange = useCallback((view: View) => {
+    setCalendarView(view)
+  }, [])
+
+  function handleClickEvent(rbcEvent: RbcEvent) {
     const evento = eventos.find((e) => e.id === rbcEvent.id)
     if (evento) {
       setSelectedEvento(evento)
@@ -134,10 +162,10 @@ export default function AgendaPage() {
     const result = await updateEvento(rbcEvent.id, {
       titulo: original.titulo,
       descricao: original.descricao,
-      data_inicio: updates.data_inicio ?? original.data_inicio,
-      data_fim: updates.data_fim ?? original.data_fim ?? null,
-      hora_inicio: updates.hora_inicio ?? original.hora_inicio ?? null,
-      hora_fim: updates.hora_fim ?? original.hora_fim ?? null,
+      data_inicio: updates.data_inicio,
+      data_fim: updates.data_fim,
+      hora_inicio: updates.hora_inicio,
+      hora_fim: updates.hora_fim,
       tipo_evento: original.tipo_evento,
     })
 
@@ -304,17 +332,30 @@ export default function AgendaPage() {
         }
       />
 
-      <div style={{ height: "calc(100vh - 112px)" }}>
-        <AgendaRbc
-          eventos={eventos}
-          onSelectEvent={handleEventClick}
-          onSelectSlot={handleSlotClick}
-          onEventDrop={handleEventDrop}
-          onEventResize={handleEventResize}
-          draggable
-          resizable
-          style={{ height: "calc(100vh - 112px)" }}
+      <div className="space-y-4">
+        <AgendaToolbar
+          date={calendarDate}
+          view={calendarView}
+          views={["month", "week", "day"]}
+          onView={handleViewChange}
+          onNavigate={handleNavigate}
         />
+        <div style={{ height: "calc(100vh - 180px)" }}>
+          <AgendaRbc
+            eventos={eventos}
+            date={calendarDate}
+            view={calendarView}
+            onNavigate={(d) => setCalendarDate(d)}
+            onViewChange={(v) => setCalendarView(v)}
+            onSelectEvent={handleClickEvent}
+            onSelectSlot={handleSlotClick}
+            onEventDrop={handleEventDrop}
+            onEventResize={handleEventResize}
+            draggable
+            resizable
+            style={{ height: "100%" }}
+          />
+        </div>
       </div>
 
       <Card className="mt-6">

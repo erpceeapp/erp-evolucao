@@ -101,11 +101,23 @@ export function toRbcEvent(evento: DbEvento): RbcEvent {
 
 export function toDbUpdate(
   rbcEvent: RbcEvent,
-  original: DbEvento,
-): Partial<DbEvento> {
+  _original: DbEvento,
+): {
+  data_inicio: string
+  data_fim: string | null
+  hora_inicio: string | null
+  hora_fim: string | null
+} {
   const startDate = formatDate(rbcEvent.start)
   const startTime = rbcEvent.allDay ? null : formatTime(rbcEvent.start)
-  const endDate = formatDate(rbcEvent.end)
+
+  let endDate = formatDate(rbcEvent.end)
+  if (rbcEvent.allDay) {
+    const adjusted = new Date(rbcEvent.end)
+    adjusted.setDate(adjusted.getDate() - 1)
+    endDate = formatDate(adjusted)
+  }
+
   const endTime = rbcEvent.allDay
     ? null
     : rbcEvent.resource.hora_fim

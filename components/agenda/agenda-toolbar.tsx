@@ -32,7 +32,15 @@ const viewNames: Record<string, string> = {
   day: "Dia",
 }
 
-export function AgendaToolbar({ date, view, views, label: _label, onNavigate, onView }: any) {
+interface AgendaToolbarProps {
+  date: Date
+  view: View
+  views: View[]
+  onView: (view: View) => void
+  onNavigate: (action: "TODAY" | "PREV" | "NEXT" | "DATE", date?: Date) => void
+}
+
+export function AgendaToolbar({ date, view, views, onView, onNavigate }: AgendaToolbarProps) {
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const dateValue = format(date, "yyyy-MM-dd")
