@@ -30,6 +30,7 @@ next-env.d.ts
 supabase/.branches
 supabase/.temp
 supabase/seed.sql
+supabase/snippets 
 
 # dotenvx
 .env.keys
@@ -39,3 +40,6 @@ supabase/seed.sql
 # opencode agent artifacts
 .superpowers/
 docs/superpowers/
+
+# contract
+.contract/
