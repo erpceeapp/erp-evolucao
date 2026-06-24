@@ -74,6 +74,29 @@ export default async function TurmasPage({
     console.error("Erro ao buscar turmas:", turmasError)
   }
 
+  // Buscar quantidade de alunos matriculados ativos por turma
+  const turmaIds = (turmas || []).map((t) => t.id)
+  const alunosCount: Record<string, number> = {}
+
+  if (turmaIds.length > 0) {
+    const { data: counts } = await supabase
+      .from("matriculas")
+      .select("turma_id")
+      .eq("status", "ativa")
+      .in("turma_id", turmaIds)
+
+    if (counts) {
+      for (const row of counts) {
+        alunosCount[row.turma_id] = (alunosCount[row.turma_id] || 0) + 1
+      }
+    }
+  }
+
+  const turmasComCount = (turmas || []).map((t) => ({
+    ...t,
+    alunos_matriculados: alunosCount[t.id] || 0,
+  }))
+
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
@@ -113,7 +136,7 @@ export default async function TurmasPage({
           <CardContent>
             <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando turmas...</div>}>
               <TurmasTable
-                turmas={turmas || []}
+                turmas={turmasComCount}
                 currentPage={page}
                 totalPages={totalPages}
                 pageSize={itemsPerPage}

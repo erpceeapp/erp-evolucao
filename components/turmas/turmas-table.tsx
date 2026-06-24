@@ -19,6 +19,7 @@ interface Turma {
   serie: string
   turno: string
   capacidade_maxima?: number
+  alunos_matriculados?: number
   professor_responsavel?: {
     nome_completo: string
   }
@@ -189,7 +190,9 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-gray-400" />
-                      {turma.capacidade_maxima || "-"}
+                      {turma.capacidade_maxima
+                        ? `${turma.alunos_matriculados ?? "?"}/${turma.capacidade_maxima}`
+                        : "-"}
                     </div>
                   </TableCell>
                   <TableCell>

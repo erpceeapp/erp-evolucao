@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Save, ArrowLeft } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Check, ChevronsUpDown, Save, ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
 
 interface TurmaData {
@@ -33,6 +36,64 @@ interface TurmaFormProps {
   turma?: TurmaData & { id: string }
   professores: Professor[]
   isEditing?: boolean
+}
+
+function ProfessorSelect({
+  value,
+  professores,
+  onChange,
+}: {
+  value: string
+  professores: Professor[]
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const selected = professores.find((p) => p.id === value)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+          {selected ? selected.nome_completo : "Nenhum professor"}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full min-w-[300px] p-0">
+        <Command>
+          <CommandInput placeholder="Buscar professor..." />
+          <CommandList>
+            <CommandEmpty>Nenhum professor encontrado</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="none"
+                onSelect={() => {
+                  onChange("none")
+                  setOpen(false)
+                }}
+              >
+                <Check className={cn("mr-2 h-4 w-4", value === "none" ? "opacity-100" : "opacity-0")} />
+                Nenhum professor
+              </CommandItem>
+              {professores.map((professor) => (
+                <CommandItem
+                  key={professor.id}
+                  value={professor.id}
+                  onSelect={() => {
+                    onChange(professor.id)
+                    setOpen(false)
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === professor.id ? "opacity-100" : "opacity-0")} />
+                  {professor.nome_completo}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormProps) {
@@ -175,7 +236,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ano_letivo">Ano Letivo *</Label>
                 <Select value={formData.ano_letivo} onValueChange={(value) => handleInputChange("ano_letivo", value)}>
@@ -215,26 +276,14 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
                   onChange={(e) => handleInputChange("capacidade_maxima", e.target.value)}
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="professor_responsavel_id">Professor Responsável</Label>
-              <Select
-                value={formData.professor_responsavel_id}
-                onValueChange={(value) => handleInputChange("professor_responsavel_id", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um professor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum professor</SelectItem>
-                  {professores.map((professor) => (
-                    <SelectItem key={professor.id} value={professor.id}>
-                      {professor.nome_completo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Professor Responsável</Label>
+                <ProfessorSelect
+                  value={formData.professor_responsavel_id}
+                  professores={professores}
+                  onChange={(value) => handleInputChange("professor_responsavel_id", value)}
+                />
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
