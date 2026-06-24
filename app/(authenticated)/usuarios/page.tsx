@@ -16,6 +16,8 @@ interface SearchParams {
   limit?: string
 }
 
+const ALLOWED_ROLES = ["admin", "diretor", "coordenacao", "secretaria"]
+
 export default async function UsuariosPage({
   searchParams,
 }: {
@@ -34,7 +36,7 @@ export default async function UsuariosPage({
     .eq("id", user.id)
     .single()
 
-  if (!profile || profile.tipo_usuario !== "admin") {
+  if (!profile || !ALLOWED_ROLES.includes(profile.tipo_usuario)) {
     redirect("/dashboard")
   }
 
@@ -55,6 +57,10 @@ export default async function UsuariosPage({
     .select("id, nome_completo, email, tipo_usuario, created_at", { count: "exact" })
     .order(finalSortBy, { ascending: finalSortOrder })
 
+  if (profile.tipo_usuario !== "admin") {
+    query = query.neq("tipo_usuario", "admin")
+  }
+
   if (busca) {
     query = query.or(`nome_completo.ilike.%${busca}%,email.ilike.%${busca}%`)
   }
@@ -73,7 +79,6 @@ export default async function UsuariosPage({
     console.error("Erro ao buscar usuarios:", usuariosError)
   }
 
-  // Buscar convites pendentes
   const { data: invites } = await supabase
     .from("user_invites")
     .select("*")
@@ -81,13 +86,15 @@ export default async function UsuariosPage({
 
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
+  const showInviteButton = ["admin", "diretor", "coordenacao"].includes(profile.tipo_usuario)
+
   return (
     <>
       <PageHeader
         icon={Users}
         title="Usuários"
         description="Gerencie os usuários que têm acesso ao sistema"
-        actions={<InviteUserDialog />}
+        actions={showInviteButton ? <InviteUserDialog currentUserTipo={profile.tipo_usuario} /> : undefined}
       />
 
       <div className="space-y-6">
@@ -134,6 +141,7 @@ export default async function UsuariosPage({
               tipo={tipo}
               sortBy={finalSortBy}
               sortOrder={sortOrder}
+              currentUserTipo={profile.tipo_usuario}
             />
           </CardContent>
         </Card>

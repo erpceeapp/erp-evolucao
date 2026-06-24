@@ -4,22 +4,31 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
 
-export async function createInvite(email: string, tipo_usuario: string) {
-  const supabase = await createClient()
+const CAN_CREATE = ["admin", "diretor"]
+const CAN_EDIT = ["admin", "diretor", "coordenacao", "secretaria"]
 
+async function getCurrentUserTipo(supabase: Awaited<ReturnType<typeof createClient>>) {
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: "Usuário nao autenticado" }
-  }
-
+  if (!user) return null
   const { data: profile } = await supabase
     .from("profiles")
     .select("tipo_usuario")
     .eq("id", user.id)
     .single()
+  return profile?.tipo_usuario ?? null
+}
 
-  if (!profile || profile.tipo_usuario !== "admin") {
+export async function createInvite(email: string, tipo_usuario: string) {
+  const supabase = await createClient()
+
+  const tipo = await getCurrentUserTipo(supabase)
+  if (!tipo || !CAN_CREATE.includes(tipo)) {
     return { error: "Sem permissao para criar convites" }
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "Usuário nao autenticado" }
   }
 
   const token = crypto.randomUUID()
@@ -47,18 +56,8 @@ export async function createInvite(email: string, tipo_usuario: string) {
 export async function deleteInvite(inviteId: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: "Usuário nao autenticado" }
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tipo_usuario")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile || profile.tipo_usuario !== "admin") {
+  const tipo = await getCurrentUserTipo(supabase)
+  if (!tipo || !CAN_CREATE.includes(tipo)) {
     return { error: "Sem permissao para excluir convites" }
   }
 
@@ -66,6 +65,35 @@ export async function deleteInvite(inviteId: string) {
 
   if (error) {
     return { error: error.message }
+  }
+
+  revalidatePath("/usuarios")
+  return { success: true }
+}
+
+export async function deleteUser(userId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "Usuário nao autenticado" }
+  }
+
+  if (user.id === userId) {
+    return { error: "Você não pode excluir o próprio usuário" }
+  }
+
+  const tipo = await getCurrentUserTipo(supabase)
+  if (!tipo || !CAN_CREATE.includes(tipo)) {
+    return { error: "Sem permissao" }
+  }
+
+  const { error: rpcError } = await supabase.rpc("admin_delete_user", {
+    p_user_id: userId,
+  })
+
+  if (rpcError) {
+    return { error: `Erro ao excluir usuário: ${rpcError.message}` }
   }
 
   revalidatePath("/usuarios")
@@ -83,18 +111,8 @@ export async function updateUser(
 ) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: "Usuário nao autenticado" }
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tipo_usuario")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile || profile.tipo_usuario !== "admin") {
+  const tipo = await getCurrentUserTipo(supabase)
+  if (!tipo || !CAN_EDIT.includes(tipo)) {
     return { error: "Sem permissao" }
   }
 
@@ -129,40 +147,6 @@ export async function updateUser(
     if (rpcError) {
       return { error: `Erro ao atualizar perfil: ${rpcError.message}` }
     }
-  }
-
-  revalidatePath("/usuarios")
-  return { success: true }
-}
-
-export async function deleteUser(userId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: "Usuário nao autenticado" }
-  }
-
-  if (user.id === userId) {
-    return { error: "Você não pode excluir o próprio usuário" }
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tipo_usuario")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile || profile.tipo_usuario !== "admin") {
-    return { error: "Sem permissao" }
-  }
-
-  const { error: rpcError } = await supabase.rpc("admin_delete_user", {
-    p_user_id: userId,
-  })
-
-  if (rpcError) {
-    return { error: `Erro ao excluir usuário: ${rpcError.message}` }
   }
 
   revalidatePath("/usuarios")

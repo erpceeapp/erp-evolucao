@@ -18,7 +18,11 @@ const tipoOptions = [
   { value: "diretor", label: "Diretor" },
 ]
 
-export function InviteUserDialog() {
+interface InviteUserDialogProps {
+  currentUserTipo?: string
+}
+
+export function InviteUserDialog({ currentUserTipo }: InviteUserDialogProps) {
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [tipo, setTipo] = useState("")

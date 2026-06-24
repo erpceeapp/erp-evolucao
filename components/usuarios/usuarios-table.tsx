@@ -32,6 +32,7 @@ interface UsuariosTableProps {
   tipo: string
   sortBy: string
   sortOrder: string
+  currentUserTipo: string
 }
 
 const tipoOptions = [
@@ -202,7 +203,7 @@ function EditUserDialog({ user }: { user: Profile }) {
   )
 }
 
-export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, totalCount, busca, tipo, sortBy, sortOrder }: UsuariosTableProps) {
+export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, totalCount, busca, tipo, sortBy, sortOrder, currentUserTipo }: UsuariosTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -284,68 +285,70 @@ export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, tot
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os Tipos</SelectItem>
-            {tipoOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+                {tipoOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHead key={col.key}>
-                  <button
-                    onClick={() => handleSort(col.key)}
-                    className={cn(
-                      "flex items-center gap-1 text-xs font-medium uppercase tracking-wider",
-                      sortBy === col.key ? "text-gray-900" : "text-gray-500",
-                    )}
-                  >
-                    {col.label}
-                    <SortIcon column={col.key} />
-                  </button>
-                </TableHead>
-              ))}
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {usuarios.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  Nenhum usuário encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              usuarios.map((usuario) => (
-                <TableRow key={usuario.id}>
-                  <TableCell>
-                    <div className="font-medium">{usuario.nome_completo || "—"}</div>
-                  </TableCell>
-                  <TableCell className="text-gray-600">{usuario.email}</TableCell>
-                  <TableCell>
-                    <Badge className={getTipoBadgeColor(usuario.tipo_usuario)} variant="outline">
-                      {getTipoLabel(usuario.tipo_usuario)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-gray-500 text-sm">
-                    {new Date(usuario.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <EditUserDialog user={usuario} />
-                      <DeleteUserDialog user={usuario} />
-                    </div>
-                  </TableCell>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {columns.map((col) => (
+                    <TableHead key={col.key}>
+                      <button
+                        onClick={() => handleSort(col.key)}
+                        className={cn(
+                          "flex items-center gap-1 text-xs font-medium uppercase tracking-wider",
+                          sortBy === col.key ? "text-gray-900" : "text-gray-500",
+                        )}
+                      >
+                        {col.label}
+                        <SortIcon column={col.key} />
+                      </button>
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {usuarios.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      Nenhum usuário encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  usuarios.map((usuario) => (
+                    <TableRow key={usuario.id}>
+                      <TableCell>
+                        <div className="font-medium">{usuario.nome_completo || "—"}</div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">{usuario.email}</TableCell>
+                      <TableCell>
+                        <Badge className={getTipoBadgeColor(usuario.tipo_usuario)} variant="outline">
+                          {getTipoLabel(usuario.tipo_usuario)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-gray-500 text-sm">
+                        {new Date(usuario.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <EditUserDialog user={usuario} />
+                          {["admin", "diretor"].includes(currentUserTipo) && (
+                            <DeleteUserDialog user={usuario} />
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
       <DataPagination
         currentPage={currentPage}

@@ -106,7 +106,7 @@ export interface Profile {
   id: string
   user_id: string
   primeira_senha: boolean
-  tipo_usuario: "admin" | "professor" | "secretaria"
+  tipo_usuario: "admin" | "professor" | "secretaria" | "coordenacao" | "diretor"
   created_at: string
   updated_at: string
 }
