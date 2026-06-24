@@ -33,7 +33,7 @@ export default async function ConfiguracoesPage() {
       icon: Users,
       title: "Gerenciar Usuários",
       description: "Gerencie usuários e permissões do sistema",
-      href: "/gerenciar-usuarios",
+      href: "/usuarios",
       adminOnly: true,
     },
     {
