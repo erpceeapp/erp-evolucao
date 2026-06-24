@@ -10,8 +10,9 @@ import { PageHeader } from "@/components/page-header"
 import { GerenciarAlunosTurma } from "@/components/turmas/gerenciar-alunos-turma"
 import { GerenciarDisciplinasTurma } from "@/components/turmas/gerenciar-disciplinas-turma"
 
-export default async function TurmaDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "nova") {
+export default async function TurmaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  if (id === "nova") {
     redirect("/turmas/nova")
   }
 
@@ -22,7 +23,7 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
     redirect("/auth/login")
   }
 
-  if (!params.id || params.id === "undefined" || params.id === "null") {
+  if (!id || id === "undefined" || id === "null") {
     notFound()
   }
 
@@ -33,7 +34,7 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
       *,
       professor_responsavel:professores!turmas_professor_responsavel_id_fkey(nome_completo, email, telefone)
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (turmaError || !turma) {
@@ -48,13 +49,13 @@ export default async function TurmaDetalhePage({ params }: { params: { id: strin
       disciplina:disciplinas!turma_disciplinas_disciplina_id_fkey(nome, codigo, carga_horaria),
       professor:professores!turma_disciplinas_professor_id_fkey(nome_completo)
     `)
-    .eq("turma_id", params.id)
+    .eq("turma_id", id)
 
   // Buscar matrículas ativas da turma
   const { data: matriculas, count: totalAlunos } = await supabase
     .from("matriculas")
     .select("id, aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, cpf)", { count: "exact" })
-    .eq("turma_id", params.id)
+    .eq("turma_id", id)
     .eq("status", "ativa")
 
   const { data: todosAlunos } = await supabase

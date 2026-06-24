@@ -21,8 +21,9 @@ interface SearchParams {
 export default async function MatriculasPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -31,12 +32,12 @@ export default async function MatriculasPage({
   }
 
   // Parâmetros de busca
-  const busca = sanitizeSearchParam(searchParams.busca)
-  const status = sanitizeSearchParam(searchParams.status)
-  const ano = sanitizeSearchParam(searchParams.ano)
-  const turma = sanitizeSearchParam(searchParams.turma)
-  const page = validatePageParam(searchParams.page)
-  const itemsPerPage = validateLimitParam(searchParams.limit)
+  const busca = sanitizeSearchParam(params.busca)
+  const status = sanitizeSearchParam(params.status) || "ativa"
+  const ano = sanitizeSearchParam(params.ano)
+  const turma = sanitizeSearchParam(params.turma)
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   let query = supabase
     .from("matriculas")

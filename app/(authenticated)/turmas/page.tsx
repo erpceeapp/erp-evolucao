@@ -20,8 +20,9 @@ interface SearchParams {
 export default async function TurmasPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -30,11 +31,11 @@ export default async function TurmasPage({
   }
 
   // Parâmetros de busca
-  const busca = sanitizeSearchParam(searchParams.busca)
-  const ano = sanitizeSearchParam(searchParams.ano)
-  const status = sanitizeSearchParam(searchParams.status)
-  const page = validatePageParam(searchParams.page)
-  const itemsPerPage = validateLimitParam(searchParams.limit)
+  const busca = sanitizeSearchParam(params.busca)
+  const ano = sanitizeSearchParam(params.ano) || String(new Date().getFullYear())
+  const status = sanitizeSearchParam(params.status) || "ativo"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar turmas com professor responsável
   let query = supabase

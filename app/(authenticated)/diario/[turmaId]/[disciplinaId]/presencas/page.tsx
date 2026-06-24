@@ -67,8 +67,9 @@ async function getPresencasHistorico(turmaId: string, disciplinaId: string) {
 export default async function HistoricoPresencasPage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const { turmaId, disciplinaId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -79,7 +80,7 @@ export default async function HistoricoPresencasPage({
     redirect("/auth/login")
   }
 
-  const data = await getPresencasHistorico(params.turmaId, params.disciplinaId)
+  const data = await getPresencasHistorico(turmaId, disciplinaId)
 
   if (!data) {
     redirect("/diario")
@@ -97,10 +98,10 @@ export default async function HistoricoPresencasPage({
         icon={History}
         title="Histórico de Presenças"
         description={`${disciplina.nome} - ${turma.nome} - Prof. ${professor.nome_completo}`}
-        backHref={`/diario/${params.turmaId}/${params.disciplinaId}`}
+        backHref={`/diario/${turmaId}/${disciplinaId}`}
       >
         <Button asChild>
-          <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
+          <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
             <Calendar className="h-4 w-4 mr-2" />
             Nova Chamada
           </Link>
@@ -114,7 +115,7 @@ export default async function HistoricoPresencasPage({
             <h3 className="text-lg font-semibold mb-2">Nenhuma aula registrada</h3>
             <p className="text-sm text-muted-foreground mb-4">Comece registrando a primeira chamada da turma</p>
             <Button asChild>
-              <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
+              <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
                 <Calendar className="h-4 w-4 mr-2" />
                 Registrar Presença
               </Link>
@@ -166,7 +167,7 @@ export default async function HistoricoPresencasPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild size="sm" variant="ghost">
-                        <Link href={`/diario/${params.turmaId}/${params.disciplinaId}/presencas/${aula.id}`}>
+                        <Link href={`/diario/${turmaId}/${disciplinaId}/presencas/${aula.id}`}>
                           Ver Detalhes
                         </Link>
                       </Button>

@@ -32,7 +32,7 @@ export default async function DisciplinasPage({
 
   // Parâmetros de busca
   const busca = sanitizeSearchParam(params.busca)
-  const status = sanitizeSearchParam(params.status)
+  const status = sanitizeSearchParam(params.status) || "ativo"
   const page = validatePageParam(params.page)
   const itemsPerPage = validateLimitParam(params.limit)
 

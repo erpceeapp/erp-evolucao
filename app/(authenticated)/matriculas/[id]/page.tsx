@@ -9,8 +9,10 @@ import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { DeleteMatriculaButton } from "@/components/matriculas/delete-matricula-button"
 
-export default async function MatriculaDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "nova") {
+export default async function MatriculaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  if (id === "nova") {
     redirect("/matriculas/nova")
   }
 
@@ -41,7 +43,7 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
       turma:turmas(*, professor_responsavel:professores(nome_completo))
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (matriculaError || !matricula) {

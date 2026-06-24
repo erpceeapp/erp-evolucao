@@ -4,7 +4,8 @@ import { BookOpen } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { TurmaForm } from "@/components/turmas/turma-form"
 
-export default async function EditarTurmaPage({ params }: { params: { id: string } }) {
+export default async function EditarTurmaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -13,7 +14,7 @@ export default async function EditarTurmaPage({ params }: { params: { id: string
   }
 
   // Buscar dados da turma
-  const { data: turma, error: turmaError } = await supabase.from("turmas").select("*").eq("id", params.id).single()
+  const { data: turma, error: turmaError } = await supabase.from("turmas").select("*").eq("id", id).single()
 
   if (turmaError || !turma) {
     notFound()
@@ -32,7 +33,7 @@ export default async function EditarTurmaPage({ params }: { params: { id: string
         icon={BookOpen}
         title="Editar Turma"
         description={`Atualize os dados de ${turma.nome}`}
-        backHref={`/turmas/${params.id}`}
+        backHref={`/turmas/${id}`}
       />
 
       <TurmaForm turma={turma} professores={professores || []} isEditing={true} />

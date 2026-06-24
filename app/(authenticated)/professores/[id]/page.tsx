@@ -8,8 +8,9 @@ import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, GraduationCap, DollarSi
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
-export default async function ProfessorDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "novo") {
+export default async function ProfessorDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  if (id === "novo") {
     redirect("/professores/novo")
   }
 
@@ -34,7 +35,7 @@ export default async function ProfessorDetalhePage({ params }: { params: { id: s
   const { data: professor, error: professorError } = await supabase
     .from("professores")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (professorError || !professor) {

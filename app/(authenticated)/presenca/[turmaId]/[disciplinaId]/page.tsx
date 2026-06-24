@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Users, Save, Check, X, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -29,8 +29,9 @@ interface TurmaDisciplina {
 export default function PresencaPage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const p = use(params)
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [turmaDisciplina, setTurmaDisciplina] = useState<TurmaDisciplina | null>(null)
   const [presencas, setPresencas] = useState<Record<string, "presente" | "ausente" | "justificado">>({})
@@ -54,8 +55,8 @@ export default function PresencaPage({
       const { data: tdData, error: tdError } = await supabase
         .from("turma_disciplinas")
         .select("*")
-        .eq("turma_id", params.turmaId)
-        .eq("disciplina_id", params.disciplinaId)
+        .eq("turma_id", p.turmaId)
+        .eq("disciplina_id", p.disciplinaId)
         .single()
 
       if (tdError) {
@@ -72,14 +73,14 @@ export default function PresencaPage({
       const { data: turma } = await supabase
         .from("turmas")
         .select("nome, serie, ano_letivo")
-        .eq("id", params.turmaId)
+        .eq("id", p.turmaId)
         .single()
 
       // Buscar disciplina separadamente
       const { data: disciplina } = await supabase
         .from("disciplinas")
         .select("nome, codigo")
-        .eq("id", params.disciplinaId)
+        .eq("id", p.disciplinaId)
         .single()
 
       // Buscar professor separadamente
@@ -100,7 +101,7 @@ export default function PresencaPage({
       const { data: matriculas, error: matriculasError } = await supabase
         .from("matriculas")
         .select("aluno_id")
-        .eq("turma_id", params.turmaId)
+        .eq("turma_id", p.turmaId)
         .eq("status", "ativa")
 
       if (matriculasError) {
@@ -186,8 +187,8 @@ export default function PresencaPage({
         horaFim,
         conteudo,
         presencas,
-        turmaId: params.turmaId,
-        disciplinaId: params.disciplinaId,
+        turmaId: p.turmaId,
+        disciplinaId: p.disciplinaId,
       })
 
       if (result.error) throw new Error(result.error)
@@ -197,7 +198,7 @@ export default function PresencaPage({
         description: "Aula e presenças registradas com sucesso!",
       })
 
-      router.push(`/diario/${params.turmaId}/${params.disciplinaId}`)
+      router.push(`/diario/${p.turmaId}/${p.disciplinaId}`)
       router.refresh()
     } catch (error) {
       toast({
@@ -235,7 +236,7 @@ export default function PresencaPage({
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/diario/${params.turmaId}/${params.disciplinaId}`}>
+            <Link href={`/diario/${p.turmaId}/${p.disciplinaId}`}>
               <BookOpen className="h-4 w-4 mr-2" />
               Ver Diário
             </Link>

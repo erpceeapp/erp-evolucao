@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
-import { useEffect } from "react"
+import { useEffect, use } from "react"
 
 import { useState } from "react"
 import { salvarPresencas } from "./actions"
@@ -115,8 +115,9 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
 export default function AulaDetalhePage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string; aulaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string; aulaId: string }>
 }) {
+  const p = use(params)
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [presencas, setPresencas] = useState<any[]>([])
@@ -128,7 +129,7 @@ export default function AulaDetalhePage({
   }, [])
 
   async function loadData() {
-    const result = await getAulaDetalhes(params.aulaId, params.turmaId, params.disciplinaId)
+    const result = await getAulaDetalhes(p.aulaId, p.turmaId, p.disciplinaId)
     if (result) {
       setData(result)
       setPresencas(result.presencas)
@@ -147,9 +148,9 @@ export default function AulaDetalhePage({
     setIsLoading(true)
 
     try {
-      const path = `/diario/${params.turmaId}/${params.disciplinaId}/presencas`
+      const path = `/diario/${p.turmaId}/${p.disciplinaId}/presencas`
       const result = await salvarPresencas(
-        params.aulaId,
+        p.aulaId,
         presencas.map((p) => ({
           id: p.id,
           presente: p.presente,
@@ -187,7 +188,7 @@ export default function AulaDetalhePage({
         icon={Eye}
         title="Detalhes da Aula"
         description={`${disciplina.nome} - ${turma.nome}`}
-        backHref={`/diario/${params.turmaId}/${params.disciplinaId}/presencas`}
+        backHref={`/diario/${p.turmaId}/${p.disciplinaId}/presencas`}
       >
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)}>

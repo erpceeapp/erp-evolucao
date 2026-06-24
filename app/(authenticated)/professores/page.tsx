@@ -19,8 +19,9 @@ interface SearchParams {
 export default async function ProfessoresPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -29,10 +30,10 @@ export default async function ProfessoresPage({
   }
 
   // Parâmetros de busca
-  const busca = sanitizeSearchParam(searchParams.busca)
-  const status = sanitizeSearchParam(searchParams.status)
-  const page = validatePageParam(searchParams.page)
-  const itemsPerPage = validateLimitParam(searchParams.limit)
+  const busca = sanitizeSearchParam(params.busca)
+  const status = sanitizeSearchParam(params.status) || "ativo"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar professores
   let query = supabase.from("professores").select("*", { count: "exact" }).order("nome_completo")

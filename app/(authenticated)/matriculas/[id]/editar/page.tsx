@@ -4,7 +4,8 @@ import { UserCheck } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { MatriculaForm } from "@/components/matriculas/matricula-form"
 
-export default async function EditarMatriculaPage({ params }: { params: { id: string } }) {
+export default async function EditarMatriculaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -16,7 +17,7 @@ export default async function EditarMatriculaPage({ params }: { params: { id: st
   const { data: matricula, error: matriculaError } = await supabase
     .from("matriculas")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (matriculaError || !matricula) {
@@ -44,7 +45,7 @@ export default async function EditarMatriculaPage({ params }: { params: { id: st
         icon={UserCheck}
         title="Editar Matrícula"
         description={`Atualize os dados da matrícula #${matricula.numero_matricula}`}
-        backHref={`/matriculas/${params.id}`}
+        backHref={`/matriculas/${id}`}
       />
 
       <MatriculaForm matricula={matricula} alunos={alunos || []} turmas={turmas || []} isEditing={true} />

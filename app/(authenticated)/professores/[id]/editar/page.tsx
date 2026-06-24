@@ -4,7 +4,8 @@ import { GraduationCap } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { ProfessorForm } from "@/components/professores/professor-form"
 
-export default async function EditarProfessorPage({ params }: { params: { id: string } }) {
+export default async function EditarProfessorPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -16,7 +17,7 @@ export default async function EditarProfessorPage({ params }: { params: { id: st
   const { data: professor, error: professorError } = await supabase
     .from("professores")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (professorError || !professor) {
@@ -29,7 +30,7 @@ export default async function EditarProfessorPage({ params }: { params: { id: st
         icon={GraduationCap}
         title="Editar Professor"
         description={`Atualize os dados de ${professor.nome_completo}`}
-        backHref={`/professores/${params.id}`}
+        backHref={`/professores/${id}`}
       />
 
       <ProfessorForm professor={professor} isEditing={true} />

@@ -91,8 +91,9 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
 export default async function DiarioDetalhePage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const { turmaId, disciplinaId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -102,7 +103,7 @@ export default async function DiarioDetalhePage({
     redirect("/auth/login")
   }
 
-  const data = await getDiarioData(params.turmaId, params.disciplinaId)
+  const data = await getDiarioData(turmaId, disciplinaId)
 
   if (!data) {
     redirect("/diario")
@@ -120,7 +121,7 @@ export default async function DiarioDetalhePage({
       >
         {/* <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
+            <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
               <Users className="h-4 w-4 mr-2" />
               Nova Aula
             </Link>
@@ -144,8 +145,8 @@ export default async function DiarioDetalhePage({
           <AulasTab
             aulas={aulas}
             turmaDisciplina={turmaDisciplina}
-            turmaId={params.turmaId}
-            disciplinaId={params.disciplinaId}
+            turmaId={turmaId}
+            disciplinaId={disciplinaId}
             matriculas={matriculas}
           />
         </TabsContent>
@@ -153,7 +154,7 @@ export default async function DiarioDetalhePage({
         <TabsContent value="notas">
           <NotasTab
             matriculas={matriculas}
-            disciplinaId={params.disciplinaId}
+            disciplinaId={disciplinaId}
             periodos={periodos}
             anoLetivo={turmaDisciplina.turmas.ano_letivo}
           />
