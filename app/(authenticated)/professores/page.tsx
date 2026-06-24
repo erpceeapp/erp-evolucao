@@ -2,23 +2,26 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, GraduationCap } from "lucide-react"
 import Link from "next/link"
-import { ProfessoresHeader } from "@/components/professores/professores-header"
+import { PageHeader } from "@/components/page-header"
 import { ProfessoresTable } from "@/components/professores/professores-table"
 import { Suspense } from "react"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
 interface SearchParams {
   busca?: string
   status?: string
   page?: string
+  limit?: string
 }
 
 export default async function ProfessoresPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -27,10 +30,10 @@ export default async function ProfessoresPage({
   }
 
   // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const status = searchParams.status || "todos"
-  const page = Number.parseInt(searchParams.page || "1")
-  const itemsPerPage = 10
+  const busca = sanitizeSearchParam(params.busca)
+  const status = sanitizeSearchParam(params.status) || "ativo"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar professores
   let query = supabase.from("professores").select("*", { count: "exact" }).order("nome_completo")
@@ -60,22 +63,21 @@ export default async function ProfessoresPage({
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProfessoresHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Professores</h1>
-            <p className="text-gray-600 mt-1">Gerencie o cadastro de professores da escola</p>
-          </div>
+    <>
+      <PageHeader
+        icon={GraduationCap}
+        title="Professores"
+        description="Gerencie o cadastro de professores da escola"
+        showBackButton={false}
+        actions={
           <Button asChild>
             <Link href="/professores/novo">
               <Plus className="h-4 w-4 mr-2" />
               Novo Professor
             </Link>
           </Button>
-        </div>
+        }
+      />
 
         <Card>
           <CardHeader>
@@ -92,13 +94,14 @@ export default async function ProfessoresPage({
                 professores={professores || []}
                 currentPage={page}
                 totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalCount={count || 0}
                 busca={busca}
                 status={status}
               />
             </Suspense>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </>
   )
 }

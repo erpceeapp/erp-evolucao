@@ -22,10 +22,10 @@ import {
 } from "lucide-react"
 
 interface SidebarProps {
-  userRole?: string
+  userTipo?: string
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userTipo }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -34,11 +34,13 @@ export function Sidebar({ userRole }: SidebarProps) {
       title: "Dados da Escola",
       icon: Building2,
       href: "/escola",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Gestão de Usuários",
       icon: UserCog,
       href: "/usuarios",
+      roles: ["admin", "diretor"],
     },
   ]
 
@@ -47,65 +49,83 @@ export function Sidebar({ userRole }: SidebarProps) {
       title: "Dashboard",
       icon: Home,
       href: "/dashboard",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Alunos",
       icon: Users,
       href: "/alunos",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Professores",
       icon: GraduationCap,
       href: "/professores",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Turmas",
       icon: BookOpen,
       href: "/turmas",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Disciplinas",
       icon: BookOpen,
       href: "/disciplinas",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Matrículas",
       icon: UserCheck,
       href: "/matriculas",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Agenda",
       icon: Calendar,
       href: "/agenda",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Diário de Classe",
       icon: FileText,
       href: "/diario",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Presença",
       icon: UserCheck,
       href: "/presenca",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Notas",
       icon: FileText,
       href: "/notas",
+      roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
     },
     {
       title: "Relatórios",
       icon: BarChart3,
       href: "/relatorios",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
       title: "Configurações",
       icon: Settings,
       href: "/configuracoes",
+      roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
   ]
 
-  const allMenuItems = userRole === "admin" ? [...adminItems, ...menuItems] : menuItems
+  const userRole = userTipo?.toLowerCase() || ""
+
+  const filteredAdminItems = adminItems.filter((item) => item.roles.includes(userRole))
+
+  const filteredMenuItems = menuItems.filter((item) => item.roles.includes(userRole))
+
+  const allMenuItems = [...filteredAdminItems, ...filteredMenuItems]
 
   return (
     <>
@@ -133,7 +153,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">ERP Educacional</h1>
+              <h1 className="text-lg font-bold text-gray-900">Centro Educacional Evolução</h1>
               <p className="text-xs text-gray-600">Sistema de Gestão</p>
             </div>
           </div>

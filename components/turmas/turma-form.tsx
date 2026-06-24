@@ -11,7 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Save, ArrowLeft } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Check, ChevronsUpDown, Save, ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
 
 interface TurmaData {
@@ -33,6 +36,64 @@ interface TurmaFormProps {
   turma?: TurmaData & { id: string }
   professores: Professor[]
   isEditing?: boolean
+}
+
+function ProfessorSelect({
+  value,
+  professores,
+  onChange,
+}: {
+  value: string
+  professores: Professor[]
+  onChange: (value: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const selected = professores.find((p) => p.id === value)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+          {selected ? selected.nome_completo : "Nenhum professor"}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full min-w-[300px] p-0">
+        <Command>
+          <CommandInput placeholder="Buscar professor..." />
+          <CommandList>
+            <CommandEmpty>Nenhum professor encontrado</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="none"
+                onSelect={() => {
+                  onChange("none")
+                  setOpen(false)
+                }}
+              >
+                <Check className={cn("mr-2 h-4 w-4", value === "none" ? "opacity-100" : "opacity-0")} />
+                Nenhum professor
+              </CommandItem>
+              {professores.map((professor) => (
+                <CommandItem
+                  key={professor.id}
+                  value={professor.id}
+                  onSelect={() => {
+                    onChange(professor.id)
+                    setOpen(false)
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === professor.id ? "opacity-100" : "opacity-0")} />
+                  {professor.nome_completo}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormProps) {
@@ -61,10 +122,50 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Iniciando cadastro de turma")
+
     const supabase = createClient()
 
     try {
-      // Preparar dados para envio
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !userData?.user) {
+        throw new Error("Usuário não autenticado")
+      }
+
+      console.log("[v0] Usuário autenticado:", userData.user.id)
+
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", userData.user.id)
+
+      if (profileError) {
+        console.error("[v0] Erro ao buscar perfil:", profileError)
+        throw new Error("Erro ao verificar permissões do usuário")
+      }
+
+      const profile = profiles && profiles.length > 0 ? profiles[0] : null
+
+      console.log("[v0] Perfil do usuário:", profile)
+
+      if (!profile) {
+        throw new Error("Perfil do usuário não encontrado")
+      }
+
+      const allowedRoles = ["admin", "coordenacao", "secretaria", "diretor"]
+      const allowedTipos = ["coordenação", "secretaria", "diretor", "admin"]
+
+      const hasPermission =
+        (profile.tipo_usuario && allowedRoles.includes(profile.tipo_usuario.toLowerCase())) ||
+        (profile.tipo_usuario && allowedTipos.includes(profile.tipo_usuario))
+
+      if (!hasPermission) {
+        throw new Error(
+          "Você não tem permissão para cadastrar turmas. Apenas Secretaria, Coordenação e Diretor podem realizar esta ação.",
+        )
+      }
+
       const dataToSend = {
         ...formData,
         ano_letivo: Number.parseInt(formData.ano_letivo),
@@ -73,25 +174,34 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
           formData.professor_responsavel_id === "none" ? null : formData.professor_responsavel_id,
       }
 
+      console.log("[v0] Dados a serem enviados:", dataToSend)
+
       if (isEditing && turma) {
         const { error } = await supabase.from("turmas").update(dataToSend).eq("id", turma.id)
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao atualizar turma:", error)
+          throw error
+        }
       } else {
         const { error } = await supabase.from("turmas").insert([dataToSend])
 
-        if (error) throw error
+        if (error) {
+          console.error("[v0] Erro ao inserir turma:", error)
+          throw error
+        }
       }
 
+      console.log("[v0] Turma salva com sucesso")
       router.push("/turmas")
     } catch (error: any) {
+      console.error("[v0] Erro no handleSubmit:", error)
       setError(error.message || "Erro ao salvar turma")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Gerar anos disponíveis (últimos 3 anos + próximos 5)
   const availableYears = Array.from({ length: 8 }, (_, i) => currentYear - 3 + i)
 
   return (
@@ -126,7 +236,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ano_letivo">Ano Letivo *</Label>
                 <Select value={formData.ano_letivo} onValueChange={(value) => handleInputChange("ano_letivo", value)}>
@@ -166,26 +276,14 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
                   onChange={(e) => handleInputChange("capacidade_maxima", e.target.value)}
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="professor_responsavel_id">Professor Responsável</Label>
-              <Select
-                value={formData.professor_responsavel_id}
-                onValueChange={(value) => handleInputChange("professor_responsavel_id", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um professor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhum professor</SelectItem>
-                  {professores.map((professor) => (
-                    <SelectItem key={professor.id} value={professor.id}>
-                      {professor.nome_completo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Professor Responsável</Label>
+                <ProfessorSelect
+                  value={formData.professor_responsavel_id}
+                  professores={professores}
+                  onChange={(value) => handleInputChange("professor_responsavel_id", value)}
+                />
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">

@@ -50,6 +50,7 @@ export function GerenciarAlunosTurma({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedAlunos, setSelectedAlunos] = useState<Set<string>>(new Set())
 
   const alunosIds = alunosMatriculados.map((m) => m.aluno.id)
   const alunosDisponiveis = todosAlunos.filter((a) => !alunosIds.includes(a.id))
@@ -76,9 +77,8 @@ export function GerenciarAlunosTurma({
 
     try {
       // Gerar número de matrícula
-      const numeroMatricula = `${currentYear.toString().slice(-2)}${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")}`
+      const randomPart = crypto.randomUUID().replace(/-/g, "").slice(-4)
+      const numeroMatricula = `${currentYear.toString().slice(-2)}${randomPart}`
 
       const { error } = await supabase.from("matriculas").insert({
         numero_matricula: numeroMatricula,
@@ -92,10 +92,48 @@ export function GerenciarAlunosTurma({
       if (error) throw error
 
       setIsAddDialogOpen(false)
+      setSelectedAlunos(new Set())
       setSearchAlunoAdd("")
       router.refresh()
     } catch (err: any) {
       setError(err.message || "Erro ao adicionar aluno")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAdicionarMultiplosAlunos = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    const supabase = createClient()
+    const currentYear = new Date().getFullYear()
+
+    try {
+      const promises = Array.from(selectedAlunos).map(async (alunoId) => {
+        const randomPart = crypto.randomUUID().replace(/-/g, "").slice(-4)
+        const numeroMatricula = `${currentYear.toString().slice(-2)}${randomPart}`
+
+        const { error } = await supabase.from("matriculas").insert({
+          numero_matricula: numeroMatricula,
+          aluno_id: alunoId,
+          turma_id: turmaId,
+          ano_letivo: currentYear,
+          data_matricula: new Date().toISOString().split("T")[0],
+          status: "ativa",
+        })
+
+        if (error) throw error
+      })
+
+      await Promise.all(promises)
+
+      setIsAddDialogOpen(false)
+      setSelectedAlunos(new Set())
+      setSearchAlunoAdd("")
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || "Erro ao adicionar alunos")
     } finally {
       setIsLoading(false)
     }
@@ -132,7 +170,13 @@ export function GerenciarAlunosTurma({
             <Users className="h-5 w-5" />
             Alunos Matriculados ({totalAlunos}/{capacidadeMaxima})
           </CardTitle>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+              setIsAddDialogOpen(open)
+              if (!open) {
+                setSelectedAlunos(new Set())
+                setSearchAlunoAdd("")
+              }
+            }}>
             <DialogTrigger asChild>
               <Button size="sm" disabled={capacidadeAtingida}>
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -173,23 +217,32 @@ export function GerenciarAlunosTurma({
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {alunosDisponiveisFiltrados.length > 0 ? (
                     alunosDisponiveisFiltrados.map((aluno) => (
-                      <div
+                      <label
                         key={aluno.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
                       >
-                        <div>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={selectedAlunos.has(aluno.id)}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked
+                            setSelectedAlunos((prev) => {
+                              const next = new Set(prev)
+                              if (isChecked) {
+                                next.add(aluno.id)
+                              } else {
+                                next.delete(aluno.id)
+                              }
+                              return next
+                            })
+                          }}
+                        />
+                        <div className="flex-1">
                           <p className="font-medium">{aluno.nome_completo}</p>
                           {aluno.cpf && <p className="text-sm text-gray-600">CPF: {aluno.cpf}</p>}
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAdicionarAluno(aluno.id)}
-                          disabled={isLoading || capacidadeAtingida}
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Adicionar
-                        </Button>
-                      </div>
+                      </label>
                     ))
                   ) : (
                     <p className="text-center text-gray-500 py-8">
@@ -197,6 +250,14 @@ export function GerenciarAlunosTurma({
                     </p>
                   )}
                 </div>
+                {selectedAlunos.size > 0 && (
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <p className="text-sm text-gray-600">{selectedAlunos.size} aluno(s) selecionado(s)</p>
+                    <Button onClick={handleAdicionarMultiplosAlunos} disabled={isLoading}>
+                      {isLoading ? "Adicionando..." : `Adicionar Selecionados (${selectedAlunos.size})`}
+                    </Button>
+                  </div>
+                )}
               </div>
             </DialogContent>
           </Dialog>

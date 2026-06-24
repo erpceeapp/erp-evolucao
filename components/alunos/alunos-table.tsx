@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Edit, Eye } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
 interface Aluno {
   id: string
   nome_completo: string
+  matricula: string | null
   data_nascimento: string
   cpf?: string
   email?: string
@@ -26,15 +28,17 @@ interface AlunosTableProps {
   alunos: Aluno[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   status: string
 }
 
-export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: AlunosTableProps) {
+export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCount, busca, status }: AlunosTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
-  const [statusFilter, setStatusFilter] = useState(status)
+  const [statusFilter, setStatusFilter] = useState(status || "ativo")
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams)
@@ -50,7 +54,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
   const handleStatusChange = (newStatus: string) => {
     setStatusFilter(newStatus)
     const params = new URLSearchParams(searchParams)
-    if (newStatus !== "todos") {
+    if (newStatus !== "ativo") {
       params.set("status", newStatus)
     } else {
       params.delete("status")
@@ -65,13 +69,22 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
     router.push(`/alunos?${params.toString()}`)
   }
 
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
+    router.push(`/alunos?${params.toString()}`)
+  }
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR")
+    const [year, month, day] = dateString.split("-")
+    return `${day}/${month}/${year}`
   }
 
   const calculateAge = (birthDate: string) => {
+    const [year, month, day] = birthDate.split("-").map(Number)
     const today = new Date()
-    const birth = new Date(birthDate)
+    const birth = new Date(year, month - 1, day) // month is 0-indexed
     let age = today.getFullYear() - birth.getFullYear()
     const monthDiff = today.getMonth() - birth.getMonth()
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
@@ -86,7 +99,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 flex gap-2">
           <Input
-            placeholder="Buscar por nome, CPF ou email..."
+            placeholder="Buscar por nome, matrícula, CPF ou email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -112,6 +125,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Matrícula</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Idade</TableHead>
               <TableHead>CPF</TableHead>
@@ -123,13 +137,16 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
           <TableBody>
             {alunos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   Nenhum aluno encontrado
                 </TableCell>
               </TableRow>
             ) : (
               alunos.map((aluno) => (
                 <TableRow key={aluno.id}>
+                  <TableCell>
+                    <div className="font-mono text-sm font-semibold text-blue-600">{aluno.matricula || "-"}</div>
+                  </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">{aluno.nome_completo}</div>
@@ -164,33 +181,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
       </div>
 
       {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

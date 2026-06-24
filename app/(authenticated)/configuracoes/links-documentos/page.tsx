@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import PageHeader from "@/components/page-header"
-import { LinkIcon } from 'lucide-react'
+import { LinkIcon } from "lucide-react"
 import { LinksDocumentosManager } from "@/components/configuracoes/links-documentos-manager"
 
 export default async function LinksDocumentosPage() {
@@ -12,13 +12,12 @@ export default async function LinksDocumentosPage() {
     redirect("/auth/login")
   }
 
-  // Verificar permissões
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", data.user.id).single()
 
-  const isAdmin = profile?.role === "admin"
-  const isCoordenacao = profile?.role === "coordenacao"
+  const allowedTipos = ["admin", "coordenacao", "secretaria", "diretor"]
+  const hasAccess = profile?.tipo_usuario && allowedTipos.includes(profile.tipo_usuario.toLowerCase())
 
-  if (!isAdmin && !isCoordenacao) {
+  if (!hasAccess) {
     redirect("/dashboard")
   }
 

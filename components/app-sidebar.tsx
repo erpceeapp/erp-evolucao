@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { LogoutConfirmDialog } from "@/components/logout-confirm-dialog"
 import {
   LayoutDashboard,
   Users,
@@ -12,36 +13,120 @@ import {
   Book,
   UserCheck,
   Calendar,
+  BookUser,
   FileText,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  ClipboardCheck,
   NotebookPen,
   BarChart3,
   Settings,
   UserCircle,
+  UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Users, label: "Alunos", href: "/alunos" },
-  { icon: GraduationCap, label: "Professores", href: "/professores" },
-  { icon: BookOpen, label: "Turmas", href: "/turmas" },
-  { icon: Book, label: "Disciplinas", href: "/disciplinas" },
-  { icon: UserCheck, label: "Matrículas", href: "/matriculas" },
-  { icon: Calendar, label: "Agenda", href: "/agenda" },
-  { icon: FileText, label: "Notas", href: "/notas" },
-  { icon: ClipboardCheck, label: "Presença", href: "/presenca" },
-  { icon: NotebookPen, label: "Diário de Classe", href: "/diario" },
-  { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
-  { icon: Settings, label: "Configurações", href: "/configuracoes" },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/dashboard",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  { icon: UserCog, label: "Usuários", href: "/usuarios", roles: ["admin"] },
+  { icon: Users, label: "Alunos", href: "/alunos", roles: ["admin", "diretor", "coordenacao", "secretaria"] },
+  {
+    icon: GraduationCap,
+    label: "Professores",
+    href: "/professores",
+    roles: ["admin", "diretor", "coordenacao", "secretaria"],
+  },
+  {
+    icon: BookOpen,
+    label: "Turmas",
+    href: "/turmas",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: Book,
+    label: "Disciplinas",
+    href: "/disciplinas",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: UserCheck,
+    label: "Matrículas",
+    href: "/matriculas",
+    roles: ["admin", "diretor", "coordenacao", "secretaria"],
+  },
+  {
+    icon: Calendar,
+    label: "Agenda",
+    href: "/agenda",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: BookUser,
+    label: "Agenda do Aluno",
+    href: "/agenda-aluno",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: FileText,
+    label: "Notas",
+    href: "/notas",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  // {
+  //   icon: ClipboardCheck,
+  //   label: "Presença",
+  //   href: "/presenca",
+  //   roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  // },
+  {
+    icon: NotebookPen,
+    label: "Diário de Classe",
+    href: "/diario",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: BarChart3,
+    label: "Relatórios",
+    href: "/relatorios",
+    roles: ["admin", "diretor", "coordenacao", "secretaria"],
+  },
+  {
+    icon: Settings,
+    label: "Configurações",
+    href: "/configuracoes",
+    roles: ["admin", "diretor", "coordenacao", "secretaria"],
+  },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(true)
+  const [userTipo, setUserTipo] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchUserTipo() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
+
+        if (profile) {
+          setUserTipo(profile.tipo_usuario)
+        }
+      }
+    }
+
+    fetchUserTipo()
+  }, [])
 
   // Carregar estado do localStorage
   useEffect(() => {
@@ -62,8 +147,12 @@ export function AppSidebar() {
     if (href === "/dashboard") {
       return pathname === href
     }
-    return pathname.startsWith(href)
+    return pathname === href || pathname.startsWith(href + "/")
   }
+
+  const filteredMenuItems = userTipo
+    ? menuItems.filter((item) => item.roles.includes(userTipo.toLowerCase()))
+    : menuItems
 
   return (
     <aside
@@ -90,7 +179,7 @@ export function AppSidebar() {
       {/* Menu Items */}
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
 
@@ -132,18 +221,19 @@ export function AppSidebar() {
           {!isCollapsed && <span className="font-medium">Perfil</span>}
         </Link>
 
-        <Link
-          href="/auth/logout"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-            "text-red-600 hover:bg-red-50",
-            isCollapsed && "justify-center",
-          )}
-          title={isCollapsed ? "Sair" : undefined}
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!isCollapsed && <span className="font-medium">Sair</span>}
-        </Link>
+        <LogoutConfirmDialog>
+          <button
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full",
+              "text-red-600 hover:bg-red-50",
+              isCollapsed && "justify-center",
+            )}
+            title={isCollapsed ? "Sair" : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span className="font-medium">Sair</span>}
+          </button>
+        </LogoutConfirmDialog>
       </div>
     </aside>
   )

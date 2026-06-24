@@ -1,324 +1,151 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Users, UserPlus, Mail, Trash2 } from "lucide-react"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { Users } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
+import { UsuariosTable } from "@/components/usuarios/usuarios-table"
+import { InviteUserDialog } from "@/components/usuarios/invite-user-dialog"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
-interface UserInvite {
-  id: string
-  email: string
-  role: string
-  created_at: string
-  accepted_at: string | null
-  expires_at: string
+interface SearchParams {
+  busca?: string
+  tipo?: string
+  sortBy?: string
+  sortOrder?: string
+  page?: string
+  limit?: string
 }
 
-interface Profile {
-  id: string
-  nome_completo: string
-  email: string
-  role: string
-  created_at: string
-}
+const ALLOWED_ROLES = ["admin", "diretor", "coordenacao", "secretaria"]
 
-export default function UsuariosPage() {
-  const [invites, setInvites] = useState<UserInvite[]>([])
-  const [users, setUsers] = useState<Profile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [inviting, setInviting] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [newInvite, setNewInvite] = useState({
-    email: "",
-    role: "",
-  })
-  const supabase = createBrowserClient()
-  const router = useRouter()
+export default async function UsuariosPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const supabase = await createClient()
 
-  useEffect(() => {
-    checkUserRole()
-    loadData()
-  }, [])
-
-  const checkUserRole = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      router.push("/auth/login")
-      return
-    }
-
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-    if (profile?.role !== "admin") {
-      router.push("/dashboard")
-      return
-    }
-
-    setUserRole(profile.role)
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error || !user) {
+    redirect("/auth/login")
   }
 
-  const loadData = async () => {
-    try {
-      // Carregar convites pendentes
-      const { data: invitesData } = await supabase
-        .from("user_invites")
-        .select("*")
-        .order("created_at", { ascending: false })
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
 
-      if (invitesData) {
-        setInvites(invitesData)
-      }
-
-      // Carregar usuários existentes
-      const { data: usersData } = await supabase
-        .from("profiles")
-        .select("id, nome_completo, email, role, created_at")
-        .order("created_at", { ascending: false })
-
-      if (usersData) {
-        setUsers(usersData)
-      }
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error)
-    } finally {
-      setLoading(false)
-    }
+  if (!profile || !ALLOWED_ROLES.includes(profile.tipo_usuario)) {
+    redirect("/dashboard")
   }
 
-  const sendInvite = async () => {
-    if (!newInvite.email || !newInvite.role) {
-      alert("Preencha todos os campos")
-      return
-    }
+  const params = await searchParams
+  const busca = sanitizeSearchParam(params.busca)
+  const tipo = sanitizeSearchParam(params.tipo)
+  const sortBy = sanitizeSearchParam(params.sortBy) || "nome_completo"
+  const sortOrder = sanitizeSearchParam(params.sortOrder) || "asc"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
-    setInviting(true)
-    try {
-      // Gerar token único
-      const token = Math.random().toString(36).substring(2) + Date.now().toString(36)
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7) // Expira em 7 dias
+  const validSortColumns = ["nome_completo", "email", "tipo_usuario", "created_at"]
+  const finalSortBy = validSortColumns.includes(sortBy) ? sortBy : "nome_completo"
+  const finalSortOrder = sortOrder === "desc" ? false : true
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  let query = supabase
+    .from("profiles")
+    .select("id, nome_completo, email, tipo_usuario, created_at", { count: "exact" })
+    .order(finalSortBy, { ascending: finalSortOrder })
 
-      const { error } = await supabase.from("user_invites").insert([
-        {
-          email: newInvite.email,
-          role: newInvite.role,
-          invited_by: user?.id,
-          token,
-          expires_at: expiresAt.toISOString(),
-        },
-      ])
-
-      if (error) throw error
-
-      // Aqui você implementaria o envio do email
-      // Por enquanto, vamos simular
-      console.log(`Email enviado para ${newInvite.email} com token: ${token}`)
-      alert(`Convite enviado para ${newInvite.email}!`)
-
-      setNewInvite({ email: "", role: "" })
-      loadData()
-    } catch (error) {
-      console.error("Erro ao enviar convite:", error)
-      alert("Erro ao enviar convite")
-    } finally {
-      setInviting(false)
-    }
+  if (profile.tipo_usuario !== "admin") {
+    query = query.neq("tipo_usuario", "admin")
   }
 
-  const deleteInvite = async (id: string) => {
-    if (!confirm("Deseja cancelar este convite?")) return
-
-    try {
-      const { error } = await supabase.from("user_invites").delete().eq("id", id)
-
-      if (error) throw error
-
-      loadData()
-    } catch (error) {
-      console.error("Erro ao cancelar convite:", error)
-      alert("Erro ao cancelar convite")
-    }
+  if (busca) {
+    query = query.or(`nome_completo.ilike.%${busca}%,email.ilike.%${busca}%`)
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800"
-      case "secretaria":
-        return "bg-blue-100 text-blue-800"
-      case "coordenacao":
-        return "bg-purple-100 text-purple-800"
-      case "professor":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  if (tipo && tipo !== "todos") {
+    query = query.eq("tipo_usuario", tipo)
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "Administrador"
-      case "secretaria":
-        return "Secretaria"
-      case "coordenacao":
-        return "Coordenação"
-      case "professor":
-        return "Professor"
-      default:
-        return role
-    }
+  const from = (page - 1) * itemsPerPage
+  const to = from + itemsPerPage - 1
+  query = query.range(from, to)
+
+  const { data: usuarios, count, error: usuariosError } = await query
+
+  if (usuariosError) {
+    console.error("Erro ao buscar usuarios:", usuariosError)
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  const { data: invites } = await supabase
+    .from("user_invites")
+    .select("*")
+    .order("created_at", { ascending: false })
 
-  if (userRole !== "admin") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Acesso Negado</CardTitle>
-            <CardDescription>Apenas administradores podem acessar esta página.</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    )
-  }
+  const totalPages = Math.ceil((count || 0) / itemsPerPage)
+
+  const showInviteButton = ["admin", "diretor", "coordenacao"].includes(profile.tipo_usuario)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Users className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
-        </div>
-        <p className="text-gray-600">Gerencie os usuários que têm acesso ao sistema.</p>
-      </div>
+    <>
+      <PageHeader
+        icon={Users}
+        title="Usuários"
+        description="Gerencie os usuários que têm acesso ao sistema"
+        actions={showInviteButton ? <InviteUserDialog currentUserTipo={profile.tipo_usuario} /> : undefined}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Convidar Novo Usuário */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Convidar Novo Usuário
-            </CardTitle>
-            <CardDescription>Envie um convite por email para um novo usuário.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newInvite.email}
-                onChange={(e) => setNewInvite({ ...newInvite, email: e.target.value })}
-                placeholder="usuario@email.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Tipo de Usuário</Label>
-              <Select value={newInvite.role} onValueChange={(value) => setNewInvite({ ...newInvite, role: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="secretaria">Secretaria</SelectItem>
-                  <SelectItem value="coordenacao">Coordenação</SelectItem>
-                  <SelectItem value="professor">Professor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button onClick={sendInvite} disabled={inviting} className="w-full">
-              <Mail className="h-4 w-4 mr-2" />
-              {inviting ? "Enviando..." : "Enviar Convite"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Convites Pendentes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Convites Pendentes</CardTitle>
-            <CardDescription>Convites enviados aguardando aceitação.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {invites.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">Nenhum convite pendente</p>
-            ) : (
+      <div className="space-y-6">
+        {invites && invites.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Convites Pendentes</CardTitle>
+              <CardDescription>Convites enviados aguardando aceitação.</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-3">
                 {invites.map((invite) => (
                   <div key={invite.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">{invite.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge className={getRoleBadgeColor(invite.role)}>{getRoleLabel(invite.role)}</Badge>
-                        <span className="text-sm text-gray-500">
-                          {new Date(invite.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
+                      <p className="text-sm text-gray-500">
+                        {invite.tipo_usuario} &middot; {new Date(invite.created_at).toLocaleDateString()}
+                      </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => deleteInvite(invite.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 ))}
               </div>
-            )}
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Usuários do Sistema</CardTitle>
+            <CardDescription>
+              {count
+                ? `${count} usuário${count !== 1 ? "s" : ""} encontrado${count !== 1 ? "s" : ""}`
+                : "Nenhum usuário encontrado"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UsuariosTable
+              usuarios={usuarios || []}
+              currentPage={page}
+              totalPages={totalPages}
+              pageSize={itemsPerPage}
+              totalCount={count || 0}
+              busca={busca}
+              tipo={tipo}
+              sortBy={finalSortBy}
+              sortOrder={sortOrder}
+              currentUserTipo={profile.tipo_usuario}
+            />
           </CardContent>
         </Card>
       </div>
-
-      {/* Usuários Existentes */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Usuários do Sistema</CardTitle>
-          <CardDescription>Lista de todos os usuários com acesso ao sistema.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {users.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Nenhum usuário cadastrado</p>
-          ) : (
-            <div className="space-y-3">
-              {users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{user.nome_completo || "Nome não informado"}</p>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge className={getRoleBadgeColor(user.role)}>{getRoleLabel(user.role)}</Badge>
-                      <span className="text-sm text-gray-500">
-                        Desde {new Date(user.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    </>
   )
 }

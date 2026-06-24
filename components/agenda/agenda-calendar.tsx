@@ -1,8 +1,37 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
+import { useMemo } from "react"
+import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar"
+import { format, parse, startOfWeek, getDay } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import "react-big-calendar/lib/css/react-big-calendar.css"
+import "@/styles/agenda-rbc.css"
+import { toRbcEvent, getTipoColor, type DbEvento, type RbcEvent } from "@/lib/agenda/rbc-adapter"
+
+const locales = { "pt-BR": ptBR }
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
+  getDay,
+  locales,
+})
+
+const messages = {
+  today: "Hoje",
+  previous: "Anterior",
+  next: "Próximo",
+  month: "Mês",
+  week: "Semana",
+  day: "Dia",
+  agenda: "Agenda",
+  date: "Data",
+  time: "Horário",
+  event: "Evento",
+  showMore: (total: number) => `+${total} mais`,
+  noEventsInRange: "Nenhum evento neste período",
+}
 
 interface Evento {
   id: string
@@ -19,58 +48,44 @@ interface Evento {
 
 interface AgendaCalendarProps {
   eventos: Evento[]
+  onDayClick?: (data: string) => void
 }
 
-export function AgendaCalendar({ eventos }: AgendaCalendarProps) {
-  const router = useRouter()
-
-  const handleDayClick = (dia: number) => {
-    if (dia > 0 && dia <= 31) {
-      const data = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`
-      router.push(`/agenda/novo-evento?data=${data}`)
-    }
-  }
+export function AgendaCalendar({ eventos, onDayClick }: AgendaCalendarProps) {
+  const rbcEvents = useMemo(
+    () => eventos.map((e) => toRbcEvent(e as DbEvento)),
+    [eventos],
+  )
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Calendário - Dezembro 2024</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-2 mb-4">
-          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dia) => (
-            <div key={dia} className="text-center text-sm font-medium text-gray-500 p-2">
-              {dia}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 35 }, (_, i) => {
-            const dia = i - 5 + 1
-            const isToday = dia === new Date().getDate()
-            const hasEvent = eventos.some((evento) => {
-              const eventDate = new Date(evento.data_inicio)
-              return eventDate.getDate() === dia
-            })
-
-            return (
-              <Button
-                key={i}
-                variant="ghost"
-                className={`
-                  aspect-square flex items-center justify-center text-sm rounded-lg cursor-pointer
-                  ${isToday ? "bg-cyan-600 text-white hover:bg-cyan-700" : "hover:bg-gray-100"}
-                  ${hasEvent ? "bg-cyan-50 border border-cyan-200" : ""}
-                  ${dia <= 0 || dia > 31 ? "text-gray-300" : ""}
-                `}
-                onClick={() => handleDayClick(dia)}
-              >
-                {dia > 0 && dia <= 31 ? dia : ""}
-              </Button>
-            )
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <Calendar<RbcEvent>
+      localizer={localizer}
+      events={rbcEvents}
+      defaultView={Views.MONTH}
+      views={[Views.MONTH]}
+      messages={messages}
+      eventPropGetter={(event) => ({
+        style: {
+          backgroundColor: getTipoColor(event.resource.tipo_evento),
+          borderRadius: "6px",
+          border: "none",
+          fontSize: "0.8rem",
+          padding: "2px 4px",
+        },
+      })}
+      onSelectSlot={({ start }) => {
+        if (onDayClick) {
+          const data = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`
+          onDayClick(data)
+        }
+      }}
+      selectable
+      popup
+      style={{ height: 500 }}
+      formats={{
+        monthHeaderFormat: (date: Date) =>
+          `${format(date, "MMMM", { locale: ptBR })} de ${format(date, "yyyy")}`,
+      }}
+    />
   )
 }

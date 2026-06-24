@@ -2,14 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
 interface TurmaDisciplina {
@@ -44,25 +44,43 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
   const [formData, setFormData] = useState({
     turma_disciplina_id: "",
     data_aula: "",
-    horario_inicio: "",
-    horario_fim: "",
+    hora_inicio: "",
+    hora_fim: "",
     conteudo: "",
     observacoes: "",
   })
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0]
+    setFormData((prev) => ({ ...prev, data_aula: today }))
+  }, [])
+
+  const handleHoraInicioChange = (hora: string) => {
+    setFormData((prev) => ({ ...prev, hora_inicio: hora }))
+
+    if (hora) {
+      const [hours, minutes] = hora.split(":").map(Number)
+      const totalMinutes = hours * 60 + minutes + 50
+      const newHours = Math.floor(totalMinutes / 60) % 24
+      const newMinutes = totalMinutes % 60
+      const horaFim = `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`
+      setFormData((prev) => ({ ...prev, hora_fim: horaFim }))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const supabase = createClient()
 
       const { error } = await supabase.from("aulas").insert({
         turma_disciplina_id: formData.turma_disciplina_id,
         data_aula: formData.data_aula,
-        horario_inicio: formData.horario_inicio,
-        horario_fim: formData.horario_fim,
-        conteudo: formData.conteudo,
+        hora_inicio: formData.hora_inicio,
+        hora_fim: formData.hora_fim,
+        conteudo: formData.conteudo || null,
         observacoes: formData.observacoes || null,
       })
 
@@ -115,23 +133,23 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_inicio">Horário de Início *</Label>
+          <Label htmlFor="hora_inicio">Horário de Início *</Label>
           <Input
-            id="horario_inicio"
+            id="hora_inicio"
             type="time"
-            value={formData.horario_inicio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, horario_inicio: e.target.value }))}
+            value={formData.hora_inicio}
+            onChange={(e) => handleHoraInicioChange(e.target.value)}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_fim">Horário de Fim *</Label>
+          <Label htmlFor="hora_fim">Horário de Fim *</Label>
           <Input
-            id="horario_fim"
+            id="hora_fim"
             type="time"
-            value={formData.horario_fim}
-            onChange={(e) => setFormData((prev) => ({ ...prev, horario_fim: e.target.value }))}
+            value={formData.hora_fim}
+            onChange={(e) => setFormData((prev) => ({ ...prev, hora_fim: e.target.value }))}
             required
           />
         </div>
@@ -155,14 +173,13 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="conteudo">Conteúdo Ministrado *</Label>
+        <Label htmlFor="conteudo">Conteúdo Ministrado</Label>
         <Textarea
           id="conteudo"
           placeholder="Descreva o conteúdo que foi ministrado na aula..."
           value={formData.conteudo}
           onChange={(e) => setFormData((prev) => ({ ...prev, conteudo: e.target.value }))}
           rows={4}
-          required
         />
       </div>
 

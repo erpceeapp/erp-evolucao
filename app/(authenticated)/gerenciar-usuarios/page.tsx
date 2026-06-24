@@ -15,34 +15,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import toast from "sonner"
-import { Edit, Users } from 'lucide-react'
+import { toast } from "sonner"
+import { Edit, Users } from "lucide-react"
 import PageHeader from "@/components/page-header"
+import { updateProfile } from "./actions"
 
 interface Profile {
   id: string
   nome_completo: string
   email: string
   telefone: string
-  role: string
+  tipo_usuario: string
   created_at: string
 }
 
 interface EditFormData {
   nome_completo: string
   telefone: string
-  role: string
+  tipo_usuario: string
 }
 
 export default function GerenciarUsuariosPage() {
   const [profiles, setProfiles] = useState<Profile[]>([])
-  const [currentUserRole, setCurrentUserRole] = useState<string>("")
+  const [currentUserTipo, setCurrentUserTipo] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
   const [editFormData, setEditFormData] = useState<EditFormData>({
     nome_completo: "",
     telefone: "",
-    role: "",
+    tipo_usuario: "",
   })
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -60,15 +61,15 @@ export default function GerenciarUsuariosPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      // Verificar se o usuário atual é admin
-      const { data: currentProfile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+      const { data: currentProfile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
-      if (currentProfile?.role !== "admin") {
+      const allowedTipos = ["admin", "coordenacao", "secretaria", "diretor"]
+      if (!currentProfile?.tipo_usuario || !allowedTipos.includes(currentProfile.tipo_usuario.toLowerCase())) {
         toast.error("Acesso negado. Apenas administradores podem gerenciar usuários.")
         return
       }
 
-      setCurrentUserRole(currentProfile.role)
+      setCurrentUserTipo(currentProfile.tipo_usuario)
       await loadProfiles()
     } catch (error) {
       console.error("Erro ao verificar permissões:", error)
@@ -95,7 +96,7 @@ export default function GerenciarUsuariosPage() {
     setEditFormData({
       nome_completo: profile.nome_completo || "",
       telefone: profile.telefone || "",
-      role: profile.role || "professor",
+      tipo_usuario: profile.tipo_usuario || "professor",
     })
   }
 
@@ -104,51 +105,50 @@ export default function GerenciarUsuariosPage() {
     setSaving(true)
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          nome_completo: editFormData.nome_completo,
-          telefone: editFormData.telefone,
-          role: editFormData.role,
-        })
-        .eq("id", editingProfile.id)
+      const result = await updateProfile(editingProfile.id, editFormData)
 
-      if (error) throw error
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
       toast.success("Usuário atualizado com sucesso!")
       setEditingProfile(null)
       await loadProfiles()
     } catch (error) {
       console.error("Erro ao salvar usuário:", error)
-      toast.error("Erro ao salvar usuário")
+      toast.error(error instanceof Error ? error.message : "Erro ao salvar usuário")
     } finally {
       setSaving(false)
     }
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
       case "admin":
         return "Administrador"
       case "secretaria":
         return "Secretaria"
       case "coordenacao":
         return "Coordenação"
+      case "diretor":
+        return "Diretor"
       case "professor":
         return "Professor"
       default:
-        return role
+        return tipo
     }
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
+  const getTipoBadgeColor = (tipo: string) => {
+    switch (tipo.toLowerCase()) {
       case "admin":
         return "bg-red-100 text-red-800"
       case "secretaria":
         return "bg-blue-100 text-blue-800"
       case "coordenacao":
         return "bg-purple-100 text-purple-800"
+      case "diretor":
+        return "bg-orange-100 text-orange-800"
       case "professor":
         return "bg-green-100 text-green-800"
       default:
@@ -173,7 +173,7 @@ export default function GerenciarUsuariosPage() {
     )
   }
 
-  if (currentUserRole !== "admin") {
+  if (currentUserTipo.toLowerCase() !== "admin" && currentUserTipo.toLowerCase() !== "diretor") {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -235,8 +235,10 @@ export default function GerenciarUsuariosPage() {
                       <p className="text-sm text-gray-600">{profile.email}</p>
                       {profile.telefone && <p className="text-sm text-gray-600">{profile.telefone}</p>}
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(profile.role)}`}>
-                      {getRoleLabel(profile.role)}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getTipoBadgeColor(profile.tipo_usuario)}`}
+                    >
+                      {getTipoLabel(profile.tipo_usuario)}
                     </span>
                   </div>
                 </div>
@@ -289,10 +291,10 @@ export default function GerenciarUsuariosPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="edit-role">Tipo de Usuário</Label>
+                        <Label htmlFor="edit-tipo">Tipo de Usuário</Label>
                         <Select
-                          value={editFormData.role}
-                          onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+                          value={editFormData.tipo_usuario}
+                          onValueChange={(value) => setEditFormData({ ...editFormData, tipo_usuario: value })}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo" />
@@ -301,6 +303,7 @@ export default function GerenciarUsuariosPage() {
                             <SelectItem value="admin">Administrador</SelectItem>
                             <SelectItem value="secretaria">Secretaria</SelectItem>
                             <SelectItem value="coordenacao">Coordenação</SelectItem>
+                            <SelectItem value="diretor">Diretor</SelectItem>
                             <SelectItem value="professor">Professor</SelectItem>
                           </SelectContent>
                         </Select>

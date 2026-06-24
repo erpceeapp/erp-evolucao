@@ -75,10 +75,9 @@ export default async function RelatoriosPage() {
         subtitle="Gere e exporte relatórios do sistema"
         backHref="/dashboard"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {relatorios.map((relatorio) => (
-            <Card key={relatorio.id} className="hover:shadow-md transition-shadow">
+            <Card key={relatorio.id}>
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className={`p-2 ${relatorio.color} rounded-lg`}>
@@ -121,7 +120,6 @@ export default async function RelatoriosPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    </>
+      </>
   )
 }

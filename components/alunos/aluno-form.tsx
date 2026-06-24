@@ -15,6 +15,7 @@ import { cadastrarAluno, atualizarAluno } from "@/app/(authenticated)/alunos/nov
 import { Separator } from "@/components/ui/separator"
 import { maskCPF, maskRG, maskCEP, maskPhone, maskCellPhone, removeMask } from "@/lib/input-masks"
 import { useRequiredFields } from "@/hooks/use-required-fields"
+import { translateError } from "@/lib/error-messages"
 
 interface AlunoData {
   // Dados básicos
@@ -178,6 +179,8 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Iniciando submit do formulário de aluno")
+
     try {
       const formDataToSend = new FormData(e.currentTarget)
 
@@ -207,13 +210,24 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
         unmaskedFormData.append(key, processedValue)
       }
 
+      console.log("[v0] Chamando server action...")
+
+      let result
       if (isEditing && aluno) {
-        await atualizarAluno(aluno.id, unmaskedFormData)
+        result = await atualizarAluno(aluno.id, unmaskedFormData)
       } else {
-        await cadastrarAluno(unmaskedFormData)
+        result = await cadastrarAluno(unmaskedFormData)
       }
+
+      if (result && result.error) {
+        console.error("[v0] Erro retornado pela server action:", result.error)
+        setError(result.error)
+        setIsLoading(false)
+      }
+      // Se não houver erro, o redirect() foi chamado e a página será redirecionada
     } catch (error: any) {
-      setError(error.message || "Erro ao salvar aluno")
+      console.error("[v0] Erro no handleSubmit:", error)
+      setError(translateError(error.message || "Erro ao salvar aluno"))
       setIsLoading(false)
     }
   }
@@ -1029,16 +1043,26 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nivel">Nível {isRequired("nivel") && <span className="text-red-500">*</span>}</Label>
+              <Label htmlFor="nivel">Série {isRequired("nivel") && <span className="text-red-500">*</span>}</Label>
               <Select value={formData.nivel} onValueChange={(value) => handleInputChange("nivel", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Educação Infantil">Educação Infantil</SelectItem>
-                  <SelectItem value="Ensino Fundamental I">Ensino Fundamental I</SelectItem>
-                  <SelectItem value="Ensino Fundamental II">Ensino Fundamental II</SelectItem>
-                  <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
+                  <SelectItem value="1º Ano">1º Ano</SelectItem>
+                  <SelectItem value="2º Ano">2º Ano</SelectItem>
+                  <SelectItem value="3º Ano">3º Ano</SelectItem>
+                  <SelectItem value="4º Ano">4º Ano</SelectItem>
+                  <SelectItem value="5º Ano">5º Ano</SelectItem>
+                  <SelectItem value="6º Ano">6º Ano</SelectItem>
+                  <SelectItem value="7º Ano">7º Ano</SelectItem>
+                  <SelectItem value="8º Ano">8º Ano</SelectItem>
+                  <SelectItem value="9º Ano">9º Ano</SelectItem>
+                  <SelectItem value="Nível I">Nível I</SelectItem>
+                  <SelectItem value="Nível II">Nível II</SelectItem>
+                  <SelectItem value="Nível III">Nível III</SelectItem>
+                  <SelectItem value="Nível IV">Nível IV</SelectItem>
+                  <SelectItem value="Nível V">Nível V</SelectItem>
                 </SelectContent>
               </Select>
             </div>

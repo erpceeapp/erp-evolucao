@@ -80,8 +80,7 @@ export default async function PresencaPage() {
         subtitle="Registre e gerencie a frequência dos alunos"
         backHref="/dashboard"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <Card>
+      <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Turmas e Disciplinas</CardTitle>
@@ -96,7 +95,7 @@ export default async function PresencaPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {turmasDisciplinas.map((item) => (
-                <Card key={`${item.turma_id}-${item.disciplina_id}`} className="hover:shadow-md transition-shadow">
+                <Card key={`${item.turma_id}-${item.disciplina_id}`}>
                   <CardContent className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
@@ -140,7 +139,6 @@ export default async function PresencaPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </>
+      </>
   )
 }

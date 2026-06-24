@@ -5,29 +5,66 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/page-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 async function getAlunosRelatorio() {
   const supabase = await createServerClient()
 
-  const { data: alunos, error } = await supabase
+  const { data: alunos, error: alunosError } = await supabase
     .from("alunos")
-    .select(`
-      *,
-      matriculas (
-        id,
-        status,
-        turmas (nome, serie)
-      )
-    `)
+    .select("*, matriculas(*)")
     .order("nome_completo", { ascending: true })
 
-  if (error) {
-    console.error("Erro ao buscar alunos:", error)
+  if (alunosError) {
+    console.error("[v0] Erro ao buscar alunos:", alunosError)
     return []
   }
 
-  return alunos || []
+  if (!alunos || alunos.length === 0) return []
+
+  // Buscar matrículas separadamente
+  const { data: matriculas, error: matriculasError } = await supabase
+    .from("matriculas")
+    .select("id, aluno_id, turma_id, status")
+    .in(
+      "aluno_id",
+      alunos.map((a) => a.id),
+    )
+
+  if (matriculasError) {
+    console.error("[v0] Erro ao buscar matrículas:", matriculasError)
+  }
+
+  // Buscar turmas das matrículas
+  const turmaIds = matriculas?.map((m) => m.turma_id).filter(Boolean) || []
+  let turmas: { id: string; nome: string; serie: string | null }[] = []
+  if (turmaIds.length > 0) {
+    const { data: turmasData, error: turmasError } = await supabase
+      .from("turmas")
+      .select("id, nome, serie")
+      .in("id", turmaIds)
+
+    if (turmasError) {
+      console.error("[v0] Erro ao buscar turmas:", turmasError)
+    } else {
+      turmas = turmasData || []
+    }
+  }
+
+  // Combinar os dados
+  return alunos.map((aluno) => {
+    const alunoMatriculas = matriculas?.filter((m) => m.aluno_id === aluno.id) || []
+    const matriculasComTurma = alunoMatriculas.map((mat) => ({
+      ...mat,
+      turmas: turmas.find((t) => t.id === mat.turma_id),
+    }))
+
+    return {
+      ...aluno,
+      matriculas: matriculasComTurma,
+    }
+  })
 }
 
 export default async function RelatorioAlunosPage() {
@@ -43,17 +80,14 @@ export default async function RelatorioAlunosPage() {
   const alunos = await getAlunosRelatorio()
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
+      <PageHeader
+        icon={Users}
+        title="Relatório de Alunos"
+        subtitle="Lista completa de alunos cadastrados"
+        backHref="/relatorios"
+      />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Users className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Relatório de Alunos</h1>
-            <p className="text-gray-600">Lista completa de alunos cadastrados</p>
-          </div>
-        </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
@@ -82,6 +116,7 @@ export default async function RelatorioAlunosPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Matrícula</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>CPF</TableHead>
@@ -92,9 +127,12 @@ export default async function RelatorioAlunosPage() {
             </TableHeader>
             <TableBody>
               {alunos.map((aluno) => {
-                const matriculaAtiva = aluno.matriculas?.find((m) => m.status === "ativa")
+                const matriculaAtiva = aluno.matriculas?.find((m: any) => m.status === "ativa")
                 return (
                   <TableRow key={aluno.id}>
+                    <TableCell>
+                      <span className="font-mono text-sm font-semibold text-blue-600">{aluno.matricula || "-"}</span>
+                    </TableCell>
                     <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
                     <TableCell>{aluno.email}</TableCell>
                     <TableCell>{aluno.cpf}</TableCell>
@@ -122,6 +160,6 @@ export default async function RelatorioAlunosPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 }

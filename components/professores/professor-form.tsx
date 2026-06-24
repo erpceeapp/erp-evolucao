@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
+import { createProfessorUser } from "@/app/(authenticated)/professores/novo/actions"
+import { translateError } from "@/lib/error-messages"
 
 interface ProfessorData {
   nome_completo: string
@@ -25,7 +28,7 @@ interface ProfessorData {
   especializacao: string
   registro_profissional: string
   data_admissao: string
-  salario: string
+  salario: string | number
   ativo: boolean
 }
 
@@ -64,7 +67,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     ativo: professor?.ativo ?? true,
   })
 
-  const handleInputChange = (field: keyof ProfessorData, value: string | boolean) => {
+  const handleInputChange = (field: keyof ProfessorData, value: string | boolean | number | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -82,10 +85,21 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
     const supabase = createClient()
 
     try {
+      let salarioNumerico = null
+      if (formData.salario) {
+        // Se já for um número, usar diretamente
+        if (typeof formData.salario === "number") {
+          salarioNumerico = formData.salario
+        } else {
+          // Se for string, fazer o parse
+          salarioNumerico = Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", "."))
+        }
+      }
+
       // Preparar dados para envio
       const dataToSend = {
         ...formData,
-        salario: formData.salario ? Number.parseFloat(formData.salario.replace(/[^\d,]/g, "").replace(",", ".")) : null,
+        salario: salarioNumerico,
       }
 
       let professorId: string
@@ -96,10 +110,36 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
         if (error) throw error
         professorId = professor.id
       } else {
-        const { data, error } = await supabase.from("professores").insert([dataToSend]).select().single()
+        if (formData.email && formData.cpf) {
+          console.log("[v0] Chamando Server Action para criar usuário")
 
-        if (error) throw error
-        professorId = data.id
+          const result = await createProfessorUser({
+            email: formData.email,
+            cpf: formData.cpf,
+            nome_completo: formData.nome_completo,
+            telefone: formData.telefone,
+          })
+
+          if (result.error) {
+            throw new Error(result.error)
+          }
+
+          console.log("[v0] Usuário criado via Server Action:", result.userId)
+
+          // Inserir professor com user_id
+          const { data, error } = await supabase
+            .from("professores")
+            .insert([{ ...dataToSend, user_id: result.userId }])
+            .select()
+            .single()
+
+          if (error) throw error
+          professorId = data.id
+
+          toast.success(`Professor cadastrado! Senha temporária: CPF (${result.senhaTemporaria})`)
+        } else {
+          throw new Error("Email e CPF são obrigatórios para criar acesso ao sistema")
+        }
       }
 
       // Primeiro, remover todas as associações existentes
@@ -119,7 +159,8 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
 
       router.push("/professores")
     } catch (error: any) {
-      setError(error.message || "Erro ao salvar professor")
+      console.error("[v0] Erro ao salvar professor:", error)
+      setError(translateError(error.message || "Erro ao salvar professor"))
     } finally {
       setIsLoading(false)
     }

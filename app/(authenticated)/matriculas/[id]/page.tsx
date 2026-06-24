@@ -4,13 +4,15 @@ import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, ArrowLeft, User, GraduationCap, Calendar, FileText, Hash } from "lucide-react"
+import { Edit, ArrowLeft, User, GraduationCap, Calendar, FileText, Hash, UserCheck } from "lucide-react"
 import Link from "next/link"
-import { MatriculasHeader } from "@/components/matriculas/matriculas-header"
+import { PageHeader } from "@/components/page-header"
 import { DeleteMatriculaButton } from "@/components/matriculas/delete-matricula-button"
 
-export default async function MatriculaDetalhePage({ params }: { params: { id: string } }) {
-  if (params.id === "nova") {
+export default async function MatriculaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  if (id === "nova") {
     redirect("/matriculas/nova")
   }
 
@@ -19,6 +21,16 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) {
     redirect("/auth/login")
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  if (!profile || !["admin", "secretaria", "diretor", "coordenacao", "professor"].includes(profile.tipo_usuario)) {
+    redirect("/dashboard")
   }
 
   // Buscar dados da matrícula com relacionamentos
@@ -31,7 +43,7 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
       turma:turmas(*, professor_responsavel:professores(nome_completo))
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (matriculaError || !matricula) {
@@ -70,22 +82,14 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <MatriculasHeader />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Matrícula #{matricula.numero_matricula}</h1>
-            <p className="text-gray-600 mt-1">Detalhes da matrícula</p>
-          </div>
+    <>
+      <PageHeader
+        icon={UserCheck}
+        title={`Matrícula #${matricula.numero_matricula}`}
+        description="Detalhes da matrícula"
+        backHref="/matriculas"
+        actions={
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/matriculas">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Link>
-            </Button>
             <DeleteMatriculaButton
               matriculaId={matricula.id}
               numeroMatricula={matricula.numero_matricula}
@@ -98,9 +102,10 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
               </Link>
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Informações Principais */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -263,9 +268,8 @@ export default async function MatriculaDetalhePage({ params }: { params: { id: s
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   )
 }
 

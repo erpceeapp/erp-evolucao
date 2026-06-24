@@ -1,11 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from 'next/navigation'
-import { BookOpen, Plus, Calendar, Users, FileText } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { redirect } from "next/navigation"
+import { BookOpen, Calendar, FileText } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Link from "next/link"
 import PageHeader from "@/components/page-header"
 import AulasTab from "@/components/diario/aulas-tab"
 import NotasTab from "@/components/diario/notas-tab"
@@ -39,8 +35,16 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
       supabase.from("disciplinas").select("id, nome, codigo, carga_horaria").eq("id", disciplinaId).single(),
       supabase.from("professores").select("id, nome_completo").eq("id", turmaDisciplinas.professor_id).single(),
-      supabase.from("aulas").select("*").eq("turma_disciplina_id", turmaDisciplinas.id).order("data_aula", { ascending: false }),
-      supabase.from("matriculas").select("id, numero_matricula, aluno_id").eq("turma_id", turmaId).eq("status", "ativa")
+      supabase
+        .from("aulas")
+        .select("*")
+        .eq("turma_disciplina_id", turmaDisciplinas.id)
+        .order("data_aula", { ascending: false }),
+      supabase
+        .from("matriculas")
+        .select("id, numero_matricula, aluno_id")
+        .eq("turma_id", turmaId)
+        .eq("status", "ativa"),
     ])
 
     if (turmaRes.error || disciplinaRes.error || professorRes.error) {
@@ -49,16 +53,13 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     }
 
     // Buscar alunos
-    const alunoIds = matriculasRes.data?.map(m => m.aluno_id) || []
-    const { data: alunos } = await supabase
-      .from("alunos")
-      .select("id, nome_completo, email")
-      .in("id", alunoIds)
+    const alunoIds = matriculasRes.data?.map((m) => m.aluno_id) || []
+    const { data: alunos } = await supabase.from("alunos").select("id, nome_completo, email").in("id", alunoIds)
 
     // Combinar matriculas com alunos
-    const matriculasComAlunos = (matriculasRes.data || []).map(matricula => ({
+    const matriculasComAlunos = (matriculasRes.data || []).map((matricula) => ({
       ...matricula,
-      alunos: alunos?.find(a => a.id === matricula.aluno_id)
+      alunos: alunos?.find((a) => a.id === matricula.aluno_id),
     }))
 
     // Buscar períodos letivos
@@ -75,7 +76,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
         ...turmaDisciplinas,
         turmas: turmaRes.data,
         disciplinas: disciplinaRes.data,
-        professores: professorRes.data
+        professores: professorRes.data,
       },
       aulas: aulasRes.data || [],
       matriculas: matriculasComAlunos,
@@ -90,8 +91,9 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
 export default async function DiarioDetalhePage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const { turmaId, disciplinaId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -101,7 +103,7 @@ export default async function DiarioDetalhePage({
     redirect("/auth/login")
   }
 
-  const data = await getDiarioData(params.turmaId, params.disciplinaId)
+  const data = await getDiarioData(turmaId, disciplinaId)
 
   if (!data) {
     redirect("/diario")
@@ -110,21 +112,21 @@ export default async function DiarioDetalhePage({
   const { turmaDisciplina, aulas, matriculas, periodos } = data
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={BookOpen}
         title={turmaDisciplina.disciplinas.nome}
         description={`${turmaDisciplina.turmas.nome} - Prof. ${turmaDisciplina.professores.nome_completo}`}
         backHref="/diario"
       >
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/presenca/${params.turmaId}/${params.disciplinaId}`}>
+            <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
               <Users className="h-4 w-4 mr-2" />
-              Presença
+              Nova Aula
             </Link>
           </Button>
-        </div>
+        </div> */}
       </PageHeader>
 
       <Tabs defaultValue="aulas" className="space-y-6">
@@ -143,8 +145,8 @@ export default async function DiarioDetalhePage({
           <AulasTab
             aulas={aulas}
             turmaDisciplina={turmaDisciplina}
-            turmaId={params.turmaId}
-            disciplinaId={params.disciplinaId}
+            turmaId={turmaId}
+            disciplinaId={disciplinaId}
             matriculas={matriculas}
           />
         </TabsContent>
@@ -152,12 +154,12 @@ export default async function DiarioDetalhePage({
         <TabsContent value="notas">
           <NotasTab
             matriculas={matriculas}
-            disciplinaId={params.disciplinaId}
+            disciplinaId={disciplinaId}
             periodos={periodos}
             anoLetivo={turmaDisciplina.turmas.ano_letivo}
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   )
 }

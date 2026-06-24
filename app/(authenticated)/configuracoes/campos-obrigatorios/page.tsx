@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { CheckCircle2, Save, Settings } from 'lucide-react'
-import { createBrowserClient } from "@supabase/ssr"
-import { useRouter } from 'next/navigation'
+import { CheckCircle2, Save, Settings } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
@@ -99,19 +99,16 @@ export default function CamposObrigatoriosPage() {
   const [config, setConfig] = useState<RequiredFieldsConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const [userTipo, setUserTipo] = useState<string | null>(null)
+  const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
-    checkUserRole()
+    checkUserTipo()
     loadConfig()
   }, [])
 
-  const checkUserRole = async () => {
+  const checkUserTipo = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -120,14 +117,15 @@ export default function CamposObrigatoriosPage() {
       return
     }
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
-    if (profile?.role !== "admin" && profile?.role !== "coordenacao") {
+    const allowedTipos = ["admin", "coordenacao", "secretaria", "diretor"]
+    if (!profile?.tipo_usuario || !allowedTipos.includes(profile.tipo_usuario.toLowerCase())) {
       router.push("/dashboard")
       return
     }
 
-    setUserRole(profile.role)
+    setUserTipo(profile.tipo_usuario)
   }
 
   const loadConfig = async () => {
@@ -156,16 +154,24 @@ export default function CamposObrigatoriosPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      // Atualizar cada campo no banco
-      const updates = Object.entries(config).map(([campo, obrigatorio]) =>
-        supabase.from("config_campos_obrigatorios").update({ obrigatorio }).eq("campo", campo),
-      )
+      const updates = Object.entries(config).map(async ([campo, obrigatorio]) => {
+        const { data, error } = await supabase
+          .from("config_campos_obrigatorios")
+          .upsert({ campo, obrigatorio, updated_at: new Date().toISOString() }, { onConflict: "campo" })
+
+        if (error) {
+          throw error
+        }
+
+        return data
+      })
 
       await Promise.all(updates)
 
+      console.log("[v0] Todas as configurações foram salvas")
       toast.success("Configuração salva com sucesso!")
     } catch (error) {
-      console.error("Erro ao salvar:", error)
+      console.error("[v0] Erro ao salvar:", error)
       toast.error("Erro ao salvar configuração")
     } finally {
       setSaving(false)
@@ -184,7 +190,7 @@ export default function CamposObrigatoriosPage() {
     )
   }
 
-  if (userRole !== "admin" && userRole !== "coordenacao") {
+  if (!userTipo) {
     return (
       <div className="space-y-6">
         <PageHeader

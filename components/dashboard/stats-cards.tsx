@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/server"
 export async function StatsCards() {
   const supabase = await createClient()
 
-  console.log("[v0] StatsCards - Fetching statistics")
-
   try {
     // Buscar estatísticas com tratamento de erro individual
     const [alunosResult, professoresResult, turmasResult, matriculasResult] = await Promise.all([
@@ -15,12 +13,6 @@ export async function StatsCards() {
       supabase.from("turmas").select("*", { count: "exact", head: true }),
       supabase.from("matriculas").select("*", { count: "exact", head: true }),
     ])
-
-    // Log de debug para verificar erros
-    if (alunosResult.error) console.error("[v0] Erro ao buscar alunos:", alunosResult.error)
-    if (professoresResult.error) console.error("[v0] Erro ao buscar professores:", professoresResult.error)
-    if (turmasResult.error) console.error("[v0] Erro ao buscar turmas:", turmasResult.error)
-    if (matriculasResult.error) console.error("[v0] Erro ao buscar matrículas:", matriculasResult.error)
 
     const stats = [
       {
@@ -74,8 +66,6 @@ export async function StatsCards() {
       </div>
     )
   } catch (error) {
-    console.error("[v0] StatsCards - Erro ao buscar estatísticas:", error)
-    
     // Retornar cards com valores zero em caso de erro
     const defaultStats = [
       {

@@ -45,13 +45,7 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    console.log('[v0] Iniciando submissão de presença')
-    console.log('[v0] Data:', dataAula, 'Horário:', horario)
-    console.log('[v0] TurmaDisciplinaId:', turmaDisciplinaId)
-    console.log('[v0] Presenças:', presencas)
-    
     if (!dataAula || !horario) {
-      console.log('[v0] Campos obrigatórios faltando')
       toast({
         title: "Campos obrigatórios",
         description: "Preencha a data e o horário da aula",
@@ -63,10 +57,8 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
     setIsSubmitting(true)
 
     try {
-      console.log('[v0] Criando cliente Supabase')
       const supabase = createClient()
 
-      console.log('[v0] Inserindo aula no banco')
       const { data: aula, error: aulaError } = await supabase
         .from("aulas")
         .insert({
@@ -79,11 +71,8 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         .single()
 
       if (aulaError) {
-        console.error('[v0] Erro ao inserir aula:', aulaError)
         throw aulaError
       }
-
-      console.log('[v0] Aula criada:', aula)
 
       const presencasData = alunos.map(aluno => ({
         aula_id: aula.id,
@@ -91,18 +80,13 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         presente: presencas[aluno.id] ?? true,
       }))
 
-      console.log('[v0] Inserindo presenças:', presencasData)
-
       const { error: presencaError } = await supabase
         .from("presencas")
         .insert(presencasData)
 
       if (presencaError) {
-        console.error('[v0] Erro ao inserir presenças:', presencaError)
         throw presencaError
       }
-
-      console.log('[v0] Presenças salvas com sucesso')
 
       toast({
         title: "Sucesso!",
