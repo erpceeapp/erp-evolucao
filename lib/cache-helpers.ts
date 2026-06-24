@@ -97,7 +97,7 @@ export const getCachedEscola = unstable_cache(
     const supabase = await createClient()
     return supabase
       .from("escola")
-      .select("nome, cnpj, telefone, email, endereco, cidade, estado, cep")
+      .select("nome, cnpj, telefone, email, logradouro, numero, complemento, cidade, estado, cep, endereco")
       .limit(1)
       .single()
   },
