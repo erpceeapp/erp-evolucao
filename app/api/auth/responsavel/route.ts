@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       .rpc("get_matricula_ativa", {
         p_aluno_id: aluno.id,
       })
-      .single()) as unknown as { data: { id: string; turma_id: string; status: string; numero_matricula: string } | null; error: any }
+      .maybeSingle()) as unknown as { data: { id: string; turma_id: string; status: string; numero_matricula: string } | null; error: any }
 
     let turmaNome: string | undefined
     if (matricula?.turma_id) {
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         .rpc("get_turma", {
           p_turma_id: matricula.turma_id,
         })
-        .single()) as unknown as { data: { nome: string; serie: string; turno: string } | null; error: any }
+        .maybeSingle()) as unknown as { data: { nome: string; serie: string; turno: string } | null; error: any }
       turmaNome = turma?.nome
     }
 
@@ -84,9 +84,10 @@ export async function POST(request: Request) {
     })
 
     // Definir cookie na resposta (8 horas)
+    const isLocal = request.headers.get("host")?.includes("localhost") || request.headers.get("host")?.includes("127.0.0.1")
     response.cookies.set("responsavel-session", token, {
       httpOnly: true,
-      secure: true,
+      secure: !isLocal,
       sameSite: "lax",
       maxAge: 60 * 60 * 8,
       path: "/",
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
 
     return response
   } catch (error: any) {
+    console.error("[responsavel-auth] Erro interno:", error?.message || error, error?.stack || "")
     return NextResponse.json(
       { error: "Erro interno. Tente novamente mais tarde." },
       { status: 500 }

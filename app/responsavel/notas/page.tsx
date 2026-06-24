@@ -157,8 +157,8 @@ export default async function ResponsavelNotasPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {disciplinas.map((disciplina) => (
-                    <TableRow key={disciplina.id}>
+                  {disciplinas.map((disciplina, idx) => (
+                    <TableRow key={`${disciplina.id}-${idx}`}>
                       <TableCell className="font-medium">
                         <div>
                           <p>{disciplina.nome}</p>
