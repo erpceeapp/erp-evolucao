@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { DiarioTurmasView } from "./diario-turmas-view"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
@@ -115,7 +116,7 @@ export default async function DiarioPage() {
       />
 
       {turmasSemDisciplinas.length > 0 && (
-        <Alert>
+        <Alert className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Você tem {turmasSemDisciplinas.length} turma{turmasSemDisciplinas.length !== 1 ? "s" : ""} sem disciplinas
@@ -124,105 +125,11 @@ export default async function DiarioPage() {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Turmas e Disciplinas ({totalTurmas})</CardTitle>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input placeholder="Buscar turma ou disciplina..." className="pl-10 w-64" />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {turmasComDisciplinas.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-gray-700">Turmas Prontas para Uso</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {turmasComDisciplinas.map((item) => (
-                  <Card key={`${item.turma_id}-${item.disciplina_id}`}>
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{item.turmas?.nome}</h3>
-                            <p className="text-sm text-gray-600">
-                              {item.turmas?.serie} - {item.turmas?.ano_letivo}
-                            </p>
-                          </div>
-                          <Badge variant="outline">{item.disciplinas?.codigo}</Badge>
-                        </div>
-
-                        <div>
-                          <p className="font-medium text-cyan-700">{item.disciplinas?.nome}</p>
-                          <p className="text-sm text-gray-600">Prof. {item.professores?.nome_completo}</p>
-                        </div>
-
-                        <div className="flex gap-2 pt-2">
-                          <Button asChild size="sm" className="w-full bg-cyan-600 hover:bg-cyan-700">
-                            <Link href={`/diario/${item.turma_id}/${item.disciplina_id}`}>Ver Diário</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {turmasSemDisciplinas.length > 0 && (
-            <div className="space-y-4 mt-6">
-              <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-500" />
-                Turmas que Precisam de Configuração
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {turmasSemDisciplinas.map((turma) => (
-                  <Card key={turma.id} className="border-orange-200 bg-orange-50/50">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{turma.nome}</h3>
-                          <p className="text-sm text-gray-600">
-                            {turma.serie} - {turma.ano_letivo}
-                          </p>
-                        </div>
-
-                        <Alert className="py-2">
-                          <AlertDescription className="text-xs">
-                            Esta turma ainda não tem disciplinas. Adicione disciplinas para usar o diário.
-                          </AlertDescription>
-                        </Alert>
-
-                        <Button asChild size="sm" className="w-full bg-transparent" variant="outline">
-                          <Link href={`/turmas/${turma.id}`}>
-                            <Settings className="h-4 w-4 mr-2" />
-                            Configurar Turma
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {totalTurmas === 0 && (
-            <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma turma cadastrada</h3>
-              <p className="text-gray-600 mb-4">Cadastre turmas para começar a usar o diário de classe.</p>
-              <Button asChild>
-                <Link href="/turmas/nova">Cadastrar Turma</Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <DiarioTurmasView
+        turmasComDisciplinas={turmasComDisciplinas}
+        turmasSemDisciplinas={turmasSemDisciplinas}
+        totalTurmas={totalTurmas}
+      />
     </>
   )
 }
