@@ -137,6 +137,7 @@ export default function GradeHorariosPage() {
             filtroTipo={filtroTipo}
             onCellClick={handleCellClick}
             onSlotClick={handleSlotClick}
+            duracaoPadrao={duracaoPadrao}
           />
 
           {filtroTipo === "turma" && <SemProfessorList disciplinas={disciplinas} />}

@@ -20,13 +20,13 @@ export async function listarTurmaDisciplinas(turmaId: string): Promise<TurmaDisc
     .from("turma_disciplinas")
     .select(`
       id, turma_id, disciplina_id, professor_id,
-      turmas!inner(id, nome, serie),
-      disciplinas!inner(id, nome, codigo),
-      professores(id, nome_completo)
+      turmas!turma_disciplinas_turma_id_fkey!inner(id, nome, serie),
+      disciplinas!turma_disciplinas_disciplina_id_fkey!inner(id, nome, codigo),
+      professores!turma_disciplinas_professor_id_fkey(id, nome_completo)
     `)
     .eq("turma_id", turmaId)
 
-  if (error) throw new Error("Erro ao carregar disciplinas da turma")
+  if (error) throw new Error(`Erro ao carregar disciplinas da turma: ${error.message}`)
 
   return (data || []).map((td: any) => ({
     id: td.id,
@@ -58,9 +58,9 @@ export async function listarGrade(
         turma_id,
         disciplina_id,
         professor_id,
-        turmas!inner(id, nome, serie),
-        disciplinas!inner(id, nome, codigo),
-        professores(id, nome_completo)
+        turmas!turma_disciplinas_turma_id_fkey!inner(id, nome, serie),
+        disciplinas!turma_disciplinas_disciplina_id_fkey!inner(id, nome, codigo),
+        professores!turma_disciplinas_professor_id_fkey(id, nome_completo)
       )
     `)
 
@@ -73,7 +73,7 @@ export async function listarGrade(
   }
 
   const { data, error } = await query.order("dia_semana").order("hora_inicio")
-  if (error) throw new Error("Erro ao carregar grade horária")
+  if (error) throw new Error(`Erro ao carregar grade horária: ${error.message}`)
 
   return (data || []).map((item: any) => ({
     id: item.id,
@@ -132,7 +132,7 @@ export async function salvarSlot(input: SalvarSlotInput): Promise<void> {
     hora_fim: input.hora_fim,
   })
 
-  if (error) throw new Error("Erro ao salvar horário")
+  if (error) throw new Error(`Erro ao salvar horário: ${error.message}`)
   revalidatePath("/grade-horarios")
 }
 
@@ -142,6 +142,6 @@ export async function removerSlot(id: string): Promise<void> {
   if (authError || !userData?.user) throw new Error("Não autenticado")
 
   const { error } = await supabase.from("grade_horarios").delete().eq("id", id)
-  if (error) throw new Error("Erro ao remover horário")
+  if (error) throw new Error(`Erro ao remover horário: ${error.message}`)
   revalidatePath("/grade-horarios")
 }

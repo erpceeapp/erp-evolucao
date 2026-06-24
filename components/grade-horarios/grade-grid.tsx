@@ -9,6 +9,7 @@ interface GradeGridProps {
   filtroTipo: "turma" | "professor"
   onCellClick: (diaSemana: number, hora: string) => void
   onSlotClick: (slot: GradeSlot) => void
+  duracaoPadrao: number
 }
 
 const DIAS = [
@@ -17,12 +18,6 @@ const DIAS = [
   { value: 3, label: "Qua" },
   { value: 4, label: "Qui" },
   { value: 5, label: "Sex" },
-]
-
-const HORARIOS = [
-  "07:00", "08:00", "09:00", "10:00", "11:00",
-  "13:00", "14:00", "15:00", "16:00", "17:00",
-  "19:00", "20:00", "21:00", "22:00",
 ]
 
 function getDisciplinaColor(nome: string): string {
@@ -48,7 +43,18 @@ function parseHora(h: string): number {
   return hora * 60 + min
 }
 
-export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick }: GradeGridProps) {
+function gerarHorarios(duracao: number): string[] {
+  const horarios: string[] = []
+  for (let min = 7 * 60; min <= 22 * 60; min += duracao) {
+    if (min >= 12 * 60 && min < 13 * 60) continue
+    if (min >= 18 * 60 && min < 19 * 60) continue
+    horarios.push(`${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`)
+  }
+  return horarios
+}
+
+export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracaoPadrao }: GradeGridProps) {
+  const HORARIOS = useMemo(() => gerarHorarios(duracaoPadrao), [duracaoPadrao])
   const slotMap = useMemo(() => {
     const map = new Map<string, GradeSlot[]>()
     for (const slot of slots) {
@@ -64,7 +70,7 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick }: Grade
     for (const slot of slots) {
       const startMin = parseHora(slot.hora_inicio)
       const endMin = parseHora(slot.hora_fim)
-      for (let m = startMin + 60; m < endMin; m += 60) {
+      for (let m = startMin + duracaoPadrao; m < endMin; m += duracaoPadrao) {
         const hh = Math.floor(m / 60)
         const mm = m % 60
         const hiddenKey = `${slot.dia_semana}-${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`
@@ -72,7 +78,7 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick }: Grade
       }
     }
     return map
-  }, [slots])
+  }, [slots, duracaoPadrao])
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -118,7 +124,7 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick }: Grade
                         ? cellSlots.map((slot) => {
                             const startMin = parseHora(slot.hora_inicio)
                             const endMin = parseHora(slot.hora_fim)
-                            const rowspan = Math.max(1, Math.ceil((endMin - startMin) / 60))
+                            const rowspan = Math.max(1, Math.ceil((endMin - startMin) / duracaoPadrao))
                             const colorClass = getDisciplinaColor(slot.disciplina_nome)
 
                             return (
