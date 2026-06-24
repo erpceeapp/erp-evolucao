@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Edit, Eye, Users } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -129,19 +130,13 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
           </Button>
         </div>
         <div className="flex gap-2">
-          <Select value={anoFilter || "todos"} onValueChange={handleAnoChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os Anos</SelectItem>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={anoFilter || "todos"}
+            onChange={handleAnoChange}
+            placeholder="Ano"
+            allLabel="Todos os Anos"
+            options={availableYears.map((year) => ({ value: year.toString(), label: year.toString() }))}
+          />
           <Select value={statusFilter} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-32">
               <SelectValue />
