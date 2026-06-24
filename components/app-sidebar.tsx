@@ -22,6 +22,7 @@ import {
   BarChart3,
   Settings,
   UserCircle,
+  CalendarRange,
   UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -70,6 +71,12 @@ const menuItems = [
     icon: BookUser,
     label: "Agenda do Aluno",
     href: "/agenda-aluno",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: CalendarRange,
+    label: "Grade de Horários",
+    href: "/grade-horarios",
     roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
   },
   {
