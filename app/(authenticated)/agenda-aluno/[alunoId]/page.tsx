@@ -271,126 +271,126 @@ export default function AgendaAlunoDetailPage() {
         backHref="/agenda-aluno"
       />
       {/* Card com dados do aluno */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <User className="h-7 w-7 text-cyan-700" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{aluno.nome_completo}</h2>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                    {aluno.cpf && <span>CPF: {aluno.cpf}</span>}
-                    {aluno.telefone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {aluno.telefone}
-                      </span>
-                    )}
-                    {aluno.email && (
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {aluno.email}
-                      </span>
-                    )}
-                  </div>
-                  {aluno.nome_responsavel && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Responsavel: {aluno.nome_responsavel}
-                      {aluno.telefone_responsavel && ` - ${aluno.telefone_responsavel}`}
-                    </p>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-cyan-100 flex items-center justify-center">
+                <User className="h-7 w-7 text-cyan-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{aluno.nome_completo}</h2>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                  {aluno.cpf && <span>CPF: {aluno.cpf}</span>}
+                  {aluno.telefone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {aluno.telefone}
+                    </span>
+                  )}
+                  {aluno.email && (
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      {aluno.email}
+                    </span>
                   )}
                 </div>
+                {aluno.nome_responsavel && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Responsavel: {aluno.nome_responsavel}
+                    {aluno.telefone_responsavel && ` - ${aluno.telefone_responsavel}`}
+                  </p>
+                )}
               </div>
-              <Button onClick={openNewAviso} className="bg-cyan-600 hover:bg-cyan-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Aviso
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <Button onClick={openNewAviso} className="bg-cyan-600 hover:bg-cyan-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Aviso
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Calendario */}
-        <Card>
-          <CardContent className="p-6">
-            <AgendaCalendar
-              eventos={eventosCalendario}
-              onDayClick={(data) => {
-                setEditingAviso(null)
-                setFormData({
-                  titulo: "",
-                  descricao: "",
-                  categoria: "aviso",
-                  data,
-                  hora: "",
-                })
-                setIsFormModalOpen(true)
-              }}
-            />
-          </CardContent>
-        </Card>
+      {/* Calendario */}
+      <Card>
+        <CardContent className="p-6">
+          <AgendaCalendar
+            eventos={eventosCalendario}
+            onDayClick={(data) => {
+              setEditingAviso(null)
+              setFormData({
+                titulo: "",
+                descricao: "",
+                categoria: "aviso",
+                data,
+                hora: "",
+              })
+              setIsFormModalOpen(true)
+            }}
+          />
+        </CardContent>
+      </Card>
 
-        {/* Lista de avisos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Avisos Registrados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {avisos.length > 0 ? (
-              <div className="space-y-3">
-                {avisos.map((aviso) => (
-                  <div
-                    key={aviso.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleAvisoClick(aviso)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-gray-900">{aviso.titulo}</h4>
-                          <Badge
-                            variant="outline"
-                            className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
-                          >
-                            {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
-                          </Badge>
-                        </div>
-                        {aviso.descricao && (
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{aviso.descricao}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(aviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
-                          </span>
-                          {aviso.hora_aviso && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {aviso.hora_aviso}
-                            </span>
-                          )}
-                        </div>
+      {/* Lista de avisos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Avisos Registrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {avisos.length > 0 ? (
+            <div className="space-y-3">
+              {avisos.map((aviso) => (
+                <div
+                  key={aviso.id}
+                  className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => handleAvisoClick(aviso)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-semibold text-gray-900">{aviso.titulo}</h4>
+                        <Badge
+                          variant="outline"
+                          className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
+                        >
+                          {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
+                        </Badge>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => openDeleteDialog(aviso, e)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {aviso.descricao && (
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{aviso.descricao}</p>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(aviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
+                        </span>
+                        {aviso.hora_aviso && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {aviso.hora_aviso}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={(e) => openDeleteDialog(aviso, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm text-center py-8">
-                Nenhum aviso registrado para este aluno
-              </p>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-8">
+              Nenhum aviso registrado para este aluno
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Modal de detalhes do aviso */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
