@@ -60,12 +60,15 @@ export default function PresencaPage({
         .single()
 
       if (tdError) {
-        console.error("[v0] Erro ao buscar turma_disciplina:", tdError)
         throw tdError
       }
 
       if (!tdData) {
-        console.error("[v0] Turma disciplina não encontrada")
+        toast({
+          title: "Erro",
+          description: "Turma disciplina não encontrada",
+          variant: "destructive",
+        })
         return
       }
 
@@ -105,11 +108,8 @@ export default function PresencaPage({
         .eq("status", "ativa")
 
       if (matriculasError) {
-        console.error("[v0] Erro ao buscar matrículas:", matriculasError)
         throw matriculasError
       }
-
-      console.log("[v0] Matrículas encontradas:", matriculas?.length)
 
       if (!matriculas || matriculas.length === 0) {
         setAlunos([])
@@ -126,11 +126,8 @@ export default function PresencaPage({
         .order("nome_completo")
 
       if (alunosError) {
-        console.error("[v0] Erro ao buscar alunos:", alunosError)
         throw alunosError
       }
-
-      console.log("[v0] Alunos encontrados:", alunosData?.length)
 
       setAlunos(alunosData || [])
 
@@ -141,7 +138,6 @@ export default function PresencaPage({
       })
       setPresencas(presencasIniciais)
     } catch (error) {
-      console.error("[v0] Erro ao carregar dados:", error)
       toast({
         title: "Erro",
         description: "Erro ao carregar dados da turma",

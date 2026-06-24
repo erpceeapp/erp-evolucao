@@ -29,8 +29,6 @@ export async function createProfessorUser(professorData: {
     // Senha padrão é o CPF sem formatação
     const senhaTemporaria = professorData.cpf.replace(/[^0-9]/g, "")
 
-    console.log("[v0] Server Action: Criando usuário professor")
-
     const supabaseAdmin = createAdminClient()
 
     // Primeiro, verificar se o usuário já existe no Auth
@@ -40,8 +38,6 @@ export async function createProfessorUser(professorData: {
     )
 
     if (existingUser) {
-      console.log("[v0] Usuário já existe no Auth, verificando se pode ser reutilizado...")
-      
       // Verificar se o usuário já tem um perfil de professor ativo
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")

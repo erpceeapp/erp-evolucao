@@ -64,7 +64,6 @@ export default async function EditarEventoPage({ params }: PageProps) {
       .eq("id", id)
 
     if (error) {
-      console.error("[v0] Erro ao atualizar evento:", error)
       throw new Error("Erro ao atualizar evento")
     }
 

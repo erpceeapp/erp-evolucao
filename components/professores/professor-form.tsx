@@ -111,8 +111,6 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
         professorId = professor.id
       } else {
         if (formData.email && formData.cpf) {
-          console.log("[v0] Chamando Server Action para criar usuário")
-
           const result = await createProfessorUser({
             email: formData.email,
             cpf: formData.cpf,
@@ -123,8 +121,6 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
           if (result.error) {
             throw new Error(result.error)
           }
-
-          console.log("[v0] Usuário criado via Server Action:", result.userId)
 
           // Inserir professor com user_id
           const { data, error } = await supabase
@@ -159,7 +155,6 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
 
       router.push("/professores")
     } catch (error: any) {
-      console.error("[v0] Erro ao salvar professor:", error)
       setError(translateError(error.message || "Erro ao salvar professor"))
     } finally {
       setIsLoading(false)

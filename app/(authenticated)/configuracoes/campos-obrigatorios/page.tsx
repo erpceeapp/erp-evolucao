@@ -168,10 +168,8 @@ export default function CamposObrigatoriosPage() {
 
       await Promise.all(updates)
 
-      console.log("[v0] Todas as configurações foram salvas")
       toast.success("Configuração salva com sucesso!")
     } catch (error) {
-      console.error("[v0] Erro ao salvar:", error)
       toast.error("Erro ao salvar configuração")
     } finally {
       setSaving(false)

@@ -7,7 +7,6 @@ import AulasTab from "@/components/diario/aulas-tab"
 import NotasTab from "@/components/diario/notas-tab"
 
 async function getDiarioData(turmaId: string, disciplinaId: string) {
-  console.log("[v0] getDiarioData called for turma:", turmaId, "disciplina:", disciplinaId)
   const supabase = await createServerClient()
 
   try {
@@ -24,11 +23,8 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     }
 
     if (!turmaDisciplinas) {
-      console.log("[v0] Nenhuma turma_disciplina encontrada")
       return null
     }
-
-    console.log("[v0] turma_disciplina encontrada:", turmaDisciplinas.id)
 
     // Buscar dados relacionados em paralelo
     const [turmaRes, disciplinaRes, professorRes, aulasRes, matriculasRes] = await Promise.all([
@@ -68,8 +64,6 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       .select("*")
       .eq("ano_letivo", turmaRes.data.ano_letivo)
       .order("numero_periodo")
-
-    console.log("[v0] Dados carregados com sucesso")
 
     return {
       turmaDisciplina: {

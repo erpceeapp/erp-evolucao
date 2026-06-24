@@ -63,7 +63,6 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   let presencas = presencasExistentes || []
 
   if (!presencasExistentes || presencasExistentes.length === 0) {
-    console.log("[v0] Criando registros de presença para todos os alunos...")
     const presencasParaCriar = alunoIds.map((alunoId) => ({
       aula_id: aulaId,
       aluno_id: alunoId,
@@ -80,7 +79,6 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
       console.error("[v0] Erro ao criar presenças:", error)
     } else {
       presencas = novasPresencas || []
-      console.log("[v0] Criadas", presencas.length, "presenças")
     }
   }
 

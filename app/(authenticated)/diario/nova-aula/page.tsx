@@ -8,7 +8,6 @@ import NovaAulaForm from "@/components/diario/nova-aula-form"
 async function getTurmasComDisciplinas() {
   const supabase = await createClient()
 
-  console.log("[v0] Buscando turma_disciplinas para nova aula...")
   const { data: turmasDisciplinas, error: tdError } = await supabase.from("turma_disciplinas").select("*")
 
   if (tdError) {
@@ -17,11 +16,8 @@ async function getTurmasComDisciplinas() {
   }
 
   if (!turmasDisciplinas || turmasDisciplinas.length === 0) {
-    console.log("[v0] Nenhuma turma_disciplina encontrada")
     return []
   }
-
-  console.log(`[v0] Encontradas ${turmasDisciplinas.length} turma_disciplinas`)
 
   // Buscar turmas
   const turmaIds = [...new Set(turmasDisciplinas.map((td) => td.turma_id))]
@@ -64,7 +60,6 @@ async function getTurmasComDisciplinas() {
     professores: professores?.find((p) => p.id === td.professor_id),
   }))
 
-  console.log(`[v0] Retornando ${resultado.length} turmas com disciplinas para nova aula`)
   return resultado
 }
 

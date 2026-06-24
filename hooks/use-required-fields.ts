@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 
 interface RequiredField {
   campo: string
@@ -20,17 +21,11 @@ export function useRequiredFields() {
     try {
       const supabase = createClient()
 
-      console.log("[v0] Loading required fields configuration")
-
       const { data, error } = await supabase.from("config_campos_obrigatorios").select("campo, obrigatorio")
 
       if (error) {
-        console.error("[v0] Error loading required fields:", error)
         throw error
       }
-
-      console.log("[v0] Loaded required fields data:", data)
-      console.log("[v0] Number of fields loaded:", data?.length || 0)
 
       const fieldsMap = (data || []).reduce(
         (acc, field) => {
@@ -40,10 +35,9 @@ export function useRequiredFields() {
         {} as Record<string, boolean>,
       )
 
-      console.log("[v0] Fields map created:", fieldsMap)
       setRequiredFields(fieldsMap)
     } catch (error) {
-      console.error("[v0] Erro ao carregar configurações de campos obrigatórios:", error)
+      toast.error("Erro ao carregar campos obrigatórios")
       setRequiredFields({
         nome_completo: true,
         data_nascimento: true,

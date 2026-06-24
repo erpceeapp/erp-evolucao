@@ -13,7 +13,6 @@ import { DiarioTurmasView } from "./diario-turmas-view"
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
 
-  console.log("[v0] Buscando turma_disciplinas...")
   const { data: turmasDisciplinas, error: tdError } = await supabase.from("turma_disciplinas").select("*")
 
   if (tdError) {
@@ -31,17 +30,12 @@ async function getTurmasComDisciplinas() {
     return { turmasComDisciplinas: [], turmasSemDisciplinas: [] }
   }
 
-  console.log(`[v0] Total de turmas ativas: ${todasTurmas?.length || 0}`)
-
   if (!turmasDisciplinas || turmasDisciplinas.length === 0) {
-    console.log("[v0] Nenhuma turma_disciplina encontrada - todas as turmas estão sem disciplinas")
     return {
       turmasComDisciplinas: [],
       turmasSemDisciplinas: todasTurmas || [],
     }
   }
-
-  console.log(`[v0] Encontradas ${turmasDisciplinas.length} turma_disciplinas`)
 
   // Buscar disciplinas
   const disciplinaIds = [...new Set(turmasDisciplinas.map((td) => td.disciplina_id))]
@@ -80,9 +74,6 @@ async function getTurmasComDisciplinas() {
     }
   })
 
-  console.log(
-    `[v0] Turmas com disciplinas: ${turmasComDisciplinas.length}, sem disciplinas: ${turmasSemDisciplinas.length}`,
-  )
   return { turmasComDisciplinas, turmasSemDisciplinas }
 }
 

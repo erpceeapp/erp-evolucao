@@ -45,11 +45,8 @@ export default function PrimeiroAcessoPage() {
       .eq("id", user.id)
       .single()
 
-    console.log("[v0] Primeiro Acesso - Profile:", profile)
-
     if (!profile || profile.tipo_usuario !== "professor" || !profile.primeira_senha) {
       // Não é professor ou já trocou a senha, redirecionar para dashboard
-      console.log("[v0] Primeiro Acesso - Redirecionando para dashboard")
       router.push("/dashboard")
     }
   }

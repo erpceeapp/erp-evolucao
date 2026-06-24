@@ -126,7 +126,7 @@ export default function AgendaAlunoDetailPage() {
       .order("data_aviso", { ascending: false })
 
     if (error) {
-      console.error("[v0] Erro ao buscar avisos:", error)
+      toast.error("Erro ao carregar avisos")
     }
 
     setAvisos(avisosData || [])

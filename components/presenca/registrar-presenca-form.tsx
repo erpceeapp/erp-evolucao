@@ -93,11 +93,9 @@ export default function RegistrarPresencaForm({ alunos, turmaDisciplinaId, turma
         description: "Presença registrada com sucesso",
       })
 
-      console.log('[v0] Redirecionando para histórico de presenças')
       router.push(`/diario/${turmaId}/${disciplinaId}/presencas`)
       router.refresh()
     } catch (error) {
-      console.error("[v0] Erro ao registrar presença:", error)
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Não foi possível registrar a presença",

@@ -193,7 +193,6 @@ export function GerenciarDisciplinasTurma({
                             placeholder="Buscar disciplina..."
                             value={searchTerm}
                             onValueChange={(value) => {
-                              console.log("[v0] Search term changed:", value)
                               setSearchTerm(value)
                             }}
                           />
@@ -209,7 +208,6 @@ export function GerenciarDisciplinasTurma({
                                   key={disciplina.id}
                                   value={disciplina.id}
                                   onSelect={() => {
-                                    console.log("[v0] Disciplina selected:", disciplina.nome)
                                     setSelectedDisciplina(disciplina)
                                     setOpen(false)
                                     setSearchTerm("")
