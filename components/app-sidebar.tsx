@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { LogoutConfirmDialog } from "@/components/logout-confirm-dialog"
 import {
   LayoutDashboard,
   Users,
@@ -220,18 +221,19 @@ export function AppSidebar() {
           {!isCollapsed && <span className="font-medium">Perfil</span>}
         </Link>
 
-        <Link
-          href="/auth/logout"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-            "text-red-600 hover:bg-red-50",
-            isCollapsed && "justify-center",
-          )}
-          title={isCollapsed ? "Sair" : undefined}
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!isCollapsed && <span className="font-medium">Sair</span>}
-        </Link>
+        <LogoutConfirmDialog>
+          <button
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full",
+              "text-red-600 hover:bg-red-50",
+              isCollapsed && "justify-center",
+            )}
+            title={isCollapsed ? "Sair" : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span className="font-medium">Sair</span>}
+          </button>
+        </LogoutConfirmDialog>
       </div>
     </aside>
   )
