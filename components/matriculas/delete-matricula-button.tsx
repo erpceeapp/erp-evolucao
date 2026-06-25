@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface DeleteMatriculaButtonProps {
   matriculaId: string
@@ -42,7 +43,7 @@ export function DeleteMatriculaButton({ matriculaId, numeroMatricula, isDisabled
       router.refresh()
     } catch (err: any) {
       console.error("Erro ao remover matrícula:", err)
-      alert("Erro ao remover matrícula. Tente novamente.")
+      toast.error("Erro ao remover matrícula. Tente novamente.")
       setIsDeleting(false)
       setOpen(false)
     }

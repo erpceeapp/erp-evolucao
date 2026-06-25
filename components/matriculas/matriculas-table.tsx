@@ -13,6 +13,7 @@ import { DataPagination } from "@/components/ui/data-pagination"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface Matricula {
   id: string
@@ -158,7 +159,7 @@ export function MatriculasTable({
       router.refresh()
     } catch (err: any) {
       console.error("Erro ao remover matrícula:", err)
-      alert("Erro ao remover matrícula. Tente novamente.")
+      toast.error("Erro ao remover matrícula. Tente novamente.")
     } finally {
       setIsDeleting(null)
     }
