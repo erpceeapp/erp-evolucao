@@ -73,11 +73,11 @@ export function GradeFilter({ filtroTipo, filtroId, onChange }: GradeFilterProps
 
   return (
     <div className="flex items-center gap-4">
-      <div className="flex rounded-md border">
+      <div className="flex rounded-md border overflow-hidden">
         <button
           type="button"
           className={cn(
-            "px-3 py-1.5 text-sm transition-colors",
+            "px-3 py-1.5 text-sm transition-colors rounded-none",
             filtroTipo === "turma"
               ? "bg-primary text-primary-foreground"
               : "bg-background text-muted-foreground hover:bg-muted",
@@ -89,7 +89,7 @@ export function GradeFilter({ filtroTipo, filtroId, onChange }: GradeFilterProps
         <button
           type="button"
           className={cn(
-            "px-3 py-1.5 text-sm transition-colors border-l",
+            "px-3 py-1.5 text-sm transition-colors rounded-none border-l",
             filtroTipo === "professor"
               ? "bg-primary text-primary-foreground"
               : "bg-background text-muted-foreground hover:bg-muted",
