@@ -64,6 +64,10 @@ export default async function MatriculasPage({
     query = query.eq("ano_letivo", Number.parseInt(ano))
   }
 
+  if (turma) {
+    query = query.eq("turma_id", turma)
+  }
+
   // Paginação
   const from = (page - 1) * itemsPerPage
   const to = from + itemsPerPage - 1

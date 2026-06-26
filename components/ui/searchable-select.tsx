@@ -34,13 +34,13 @@ export function SearchableSelect({ value, onChange, placeholder, allLabel, optio
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full sm:w-48 justify-between"
+          className="w-full sm:w-48 justify-between overflow-hidden"
         >
-          {selectedLabel || allLabel}
+          <span className="truncate">{selectedLabel || allLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0">
+      <PopoverContent className="w-64 p-0" align="start">
         <Command>
           <CommandInput placeholder={`Buscar ${placeholder}...`} value={search} onValueChange={setSearch} />
           <CommandList>
@@ -54,8 +54,8 @@ export function SearchableSelect({ value, onChange, placeholder, allLabel, optio
                   setSearch("")
                 }}
               >
-                <Check className={cn("mr-2 h-4 w-4", value === "todos" || !value ? "opacity-100" : "opacity-0")} />
-                {allLabel}
+                <Check className={cn("mr-2 h-4 w-4 shrink-0", value === "todos" || !value ? "opacity-100" : "opacity-0")} />
+                <span className="truncate">{allLabel}</span>
               </CommandItem>
               {filtered.map((option) => (
                 <CommandItem
@@ -67,8 +67,8 @@ export function SearchableSelect({ value, onChange, placeholder, allLabel, optio
                     setSearch("")
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
-                  {option.label}
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === option.value ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{option.label}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
