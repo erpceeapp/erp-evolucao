@@ -141,10 +141,7 @@ export function GerenciarDisciplinasTurma({
             <BookOpen className="h-5 w-5" />
             Disciplinas ({disciplinasAtuais.length})
           </CardTitle>
-          {disciplinasAtuais.length >= 1 ? (
-            <p className="text-sm text-gray-500">Esta turma já possui uma disciplina. Remova a atual para trocá-la.</p>
-          ) : (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
@@ -155,7 +152,7 @@ export function GerenciarDisciplinasTurma({
                 <DialogHeader>
                   <DialogTitle>Adicionar Disciplina à Turma</DialogTitle>
                   <DialogDescription>
-                    Selecione uma disciplina. O professor responsável será automaticamente associado.
+                    Selecione uma disciplina. O professor já vinculado a ela será automaticamente associado.
                   </DialogDescription>
                 </DialogHeader>
 
@@ -270,7 +267,6 @@ export function GerenciarDisciplinasTurma({
                 </div>
               </DialogContent>
             </Dialog>
-          )}
         </div>
       </CardHeader>
       <CardContent>
