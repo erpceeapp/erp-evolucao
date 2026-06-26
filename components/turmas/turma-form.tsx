@@ -65,16 +65,6 @@ function ProfessorSelect({
           <CommandList>
             <CommandEmpty>Nenhum professor encontrado</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value="none"
-                onSelect={() => {
-                  onChange("none")
-                  setOpen(false)
-                }}
-              >
-                <Check className={cn("mr-2 h-4 w-4", value === "none" ? "opacity-100" : "opacity-0")} />
-                Nenhum professor
-              </CommandItem>
               {professores.map((professor) => (
                 <CommandItem
                   key={professor.id}
@@ -109,7 +99,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
     serie: turma?.serie || "",
     turno: turma?.turno || "matutino",
     capacidade_maxima: turma?.capacidade_maxima?.toString() || "",
-    professor_responsavel_id: turma?.professor_responsavel_id || "none",
+    professor_responsavel_id: turma?.professor_responsavel_id || "",
     ativo: turma?.ativo ?? true,
   })
 
@@ -159,12 +149,15 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
         )
       }
 
+      if (!formData.professor_responsavel_id) {
+        throw new Error("Selecione um professor responsável para a turma")
+      }
+
       const dataToSend = {
         ...formData,
         ano_letivo: Number.parseInt(formData.ano_letivo),
         capacidade_maxima: formData.capacidade_maxima ? Number.parseInt(formData.capacidade_maxima) : null,
-        professor_responsavel_id:
-          formData.professor_responsavel_id === "none" ? null : formData.professor_responsavel_id,
+        professor_responsavel_id: formData.professor_responsavel_id,
       }
 
       if (isEditing && turma) {
@@ -264,7 +257,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
                 />
               </div>
               <div className="space-y-2">
-                <Label>Professor Responsável</Label>
+                <Label>Professor Responsável *</Label>
                 <ProfessorSelect
                   value={formData.professor_responsavel_id}
                   professores={professores}
