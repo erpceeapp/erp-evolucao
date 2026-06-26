@@ -16,7 +16,8 @@ interface Option {
 interface GradeFilterProps {
   filtroTipo: "turma" | "professor"
   filtroId: string | null
-  onChange: (tipo: "turma" | "professor", id: string | null) => void
+  onChange: (tipo: "turma" | "professor", id: string | null, label?: string) => void
+  onLabelChange?: (label: string) => void
 }
 
 export function GradeFilter({ filtroTipo, filtroId, onChange }: GradeFilterProps) {
@@ -130,7 +131,7 @@ export function GradeFilter({ filtroTipo, filtroId, onChange }: GradeFilterProps
                     key={option.value}
                     value={option.value}
                     onSelect={() => {
-                      onChange(filtroTipo, option.value)
+                      onChange(filtroTipo, option.value, option.label)
                       setOpen(false)
                       setSearch("")
                     }}

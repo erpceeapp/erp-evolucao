@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { PageHeader } from "@/components/page-header"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,6 +10,7 @@ import { GradeFilter } from "@/components/grade-horarios/grade-filter"
 import { GradeGrid } from "@/components/grade-horarios/grade-grid"
 import { SlotModal } from "@/components/grade-horarios/slot-modal"
 import { SemProfessorList } from "@/components/grade-horarios/sem-professor-list"
+import { ExportGradePDF } from "@/components/grade-horarios/export-grade-pdf"
 import { listarGrade, listarTurmaDisciplinas } from "./actions"
 import type { GradeSlot, TurmaDisciplinaInfo } from "@/types/entities"
 import { CalendarRange } from "lucide-react"
@@ -26,12 +28,16 @@ export default function GradeHorariosPage() {
   const [modalDiaSemana, setModalDiaSemana] = useState(1)
   const [modalHora, setModalHora] = useState("07:00")
 
+  const gridWrapperRef = useRef<HTMLDivElement>(null)
+  const [filtroNome, setFiltroNome] = useState("")
+
   const [duracaoPadrao, setDuracaoPadrao] = useState(() => {
     if (typeof window !== "undefined") {
       return Number(localStorage.getItem("grade_duracao_padrao")) || 50
     }
     return 50
   })
+  const [duracaoDraft, setDuracaoDraft] = useState(duracaoPadrao)
 
   const loadGrade = useCallback(async () => {
     if (!filtroId) return
@@ -59,9 +65,10 @@ export default function GradeHorariosPage() {
     loadGrade()
   }, [loadGrade])
 
-  function handleFilterChange(tipo: "turma" | "professor", id: string | null) {
+  function handleFilterChange(tipo: "turma" | "professor", id: string | null, label?: string) {
     setFiltroTipo(tipo)
     setFiltroId(id)
+    setFiltroNome(label || "")
     setSlots([])
     setDisciplinas([])
   }
@@ -88,9 +95,13 @@ export default function GradeHorariosPage() {
   function handleDuracaoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = Number(e.target.value)
     if (val > 0) {
-      setDuracaoPadrao(val)
-      localStorage.setItem("grade_duracao_padrao", String(val))
+      setDuracaoDraft(val)
     }
+  }
+
+  function handleDuracaoApply() {
+    setDuracaoPadrao(duracaoDraft)
+    localStorage.setItem("grade_duracao_padrao", String(duracaoDraft))
   }
 
   const hasDisciplinasComProfessor = disciplinas.some((d) => d.tem_professor)
@@ -106,6 +117,9 @@ export default function GradeHorariosPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <GradeFilter filtroTipo={filtroTipo} filtroId={filtroId} onChange={handleFilterChange} />
         <div className="flex items-center gap-2">
+          {filtroId && (
+            <ExportGradePDF wrapperRef={gridWrapperRef} filtroTipo={filtroTipo} filtroNome={filtroNome} />
+          )}
           <Label htmlFor="duracao" className="text-sm text-muted-foreground whitespace-nowrap">
             Duração padrão:
           </Label>
@@ -114,10 +128,13 @@ export default function GradeHorariosPage() {
             type="number"
             min={1}
             max={240}
-            value={duracaoPadrao}
+            value={duracaoDraft}
             onChange={handleDuracaoChange}
             className="w-20 h-8"
           />
+          <Button variant="outline" size="sm" onClick={handleDuracaoApply}>
+            Aplicar
+          </Button>
           <span className="text-sm text-muted-foreground">min</span>
         </div>
       </div>
@@ -132,15 +149,16 @@ export default function GradeHorariosPage() {
         <Card className="flex items-center justify-center p-12 text-destructive">{error}</Card>
       ) : (
         <>
-          <GradeGrid
-            slots={slots}
-            filtroTipo={filtroTipo}
-            onCellClick={handleCellClick}
-            onSlotClick={handleSlotClick}
-            duracaoPadrao={duracaoPadrao}
-          />
-
-          {filtroTipo === "turma" && <SemProfessorList disciplinas={disciplinas} />}
+          <div ref={gridWrapperRef}>
+            <GradeGrid
+              slots={slots}
+              filtroTipo={filtroTipo}
+              onCellClick={handleCellClick}
+              onSlotClick={handleSlotClick}
+              duracaoPadrao={duracaoPadrao}
+            />
+            {filtroTipo === "turma" && <SemProfessorList disciplinas={disciplinas} />}
+          </div>
 
           {slots.length === 0 && !hasDisciplinasComProfessor && filtroTipo === "turma" && (
             <Card className="flex items-center justify-center p-8 text-muted-foreground">
