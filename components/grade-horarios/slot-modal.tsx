@@ -148,7 +148,7 @@ export function SlotModal({
                 )}
                 {disciplinasComProfessor.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
-                    {d.disciplina_nome} — {d.professor_nome}
+                    {d.disciplina_nome} — {d.turma_nome} — {d.professor_nome}
                   </SelectItem>
                 ))}
               </SelectContent>
