@@ -1,10 +1,11 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
 
-const CAN_CREATE = ["admin", "diretor"]
+const CAN_CREATE = ["admin", "diretor", "coordenacao", "secretaria"]
 const CAN_EDIT = ["admin", "diretor", "coordenacao", "secretaria"]
 
 async function getCurrentUserTipo(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -35,7 +36,8 @@ export async function createInvite(email: string, tipo_usuario: string) {
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 7)
 
-  const { error } = await supabase.from("user_invites").insert([
+  const admin = createAdminClient()
+  const { error } = await admin.from("user_invites").insert([
     {
       email,
       tipo_usuario,
@@ -51,6 +53,65 @@ export async function createInvite(email: string, tipo_usuario: string) {
 
   revalidatePath("/usuarios")
   return { success: true, token }
+}
+
+export async function createUser(data: {
+  nome_completo: string
+  email: string
+  telefone?: string
+  tipo_usuario: string
+}) {
+  const supabase = await createClient()
+
+  const tipo = await getCurrentUserTipo(supabase)
+  if (!tipo || !CAN_CREATE.includes(tipo)) {
+    return { error: "Sem permissao para criar usuarios" }
+  }
+
+  const senhaTemporaria = "senha123"
+
+  try {
+    const admin = createAdminClient()
+
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email: data.email,
+      password: senhaTemporaria,
+      email_confirm: true,
+      user_metadata: {
+        nome_completo: data.nome_completo,
+        telefone: data.telefone || null,
+        tipo_usuario: data.tipo_usuario,
+      },
+    })
+
+    if (authError) {
+      return { error: authError.message }
+    }
+
+    const userId = authData.user?.id
+    if (!userId) {
+      return { error: "Erro ao criar usuario" }
+    }
+
+    if (data.tipo_usuario === "professor") {
+      const { error: profError } = await admin.from("professores").insert({
+        user_id: userId,
+        nome_completo: data.nome_completo,
+        email: data.email,
+        telefone: data.telefone || null,
+        ativo: true,
+      })
+
+      if (profError) {
+        return { error: profError.message }
+      }
+    }
+
+    revalidatePath("/usuarios")
+    return { success: true, userId }
+  } catch (error: any) {
+    return { error: error.message || "Erro ao criar usuario" }
+  }
 }
 
 export async function deleteInvite(inviteId: string) {

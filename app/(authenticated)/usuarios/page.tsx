@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users } from "lucide-react"
+import { Users, Plus } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { UsuariosTable } from "@/components/usuarios/usuarios-table"
-import { InviteUserDialog } from "@/components/usuarios/invite-user-dialog"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
 interface SearchParams {
@@ -79,14 +80,9 @@ export default async function UsuariosPage({
     console.error("Erro ao buscar usuarios:", usuariosError)
   }
 
-  const { data: invites } = await supabase
-    .from("user_invites")
-    .select("*")
-    .order("created_at", { ascending: false })
-
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
-  const showInviteButton = ["admin", "diretor", "coordenacao"].includes(profile.tipo_usuario)
+  const showCreateButton = ["admin", "diretor", "coordenacao", "secretaria"].includes(profile.tipo_usuario)
 
   return (
     <>
@@ -94,33 +90,19 @@ export default async function UsuariosPage({
         icon={Users}
         title="Usuários"
         description="Gerencie os usuários que têm acesso ao sistema"
-        actions={showInviteButton ? <InviteUserDialog currentUserTipo={profile.tipo_usuario} /> : undefined}
+        actions={
+          showCreateButton ? (
+            <Button asChild>
+              <Link href="/usuarios/novo">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Usuário
+              </Link>
+            </Button>
+          ) : undefined
+        }
       />
 
       <div className="space-y-6">
-        {invites && invites.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Convites Pendentes</CardTitle>
-              <CardDescription>Convites enviados aguardando aceitação.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {invites.map((invite) => (
-                  <div key={invite.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{invite.email}</p>
-                      <p className="text-sm text-gray-500">
-                        {invite.tipo_usuario} &middot; {new Date(invite.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle>Usuários do Sistema</CardTitle>
