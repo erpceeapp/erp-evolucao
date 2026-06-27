@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, Users } from "lucide-react"
+import { Search, Edit, Eye, Users, X } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
@@ -80,6 +80,15 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
     router.push(`/turmas?${params.toString()}`)
   }
 
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setAnoFilter("")
+    setStatusFilter("")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/turmas?${params.toString()}`)
+  }
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
@@ -149,6 +158,14 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
             </SelectContent>
           </Select>
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Tabela */}

@@ -54,7 +54,7 @@ import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
-import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from "date-fns"
+import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, isSameDay } from "date-fns"
 import type { View } from "react-big-calendar"
 import type { DbEvento } from "@/lib/agenda/rbc-adapter"
 
@@ -83,6 +83,7 @@ export default function AgendaAlunoDetailPage() {
 
   const [aluno, setAluno] = useState<any>(null)
   const [avisos, setAvisos] = useState<any[]>([])
+  const [periodos, setPeriodos] = useState<{ data_inicio: string; data_fim: string }[]>([])
   const [loading, setLoading] = useState(true)
 
   // Modal de detalhes
@@ -103,6 +104,9 @@ export default function AgendaAlunoDetailPage() {
 
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarView, setCalendarView] = useState<View>("month")
+
+  const [dayHeaderDate, setDayHeaderDate] = useState<Date | null>(null)
+  const [isDayEventsOpen, setIsDayEventsOpen] = useState(false)
 
   const [tableSearch, setTableSearch] = useState("")
   const [tableCategoria, setTableCategoria] = useState("todas")
@@ -145,6 +149,14 @@ export default function AgendaAlunoDetailPage() {
     }
 
     setAvisos(avisosData || [])
+
+    // Buscar perodos letivos
+    const { data: periodosData } = await supabase
+      .from("periodos_letivos")
+      .select("data_inicio, data_fim")
+      .eq("ativo", true)
+
+    setPeriodos(periodosData || [])
     setLoading(false)
   }
 
@@ -187,6 +199,11 @@ export default function AgendaAlunoDetailPage() {
   const handleViewChange = useCallback((view: View) => {
     setCalendarView(view)
   }, [])
+
+  function handleDateHeaderClick(date: Date) {
+    setDayHeaderDate(date)
+    setIsDayEventsOpen(true)
+  }
 
   const filteredAvisos = useMemo(() => {
     let items = avisos
@@ -381,6 +398,7 @@ export default function AgendaAlunoDetailPage() {
         <div style={{ height: 500 }}>
           <AgendaRbc
             eventos={eventosCalendario}
+            periodos={periodos}
             date={calendarDate}
             view={calendarView}
             onNavigate={(d) => setCalendarDate(d)}
@@ -401,6 +419,51 @@ export default function AgendaAlunoDetailPage() {
           />
         </div>
       </div>
+
+      <Dialog open={isDayEventsOpen} onOpenChange={setIsDayEventsOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Avisos — {dayHeaderDate?.toLocaleDateString("pt-BR")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(() => {
+              if (!dayHeaderDate) return null
+              const dayAvisos = avisos.filter((a) =>
+                isSameDay(dayHeaderDate, new Date(a.data_aviso + "T00:00:00")),
+              )
+              if (dayAvisos.length === 0) {
+                return <p className="text-sm text-gray-500 text-center py-8">Nenhum aviso neste dia</p>
+              }
+              return dayAvisos.map((aviso) => (
+                <div
+                  key={aviso.id}
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setSelectedAviso(aviso)
+                    setIsDayEventsOpen(false)
+                    setIsDetailModalOpen(true)
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{aviso.titulo}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
+                      >
+                        {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
+                      </Badge>
+                      {aviso.hora_aviso && <span className="ml-2">{aviso.hora_aviso}</span>}
+                    </p>
+                  </div>
+                </div>
+              ))
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Lista de avisos */}
       <Card>
@@ -434,6 +497,14 @@ export default function AgendaAlunoDetailPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { setTableSearch(""); setTableCategoria("todas"); setTablePage(1) }}
+              title="Limpar filtros"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           {paginatedAvisos.length > 0 ? (

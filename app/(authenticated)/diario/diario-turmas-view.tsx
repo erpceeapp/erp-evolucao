@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { BookOpen, Search, AlertCircle, Settings, NotebookPen } from "lucide-react"
+import { BookOpen, Search, AlertCircle, Settings, NotebookPen, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -158,6 +158,14 @@ export function DiarioTurmasView({ turmasComDisciplinas, turmasSemDisciplinas, t
               <SelectItem value="precisa_configuracao">Precisam de Configuração</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => { setSearch(""); setFilter("pronta"); setPage(1) }}
+            title="Limpar filtros"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
         {filtered.length === 0 ? (

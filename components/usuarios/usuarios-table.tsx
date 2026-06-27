@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
+import { Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { useRouter, useSearchParams } from "next/navigation"
 import { updateUser, deleteUser } from "@/app/(authenticated)/usuarios/actions"
@@ -232,6 +232,14 @@ export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, tot
     router.push(`/usuarios?${params.toString()}`)
   }
 
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setTipoFilter("todos")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/usuarios?${params.toString()}`)
+  }
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
@@ -279,7 +287,7 @@ export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, tot
             <Search className="h-4 w-4" />
           </Button>
         </div>
-        <Select value={tipoFilter} onValueChange={handleTipoChange}>
+            <Select value={tipoFilter} onValueChange={handleTipoChange}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
@@ -290,6 +298,14 @@ export function UsuariosTable({ usuarios, currentPage, totalPages, pageSize, tot
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleClearFilters}
+              title="Limpar filtros"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           <div className="border rounded-lg">

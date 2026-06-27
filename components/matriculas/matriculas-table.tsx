@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, Trash2 } from "lucide-react"
+import { Search, Edit, Eye, Trash2, X } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
@@ -104,6 +104,16 @@ export function MatriculasTable({
         setTurmaFilter(value)
         break
     }
+  }
+
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("")
+    setAnoFilter("")
+    setTurmaFilter("")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/matriculas?${params.toString()}`)
   }
 
   const handlePageChange = (page: number) => {
@@ -207,6 +217,14 @@ export function MatriculasTable({
             options={turmas.map((t) => ({ value: t.id, label: `${t.nome} - ${t.serie}` }))}
           />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="border rounded-lg">

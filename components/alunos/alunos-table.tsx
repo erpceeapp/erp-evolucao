@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye } from "lucide-react"
+import { Search, Edit, Eye, X } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -59,6 +59,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCo
     } else {
       params.delete("status")
     }
+    params.set("page", "1")
+    router.push(`/alunos?${params.toString()}`)
+  }
+
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("ativo")
+    const params = new URLSearchParams()
     params.set("page", "1")
     router.push(`/alunos?${params.toString()}`)
   }
@@ -118,6 +126,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCo
             <SelectItem value="inativo">Inativos</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Tabela */}
