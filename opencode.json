@@ -1,6 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "envsitter-guard", // https://github.com/boxpositron/envsitter-guard
+    "opencode-notify" // https://github.com/kdcokenny/opencode-notify
+    // ,"opencode-mem" // https://github.com/tickernelz/opencode-mem
+    // opencode plugin @tarquinen/opencode-dcp@latest --global
+  ],
   "lsp": true,
   "permission": {
     "lsp": "allow"
