@@ -187,9 +187,14 @@ export default function LoginPage() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       )}
                     </Button>
-                  </div>
                 </div>
-                {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
+              </div>
+              <div className="flex justify-end">
+                <Link href="/auth/recuperar-senha" className="text-sm text-blue-600 hover:underline">
+                  Esqueceu sua senha?
+                </Link>
+              </div>
+              {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
@@ -229,14 +234,6 @@ export default function LoginPage() {
               </form>
             )}
 
-            {mode === "funcionario" && (
-              <div className="mt-6 text-center text-sm">
-                {"Nao tem uma conta? "}
-                <Link href="/auth/cadastro" className="text-blue-600 hover:underline font-medium">
-                  Cadastre-se
-                </Link>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
