@@ -216,7 +216,7 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
       }
 
       if (result && result.error) {
-        setError(result.error)
+        setError(translateError(result.error))
         setIsLoading(false)
       }
       // Se não houver erro, o redirect() foi chamado e a página será redirecionada

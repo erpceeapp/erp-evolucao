@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UserPlus, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createInvite } from "@/app/(authenticated)/usuarios/actions"
+import { translateError } from "@/lib/error-messages"
 
 const tipoOptions = [
   { value: "admin", label: "Administrador" },
@@ -44,7 +45,7 @@ export function InviteUserDialog({ currentUserTipo }: InviteUserDialogProps) {
     setSending(false)
 
     if (result.error) {
-      setError(result.error)
+      setError(translateError(result.error))
       return
     }
 

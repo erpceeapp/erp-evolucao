@@ -5,6 +5,7 @@ import { jsPDF } from "jspdf"
 import { Button } from "@/components/ui/button"
 import { FileDown } from "lucide-react"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 import { useState } from "react"
 
 interface ExportGradePDFProps {
@@ -64,7 +65,7 @@ export function ExportGradePDF({ wrapperRef, filtroTipo, filtroNome }: ExportGra
 
       toast.success("PDF exportado com sucesso!", { id: toastId })
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao exportar PDF", { id: toastId })
+      toast.error(translateError(err?.message || "Erro ao exportar PDF"), { id: toastId })
     } finally {
       setExporting(false)
     }

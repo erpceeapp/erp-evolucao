@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
 import { Save } from "lucide-react"
+import { translateError } from "@/lib/error-messages"
 
 type Matricula = {
   id: string
@@ -115,7 +116,7 @@ export function NotasTable({
       // Reload page to get fresh data
       window.location.reload()
     } catch (error: any) {
-      toast.error("Erro ao salvar notas: " + error.message)
+      toast.error(translateError(error.message) || "Erro ao salvar notas")
     } finally {
       setSaving(false)
     }

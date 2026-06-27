@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, ArrowLeft, User, GraduationCap, Search, X, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { translateError } from "@/lib/error-messages"
 
 interface MatriculaData {
   numero_matricula: string
@@ -211,7 +212,7 @@ export function MatriculaForm({ matricula, alunos, turmas, isEditing = false }: 
 
       router.push("/matriculas")
     } catch (error: any) {
-      setError(error.message || "Erro ao salvar matrícula")
+      setError(translateError(error.message || "Erro ao salvar matrícula"))
     } finally {
       setIsLoading(false)
     }

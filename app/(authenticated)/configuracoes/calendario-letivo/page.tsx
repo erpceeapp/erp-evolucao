@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { PageHeader } from "@/components/page-header"
 import { Calendar, Plus, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 type PeriodoLetivo = {
   id: string
@@ -111,7 +112,7 @@ export default function CalendarioLetivoPage() {
       : await supabase.from("periodos_letivos").insert(payload)
 
     if (error) {
-      toast.error(error.message)
+      toast.error(translateError(error.message))
       return
     }
     toast.success(editingPeriodo ? "Período atualizado" : "Período criado")
@@ -140,7 +141,7 @@ export default function CalendarioLetivoPage() {
       : await supabase.from("eventos").insert(payload)
 
     if (error) {
-      toast.error(error.message)
+      toast.error(translateError(error.message))
       return
     }
     toast.success(editingFerias ? "Férias atualizadas" : "Férias cadastradas")
@@ -170,7 +171,7 @@ export default function CalendarioLetivoPage() {
       : await supabase.from("eventos").insert(payloadObj)
 
     if (error) {
-      toast.error(error.message)
+      toast.error(translateError(error.message))
       return
     }
     toast.success(editingFeriado ? "Feriado atualizado" : "Feriado cadastrado")
@@ -192,7 +193,7 @@ export default function CalendarioLetivoPage() {
     }
 
     if (error) {
-      toast.error(error.message)
+      toast.error(translateError(error.message))
       return
     }
     toast.success("Excluído com sucesso")

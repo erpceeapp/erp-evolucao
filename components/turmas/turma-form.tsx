@@ -16,6 +16,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, Save, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { translateError } from "@/lib/error-messages"
 
 interface TurmaData {
   nome: string
@@ -176,7 +177,7 @@ export function TurmaForm({ turma, professores, isEditing = false }: TurmaFormPr
 
       router.push("/turmas")
     } catch (error: any) {
-      setError(error.message || "Erro ao salvar turma")
+      setError(translateError(error.message || "Erro ao salvar turma"))
     } finally {
       setIsLoading(false)
     }

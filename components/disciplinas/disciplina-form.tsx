@@ -17,6 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { translateError } from "@/lib/error-messages"
 
 interface DisciplinaData {
   nome: string
@@ -101,7 +102,7 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
 
       router.push("/disciplinas")
     } catch (error: any) {
-      setError(error.message || "Erro ao salvar disciplina")
+      setError(translateError(error.message || "Erro ao salvar disciplina"))
     } finally {
       setIsLoading(false)
     }

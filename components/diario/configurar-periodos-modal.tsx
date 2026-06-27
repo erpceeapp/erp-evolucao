@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Calendar } from "lucide-react"
+import { translateError } from "@/lib/error-messages"
 
 interface ConfigurarPeriodosModalProps {
   open: boolean
@@ -75,7 +76,7 @@ export default function ConfigurarPeriodosModal({
       onOpenChange(false)
       window.location.reload()
     } catch (error: any) {
-      toast.error(`Erro ao salvar períodos: ${error.message}`)
+      toast.error(translateError(error.message) || "Erro ao salvar períodos")
     } finally {
       setLoading(false)
     }

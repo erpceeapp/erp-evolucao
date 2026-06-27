@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
 import { saveEscolaData } from "./actions"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 interface EscolaData {
   id?: string
@@ -171,7 +172,7 @@ export default function EscolaPage() {
       toast.success("Dados da escola salvos com sucesso!")
     } catch (error) {
       console.error("Erro ao salvar:", error)
-      toast.error(error instanceof Error ? error.message : "Erro ao salvar dados da escola")
+      toast.error(translateError(error instanceof Error ? error.message : "Erro ao salvar dados da escola"))
     } finally {
       setSaving(false)
     }

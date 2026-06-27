@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { translateError } from "@/lib/error-messages"
 
 interface Aluno {
   id: string
@@ -96,7 +97,7 @@ export function GerenciarAlunosTurma({
       setSearchAlunoAdd("")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao adicionar aluno")
+      setError(translateError(err.message || "Erro ao adicionar aluno"))
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +134,7 @@ export function GerenciarAlunosTurma({
       setSearchAlunoAdd("")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao adicionar alunos")
+      setError(translateError(err.message || "Erro ao adicionar alunos"))
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +155,7 @@ export function GerenciarAlunosTurma({
 
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao remover aluno")
+      setError(translateError(err.message || "Erro ao remover aluno"))
     } finally {
       setIsLoading(false)
     }

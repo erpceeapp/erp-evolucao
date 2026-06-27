@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/page-header"
 import { AgendaRbc } from "@/components/agenda/agenda-rbc"
 import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 import { createEvento, updateEvento, deleteEvento } from "./actions"
 import { toDbUpdate, type DbEvento, type RbcEvent } from "@/lib/agenda/rbc-adapter"
 import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, isSameDay } from "date-fns"
@@ -190,7 +191,7 @@ export default function AgendaPage() {
     })
 
     if (result.error) {
-      toast.error(result.error)
+      toast.error(translateError(result.error))
       return
     }
 
@@ -220,7 +221,7 @@ export default function AgendaPage() {
     })
 
     if (result.error) {
-      toast.error(result.error)
+      toast.error(translateError(result.error))
       setSaving(false)
       return
     }
@@ -268,7 +269,7 @@ export default function AgendaPage() {
     })
 
     if (result.error) {
-      toast.error(result.error)
+      toast.error(translateError(result.error))
       setEditSaving(false)
       return
     }
@@ -299,7 +300,7 @@ export default function AgendaPage() {
     const result = await deleteEvento(eventoToDelete.id)
 
     if (result.error) {
-      toast.error(result.error)
+      toast.error(translateError(result.error))
       setIsDeleting(false)
       return
     }

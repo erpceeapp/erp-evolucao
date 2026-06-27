@@ -13,6 +13,7 @@ import { DataPagination } from "@/components/ui/data-pagination"
 import { useRouter, useSearchParams } from "next/navigation"
 import { updateUser, deleteUser } from "@/app/(authenticated)/usuarios/actions"
 import { cn } from "@/lib/utils"
+import { translateError } from "@/lib/error-messages"
 
 interface Profile {
   id: string
@@ -79,7 +80,7 @@ function DeleteUserDialog({ user, onSuccess }: { user: Profile; onSuccess?: () =
     setDeleting(false)
 
     if (result.error) {
-      setError(result.error)
+      setError(translateError(result.error))
       return
     }
 
@@ -139,7 +140,7 @@ function EditUserDialog({ user }: { user: Profile }) {
     setSaving(false)
 
     if (result.error) {
-      setError(result.error)
+      setError(translateError(result.error))
       return
     }
 

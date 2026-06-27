@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 import { salvarSlot, removerSlot } from "@/app/(authenticated)/grade-horarios/actions"
 import type { TurmaDisciplinaInfo, GradeSlot } from "@/types/entities"
 import {
@@ -100,7 +101,7 @@ export function SlotModal({
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
-      toast.error(err.message || "Erro ao salvar horário")
+      toast.error(translateError(err.message || "Erro ao salvar horário"))
     } finally {
       setSaving(false)
     }
@@ -115,7 +116,7 @@ export function SlotModal({
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
-      toast.error(err.message || "Erro ao remover horário")
+      toast.error(translateError(err.message || "Erro ao remover horário"))
     } finally {
       setSaving(false)
     }

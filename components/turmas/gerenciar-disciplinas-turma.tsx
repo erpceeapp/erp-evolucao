@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { translateError } from "@/lib/error-messages"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -106,7 +107,7 @@ export function GerenciarDisciplinasTurma({
       setSearchTerm("")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao adicionar disciplina")
+      setError(translateError(err.message || "Erro ao adicionar disciplina"))
     } finally {
       setIsLoading(false)
     }
@@ -127,7 +128,7 @@ export function GerenciarDisciplinasTurma({
 
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao remover disciplina")
+      setError(translateError(err.message || "Erro ao remover disciplina"))
     } finally {
       setIsLoading(false)
     }
