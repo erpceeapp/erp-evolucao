@@ -72,7 +72,7 @@ export async function checkSessionRevoked(iat: number | undefined, alunoId: stri
 
     return iatMs < revogacaoMs
   } catch {
-    return false // se falhar, permitir acesso (fail open)
+    return true // se falhar, negar acesso (fail closed)
   }
 }
 

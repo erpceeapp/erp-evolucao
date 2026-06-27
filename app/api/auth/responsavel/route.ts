@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     response.cookies.set("responsavel-session", token, {
       httpOnly: true,
       secure: !isLocal,
-      sameSite: "lax",
+      sameSite: "strict",
       maxAge: 60 * 60 * 8,
       path: "/",
     })
