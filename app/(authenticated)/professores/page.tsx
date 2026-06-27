@@ -29,9 +29,15 @@ export default async function ProfessoresPage({
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
   // Parâmetros de busca
   const busca = sanitizeSearchParam(params.busca)
-  const status = sanitizeSearchParam(params.status) || "ativo"
+  const status = sanitizeSearchParam(params.status) || "todos"
   const page = validatePageParam(params.page)
   const itemsPerPage = validateLimitParam(params.limit)
 
@@ -98,6 +104,7 @@ export default async function ProfessoresPage({
                 totalCount={count || 0}
                 busca={busca}
                 status={status}
+                currentUserTipo={profile?.tipo_usuario ?? ""}
               />
             </Suspense>
           </CardContent>

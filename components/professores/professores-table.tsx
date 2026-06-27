@@ -6,10 +6,24 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, X } from "lucide-react"
+import { Search, Edit, Eye, Trash2, X } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { deleteProfessor } from "@/app/(authenticated)/professores/novo/actions"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 interface Professor {
   id: string
@@ -33,9 +47,10 @@ interface ProfessoresTableProps {
   totalCount: number
   busca: string
   status: string
+  currentUserTipo: string
 }
 
-export function ProfessoresTable({ professores, currentPage, totalPages, pageSize, totalCount, busca, status }: ProfessoresTableProps) {
+export function ProfessoresTable({ professores, currentPage, totalPages, pageSize, totalCount, busca, status, currentUserTipo }: ProfessoresTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -66,7 +81,7 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
 
   const handleClearFilters = () => {
     setSearchTerm("")
-    setStatusFilter("")
+    setStatusFilter("todos")
     const params = new URLSearchParams()
     params.set("page", "1")
     router.push(`/professores?${params.toString()}`)
@@ -76,6 +91,16 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
     router.push(`/professores?${params.toString()}`)
+  }
+
+  const handleDelete = async (professorId: string) => {
+    const result = await deleteProfessor(professorId)
+    if (result.error) {
+      toast.error(translateError(result.error))
+    } else {
+      toast.success("Professor excluido com sucesso")
+      router.refresh()
+    }
   }
 
   const handlePageSizeChange = (size: number) => {
@@ -157,8 +182,15 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
               professores.map((professor) => (
                 <TableRow key={professor.id}>
                   <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{professor.nome_completo}</span>
+                      {!professor.cpf && (
+                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+                          Incompleto
+                        </Badge>
+                      )}
+                    </div>
                     <div>
-                      <div className="font-medium">{professor.nome_completo}</div>
                       {professor.telefone && <div className="text-sm text-gray-500">{professor.telefone}</div>}
                     </div>
                   </TableCell>
@@ -190,6 +222,32 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {["admin", "diretor"].includes(currentUserTipo) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Professor</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Se o professor estiver vinculado a alguma turma, ele sera removido da turma. Esta acao nao pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(professor.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

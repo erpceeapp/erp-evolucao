@@ -103,3 +103,34 @@ export async function createProfessorUser(professorData: {
     return { error: error.message || "Erro ao criar usuário" }
   }
 }
+
+export async function deleteProfessor(professorId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: "Usuário não autenticado" }
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "diretor"].includes(profile.tipo_usuario)) {
+      return { error: "Apenas administradores e diretores podem excluir professores" }
+    }
+
+    const supabaseAdmin = createAdminClient()
+    const { error: deleteError } = await supabaseAdmin.from("professores").delete().eq("id", professorId)
+
+    if (deleteError) {
+      return { error: deleteError.message }
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message || "Erro ao excluir professor" }
+  }
+}
