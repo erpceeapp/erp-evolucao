@@ -13,6 +13,14 @@ interface SearchParams {
   limit?: string
 }
 
+interface AlunoComTurma {
+  id: string
+  nome_completo: string
+  cpf: string | null
+  turma_id: string | null
+  turma_nome: string | null
+}
+
 export default async function AgendaAlunoPage({
   searchParams,
 }: {
@@ -31,45 +39,64 @@ export default async function AgendaAlunoPage({
   const page = validatePageParam(params.page)
   const itemsPerPage = validateLimitParam(params.limit)
 
+  // Buscar todas as turmas para o dropdown e lookup
+  const { data: allTurmas } = await supabase
+    .from("turmas")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome")
+
+  const turmas = allTurmas || []
+  const turmaMap = new Map(turmas.map((t) => [t.id, t.nome]))
+
+  const from = (page - 1) * itemsPerPage
+  const to = from + itemsPerPage - 1
+
+  // ── Query única com INNER JOIN via !inner ────────────────────────────────
+  // O !inner força exclusão de alunos sem matrícula ativa correspondente
   let query = supabase
     .from("alunos")
     .select(
-      `
-      id, nome_completo, cpf,
-      matriculas!matriculas_aluno_id_fkey(
-        turma_id,
-        turmas!matriculas_turma_id_fkey(nome)
-      )
-    `,
+      `id, nome_completo, cpf,
+       matriculas!inner!matriculas_aluno_id_fkey(turma_id)`,
       { count: "exact" },
     )
     .eq("ativo", true)
-    .order("nome_completo")
+    .eq("matriculas.status", "ativa")
+
+  if (turmaFilter && turmaFilter !== "todos") {
+    query = query.eq("matriculas.turma_id", turmaFilter)
+  }
 
   if (busca) {
     query = query.or(`nome_completo.ilike.%${busca}%,cpf.ilike.%${busca}%`)
   }
 
-  if (turmaFilter) {
-    query = query.eq("matriculas.turma_id", turmaFilter)
+  const { data: alunosData, count } = await query
+    .order("nome_completo")
+    .range(from, to)
+
+  const totalCount = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage))
+
+  // ── Montar estrutura final com nome da turma ────────────────────────────
+  interface AlunoRaw {
+    id: string
+    nome_completo: string
+    cpf: string | null
+    matriculas: { turma_id: string }[]
   }
 
-  const from = (page - 1) * itemsPerPage
-  const to = from + itemsPerPage - 1
-  query = query.range(from, to)
-
-  const { data: alunos, count, error: alunosError } = await query
-
-  if (alunosError) {
-    console.error("Erro ao buscar alunos:", alunosError)
-  }
-
-  const totalPages = Math.ceil((count || 0) / itemsPerPage)
-
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome")
+  const paginatedAlunos: AlunoComTurma[] = ((alunosData as unknown as AlunoRaw[]) || []).map((a) => {
+    const turmaId = a.matriculas?.[0]?.turma_id ?? null
+    return {
+      id: a.id,
+      nome_completo: a.nome_completo,
+      cpf: a.cpf,
+      turma_id: turmaId,
+      turma_nome: turmaId ? (turmaMap.get(turmaId) ?? null) : null,
+    }
+  })
 
   return (
     <>
@@ -84,19 +111,19 @@ export default async function AgendaAlunoPage({
         <CardHeader>
           <CardTitle>Lista de Alunos</CardTitle>
           <CardDescription>
-            {count
-              ? `${count} aluno${count !== 1 ? "s" : ""} encontrado${count !== 1 ? "s" : ""}`
+            {totalCount
+              ? `${totalCount} aluno${totalCount !== 1 ? "s" : ""} encontrado${totalCount !== 1 ? "s" : ""}`
               : "Nenhum aluno encontrado"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AgendaAlunoTable
-            alunos={alunos || []}
-            turmas={turmas || []}
+            alunos={paginatedAlunos}
+            turmas={turmas}
             currentPage={page}
             totalPages={totalPages}
             pageSize={itemsPerPage}
-            totalCount={count || 0}
+            totalCount={totalCount}
             busca={busca}
             turmaFilter={turmaFilter}
           />

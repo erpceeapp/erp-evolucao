@@ -4,23 +4,19 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, BookUser } from "lucide-react"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { Search, BookUser, X } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-
-interface MatriculaRef {
-  turma_id: string
-  turmas: { nome: string }[]
-}
 
 interface AlunoRow {
   id: string
   nome_completo: string
   cpf: string | null
-  matriculas: MatriculaRef[]
+  turma_id: string | null
+  turma_nome: string | null
 }
 
 interface TurmaOption {
@@ -52,7 +48,7 @@ export function AgendaAlunoTable({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
-  const [turmaSelect, setTurmaSelect] = useState(turmaFilter)
+  const [turmaSelect, setTurmaSelect] = useState(turmaFilter || "todos")
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams)
@@ -68,11 +64,19 @@ export function AgendaAlunoTable({
   const handleTurmaChange = (value: string) => {
     setTurmaSelect(value)
     const params = new URLSearchParams(searchParams)
-    if (value && value !== "todas") {
+    if (value && value !== "todos") {
       params.set("turma", value)
     } else {
       params.delete("turma")
     }
+    params.set("page", "1")
+    router.push(`/agenda-aluno?${params.toString()}`)
+  }
+
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setTurmaSelect("todos")
+    const params = new URLSearchParams()
     params.set("page", "1")
     router.push(`/agenda-aluno?${params.toString()}`)
   }
@@ -104,19 +108,21 @@ export function AgendaAlunoTable({
             <Search className="h-4 w-4" />
           </Button>
         </div>
-        <Select value={turmaSelect} onValueChange={handleTurmaChange}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filtrar por turma" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todas">Todas as turmas</SelectItem>
-            {turmas.map((turma) => (
-              <SelectItem key={turma.id} value={turma.id}>
-                {turma.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={turmaSelect}
+          onChange={handleTurmaChange}
+          placeholder="Turma"
+          allLabel="Todas as turmas"
+          options={turmas.map((t) => ({ value: t.id, label: t.nome }))}
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="border rounded-lg">
@@ -156,15 +162,9 @@ export function AgendaAlunoTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {aluno.matriculas && aluno.matriculas.length > 0 ? (
-                        aluno.matriculas.map((m, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {m.turmas?.[0]?.nome || "Sem turma"}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Sem matrícula</span>
-                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {aluno.turma_nome || "Sem turma"}
+                      </Badge>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
