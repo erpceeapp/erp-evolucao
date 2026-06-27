@@ -68,7 +68,7 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSiz
 
   const handleClearFilters = () => {
     setSearchTerm("")
-    setStatusFilter("")
+    setStatusFilter("todos")
     const params = new URLSearchParams()
     params.set("page", "1")
     router.push(`/disciplinas?${params.toString()}`)

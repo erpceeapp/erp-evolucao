@@ -50,6 +50,8 @@ Antes de escrever qualquer código, percorrer os degraus em ordem, parando no pr
 
 **Every single commit requires explicit user authorization. No exceptions.**
 
+**Only warn the user about commits when there are more than 50 changed files.**
+
 Given the identified project modifications (git status):
 
 1. Analyze all changes.

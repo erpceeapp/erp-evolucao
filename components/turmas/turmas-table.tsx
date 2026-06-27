@@ -82,8 +82,8 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
 
   const handleClearFilters = () => {
     setSearchTerm("")
-    setAnoFilter("")
-    setStatusFilter("")
+    setAnoFilter("todos")
+    setStatusFilter("todos")
     const params = new URLSearchParams()
     params.set("page", "1")
     router.push(`/turmas?${params.toString()}`)
