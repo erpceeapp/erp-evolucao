@@ -29,6 +29,23 @@ Before running any command — be it `pnpm`, `npx`, `git`, `docker`, `supabase`,
 - Read-only commands (e.g.: `ls`, `cat`, `grep`, `Select-String`) do not need permission
 - Any command that **creates, alters, or removes** resources (files, containers, data) **requires permission**
 
+## Escada de Decisão (Ponytail adaptado)
+
+Antes de escrever qualquer código, percorrer os degraus em ordem, parando no primeiro que se aplica:
+
+1. **Isso precisa existir?** → Se não, confirme antes de escrever. (YAGNI)
+2. **Já existe no código?** → Reusa. Não reescreve.
+3. **A biblioteca padrão/framework faz?** → Usa. (Zod, Shadcn, Supabase filters, etc.)
+4. **Dependência já instalada resolve?** → Usa antes de instalar nova.
+5. **Dá em uma linha?** → Faz em uma linha.
+6. **Só então:** o mínimo que funciona.
+
+**Ressalvas específicas do projeto (não cortar):**
+- `space-y-6`, `space-y-2`, `truncate`, `overflow-hidden` — padrão de UI definido, manter
+- Schemas Zod com `transform` — obrigatório para segurança de tipos
+- Tipagem explícita em props de componentes — obrigatório (projeto TypeScript estrito)
+- Tratamento de bordas (loading, empty, error) — obrigatório em ERP
+
 ## Commit protocol
 
 **Every single commit requires explicit user authorization. No exceptions.**
