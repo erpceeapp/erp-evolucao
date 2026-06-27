@@ -12,6 +12,8 @@ import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/li
 interface SearchParams {
   busca?: string
   status?: string
+  sortBy?: string
+  sortOrder?: string
   page?: string
   limit?: string
 }
@@ -35,9 +37,21 @@ export default async function DisciplinasPage({
   const status = sanitizeSearchParam(params.status) || "ativo"
   const page = validatePageParam(params.page)
   const itemsPerPage = validateLimitParam(params.limit)
+  const sortBy = sanitizeSearchParam(params.sortBy) || "nome"
+  const sortOrder = sanitizeSearchParam(params.sortOrder) || "asc"
+
+  const validSortColumns = ["nome", "codigo", "carga_horaria", "professor", "ativo"]
+  const finalSortBy = validSortColumns.includes(sortBy) ? sortBy : "nome"
+  const finalSortOrder = sortOrder === "desc" ? false : true
 
   // Query para buscar disciplinas
-  let query = supabase.from("disciplinas").select("*, professores(id, nome_completo)", { count: "exact" }).order("nome")
+  let query = supabase.from("disciplinas").select("*, professores(id, nome_completo)", { count: "exact" })
+
+  if (finalSortBy === "professor") {
+    query = query.order("professores(nome_completo)", { ascending: finalSortOrder, nullsFirst: false })
+  } else {
+    query = query.order(finalSortBy, { ascending: finalSortOrder })
+  }
 
   // Aplicar filtros
   if (busca) {
@@ -105,6 +119,8 @@ export default async function DisciplinasPage({
                 totalCount={count || 0}
                 busca={busca}
                 status={status}
+                sortBy={finalSortBy}
+                sortOrder={sortOrder}
               />
             </Suspense>
           </CardContent>
