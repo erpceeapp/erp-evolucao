@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Calendar, Plus, Edit2, Trash2, Search } from "lucide-react"
+import { Calendar, Plus, Edit2, Trash2, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,11 +30,12 @@ import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toast } from "sonner"
 import { createEvento, updateEvento, deleteEvento } from "./actions"
 import { toDbUpdate, type DbEvento, type RbcEvent } from "@/lib/agenda/rbc-adapter"
-import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from "date-fns"
+import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, isSameDay } from "date-fns"
 import type { View } from "react-big-calendar"
 
 export default function AgendaPage() {
   const [eventos, setEventos] = useState<DbEvento[]>([])
+  const [periodos, setPeriodos] = useState<{ data_inicio: string; data_fim: string }[]>([])
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarView, setCalendarView] = useState<View>("month")
   const [selectedEvento, setSelectedEvento] = useState<any>(null)
@@ -68,8 +69,13 @@ export default function AgendaPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false)
   const [discardTarget, setDiscardTarget] = useState<"new" | "edit" | null>(null)
+  const [dayHeaderDate, setDayHeaderDate] = useState<Date | null>(null)
+  const [isDayEventsOpen, setIsDayEventsOpen] = useState(false)
+
   const [tableSearch, setTableSearch] = useState("")
   const [tableTipo, setTableTipo] = useState("todos")
+  const [tableDateInicio, setTableDateInicio] = useState("")
+  const [tableDateFim, setTableDateFim] = useState("")
   const [tablePage, setTablePage] = useState(1)
   const [tablePageSize, setTablePageSize] = useState(10)
 
@@ -82,8 +88,14 @@ export default function AgendaPage() {
     if (tableTipo !== "todos") {
       items = items.filter((e) => e.tipo_evento === tableTipo)
     }
+    if (tableDateInicio) {
+      items = items.filter((e) => e.data_inicio >= tableDateInicio || (e.data_fim && e.data_fim >= tableDateInicio))
+    }
+    if (tableDateFim) {
+      items = items.filter((e) => e.data_inicio <= tableDateFim)
+    }
     return items
-  }, [eventos, tableSearch, tableTipo])
+  }, [eventos, tableSearch, tableTipo, tableDateInicio, tableDateFim])
 
   const totalPages = Math.max(1, Math.ceil(filteredEventos.length / tablePageSize))
   const paginatedEventos = filteredEventos.slice((tablePage - 1) * tablePageSize, tablePage * tablePageSize)
@@ -95,14 +107,18 @@ export default function AgendaPage() {
   }, [])
 
   async function loadEventos() {
-    const { data, error } = await supabase.from("eventos").select("*").order("data_inicio", { ascending: true })
+    const [eventosRes, periodosRes] = await Promise.all([
+      supabase.from("eventos").select("*").order("data_inicio", { ascending: true }),
+      supabase.from("periodos_letivos").select("data_inicio, data_fim").eq("ativo", true),
+    ])
 
-    if (error) {
+    if (eventosRes.error) {
       toast.error("Erro ao carregar eventos")
       return
     }
 
-    setEventos(data || [])
+    setEventos(eventosRes.data || [])
+    setPeriodos(periodosRes.data || [])
   }
 
   const handleNavigate = useCallback((action: "TODAY" | "PREV" | "NEXT" | "DATE", date?: Date) => {
@@ -137,8 +153,8 @@ export default function AgendaPage() {
     }
   }
 
-  function handleSlotClick(start: Date, _end: Date) {
-    const data = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`
+  function openNewEventForDate(date: Date) {
+    const data = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
     setNewEventDate(data)
     setNewEventForm({
       titulo: "",
@@ -150,6 +166,10 @@ export default function AgendaPage() {
       tipo_evento: "",
     })
     setIsNewEventOpen(true)
+  }
+
+  function handleSlotClick(start: Date, _end: Date) {
+    openNewEventForDate(start)
   }
 
   async function handleEventDrop(rbcEvent: RbcEvent, start: Date, end: Date) {
@@ -343,6 +363,7 @@ export default function AgendaPage() {
         <div style={{ height: "calc(100vh - 180px)" }}>
           <AgendaRbc
             eventos={eventos}
+            periodos={periodos}
             date={calendarDate}
             view={calendarView}
             onNavigate={(d) => setCalendarDate(d)}
@@ -357,6 +378,66 @@ export default function AgendaPage() {
           />
         </div>
       </div>
+
+      <Dialog open={isDayEventsOpen} onOpenChange={setIsDayEventsOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Eventos — {dayHeaderDate?.toLocaleDateString("pt-BR")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(() => {
+              if (!dayHeaderDate) return null
+              const dayEvents = eventos.filter((e) => {
+                const inicio = new Date(e.data_inicio + "T00:00:00")
+                const fim = e.data_fim ? new Date(e.data_fim + "T23:59:59") : inicio
+                return dayHeaderDate >= inicio && dayHeaderDate <= fim
+              })
+              if (dayEvents.length === 0) {
+                return <p className="text-sm text-gray-500 text-center py-8">Nenhum evento neste dia</p>
+              }
+              return dayEvents.map((evento) => (
+                <div
+                  key={evento.id}
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setSelectedEvento(evento)
+                    setIsDayEventsOpen(false)
+                    setIsModalOpen(true)
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{evento.titulo}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <Badge variant={evento.tipo_evento === "feriado" ? "destructive" : "default"} className="mr-2">
+                        {evento.tipo_evento}
+                      </Badge>
+                      {evento.hora_inicio && (
+                        <span>{evento.hora_inicio}{evento.hora_fim ? ` - ${evento.hora_fim}` : ""}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))
+            })()}
+          </div>
+          <div className="pt-4 border-t mt-4">
+            <Button
+              className="bg-cyan-600 hover:bg-cyan-700 w-full"
+              onClick={() => {
+                if (dayHeaderDate) {
+                  openNewEventForDate(dayHeaderDate)
+                  setIsDayEventsOpen(false)
+                }
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Evento
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card className="mt-6">
         <CardHeader>
@@ -373,11 +454,26 @@ export default function AgendaPage() {
                 className="pl-9"
               />
             </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={tableDateInicio}
+                onChange={(e) => { setTableDateInicio(e.target.value); setTablePage(1) }}
+                className="w-40"
+              />
+              <span className="text-muted-foreground">—</span>
+              <Input
+                type="date"
+                value={tableDateFim}
+                onChange={(e) => { setTableDateFim(e.target.value); setTablePage(1) }}
+                className="w-40"
+              />
+            </div>
             <Select
               value={tableTipo}
               onValueChange={(v) => { setTableTipo(v); setTablePage(1) }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-44">
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -389,6 +485,20 @@ export default function AgendaPage() {
                 <SelectItem value="feriado">Feriado</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setTableSearch("")
+                setTableDateInicio("")
+                setTableDateFim("")
+                setTableTipo("todos")
+                setTablePage(1)
+              }}
+              title="Limpar filtros"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           {paginatedEventos.length > 0 ? (

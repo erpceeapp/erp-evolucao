@@ -1,9 +1,9 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useCallback } from "react"
 import { Calendar, dateFnsLocalizer, Views, type View, type EventPropGetter } from "react-big-calendar"
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop"
-import { format, parse, startOfWeek, getDay } from "date-fns"
+import { format, parse, startOfWeek, getDay, isWithinInterval } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "@/styles/agenda-rbc.css"
@@ -44,6 +44,11 @@ function CalendarHeader({ label }: { label: string }) {
 
 const DragAndDropCalendar = withDragAndDrop(Calendar)
 
+type PeriodoLetivo = {
+  data_inicio: string
+  data_fim: string
+}
+
 interface AgendaRbcProps {
   eventos: DbEvento[]
   date: Date
@@ -57,6 +62,7 @@ interface AgendaRbcProps {
   draggable?: boolean
   resizable?: boolean
   style?: React.CSSProperties
+  periodos?: PeriodoLetivo[]
 }
 
 export function AgendaRbc({
@@ -72,6 +78,7 @@ export function AgendaRbc({
   draggable = false,
   resizable = false,
   style,
+  periodos,
 }: AgendaRbcProps) {
   const rbcEvents = useMemo(() => eventos.map(toRbcEvent), [eventos])
 
@@ -85,6 +92,23 @@ export function AgendaRbc({
     },
   })
 
+  const dayPropGetter = useCallback(
+    (date: Date) => {
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6
+      if (isWeekend || !periodos?.length) return {}
+      const inPeriodo = periodos.some((p) => {
+        const inicio = new Date(p.data_inicio + "T00:00:00")
+        const fim = new Date(p.data_fim + "T23:59:59")
+        return isWithinInterval(date, { start: inicio, end: fim })
+      })
+      if (inPeriodo) {
+        return { style: { backgroundColor: "#dcfce7" } }
+      }
+      return {}
+    },
+    [periodos],
+  )
+
   const commonProps = {
     localizer,
     culture: "pt-BR",
@@ -94,6 +118,7 @@ export function AgendaRbc({
     views: [Views.MONTH, Views.WEEK, Views.DAY],
     messages,
     eventPropGetter: eventPropGetter as any,
+    dayPropGetter: dayPropGetter as any,
     onSelectEvent: onSelectEvent as any,
     onSelectSlot: ({ start, end }: { start: Date; end: Date }) => onSelectSlot?.(start, end),
     onNavigate,
@@ -101,7 +126,6 @@ export function AgendaRbc({
     selectable: true,
     popup: true,
     components: { toolbar: CalendarHeader },
-    style: { height: 600, ...style },
     formats: {
       dayFormat: (d: Date) => format(d, "EEE", { locale: ptBR }),
       weekdayFormat: (d: Date) => format(d, "EEE", { locale: ptBR }),
@@ -121,11 +145,9 @@ export function AgendaRbc({
     },
   }
 
-  if (!draggable) {
-    return <Calendar {...commonProps} />
-  }
-
-  return (
+  const calendar = !draggable ? (
+    <Calendar {...commonProps} />
+  ) : (
     <DragAndDropCalendar
       {...commonProps}
       onEventDrop={({ event, start, end }: any) => onEventDrop?.(event, start, end)}
@@ -134,4 +156,6 @@ export function AgendaRbc({
       resizableAccessor={() => true}
     />
   )
+
+  return <div style={{ height: 600, ...style }}>{calendar}</div>
 }

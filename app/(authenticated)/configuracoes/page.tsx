@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon } from "lucide-react"
+import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
@@ -49,6 +49,14 @@ export default async function ConfiguracoesPage() {
       title: "Links de Documentos",
       description: "Gerencie links que aparecem no dashboard",
       href: "/configuracoes/links-documentos",
+      adminOnly: false,
+      coordenacaoAccess: true,
+    },
+    {
+      icon: Calendar,
+      title: "Calendário Letivo",
+      description: "Gerencie períodos letivos, férias e feriados",
+      href: "/configuracoes/calendario-letivo",
       adminOnly: false,
       coordenacaoAccess: true,
     },

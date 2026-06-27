@@ -82,7 +82,7 @@ export function Sidebar({ userTipo }: SidebarProps) {
       roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
-      title: "Agenda",
+      title: "Agenda Escolar",
       icon: Calendar,
       href: "/agenda",
       roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
