@@ -154,7 +154,7 @@ export default function EscolaPage() {
         })
       }
     } catch (err) {
-      console.error("Erro ao carregar dados da escola:", err)
+      toast.error("Erro ao carregar dados da escola")
     } finally {
       setLoading(false)
     }
@@ -171,7 +171,6 @@ export default function EscolaPage() {
 
       toast.success("Dados da escola salvos com sucesso!")
     } catch (error) {
-      console.error("Erro ao salvar:", error)
       toast.error(translateError(error instanceof Error ? error.message : "Erro ao salvar dados da escola"))
     } finally {
       setSaving(false)

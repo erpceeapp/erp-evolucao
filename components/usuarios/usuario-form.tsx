@@ -54,7 +54,7 @@ export function UsuarioForm() {
       return
     }
 
-    toast.success("Usuario criado com sucesso! Senha temporaria: senha123")
+    toast.success("Usuario criado com sucesso!")
     router.push("/usuarios")
   }
 

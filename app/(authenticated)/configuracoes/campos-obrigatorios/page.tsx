@@ -144,7 +144,6 @@ export default function CamposObrigatoriosPage() {
         setConfig(configFromDB)
       }
     } catch (error) {
-      console.error("Erro ao carregar configuração:", error)
       toast.error("Erro ao carregar configurações")
     } finally {
       setLoading(false)

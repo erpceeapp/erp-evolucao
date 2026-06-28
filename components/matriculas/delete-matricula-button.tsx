@@ -42,7 +42,6 @@ export function DeleteMatriculaButton({ matriculaId, numeroMatricula, isDisabled
       router.push("/matriculas")
       router.refresh()
     } catch (err: any) {
-      console.error("Erro ao remover matrícula:", err)
       toast.error("Erro ao remover matrícula. Tente novamente.")
       setIsDeleting(false)
       setOpen(false)

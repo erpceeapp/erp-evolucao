@@ -56,7 +56,6 @@ export function NovoEventoForm() {
       toast.success("Evento criado com sucesso!")
       router.push("/agenda")
     } catch (error) {
-      console.error("Erro ao criar evento:", error)
       toast.error("Erro ao criar evento")
     } finally {
       setLoading(false)

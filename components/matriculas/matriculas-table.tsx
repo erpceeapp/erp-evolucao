@@ -168,7 +168,6 @@ export function MatriculasTable({
 
       router.refresh()
     } catch (err: any) {
-      console.error("Erro ao remover matrícula:", err)
       toast.error("Erro ao remover matrícula. Tente novamente.")
     } finally {
       setIsDeleting(null)

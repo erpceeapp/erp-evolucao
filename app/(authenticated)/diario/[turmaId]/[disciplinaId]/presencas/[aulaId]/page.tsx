@@ -76,7 +76,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
       .select("id, presente, aluno_id, justificativa")
 
     if (error) {
-      console.error("[v0] Erro ao criar presenças:", error)
+      toast.error("Erro ao carregar presenças")
     } else {
       presencas = novasPresencas || []
     }

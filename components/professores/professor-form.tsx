@@ -149,7 +149,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
           if (error) throw error
           professorId = data.id
 
-          toast.success(`Professor cadastrado! Senha temporária: CPF (${result.senhaTemporaria})`)
+          toast.success(`Professor cadastrado com sucesso!`)
         } else {
           throw new Error("Email e CPF são obrigatórios para criar acesso ao sistema")
         }
@@ -220,7 +220,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
           setSelectedDisciplinas(disciplinaIds)
         }
       } catch (error: any) {
-        console.error("Erro ao buscar disciplinas:", error)
+        toast.error("Erro ao carregar disciplinas")
       } finally {
         setLoadingDisciplinas(false)
       }

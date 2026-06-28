@@ -81,7 +81,6 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
 
       toast.success("Notas salvas com sucesso!")
     } catch (error) {
-      console.error("Erro ao salvar notas:", error)
       toast.error("Erro ao salvar notas. Tente novamente.")
     } finally {
       setLoading(false)

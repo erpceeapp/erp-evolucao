@@ -46,7 +46,6 @@ export default function NovaAulaFormV2({ turmaDisciplina }: NovaAulaFormProps) {
       router.push(`/diario/${turmaDisciplina.turmas.id}/${turmaDisciplina.disciplinas.id}`)
       router.refresh()
     } catch (error) {
-      console.error("Erro ao registrar aula:", error)
       toast.error("Erro ao registrar aula. Tente novamente.")
     } finally {
       setLoading(false)

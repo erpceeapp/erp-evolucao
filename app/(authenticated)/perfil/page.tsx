@@ -56,7 +56,7 @@ export default function PerfilPage() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      const { data, error } = await supabase.from("profiles").select("id, nome_completo, email, telefone, tipo_usuario").eq("id", user.id).single()
 
       if (error) throw error
 
@@ -66,7 +66,6 @@ export default function PerfilPage() {
         telefone: data.telefone || "",
       })
     } catch (error) {
-      console.error("Erro ao carregar perfil:", error)
       toast.error("Erro ao carregar perfil")
     } finally {
       setLoading(false)
@@ -96,7 +95,6 @@ export default function PerfilPage() {
       toast.success("Perfil atualizado com sucesso!")
       loadProfile()
     } catch (error) {
-      console.error("Erro ao salvar perfil:", error)
       toast.error("Erro ao salvar perfil")
     } finally {
       setSaving(false)
@@ -144,7 +142,6 @@ export default function PerfilPage() {
       })
       setShowChangePassword(false)
     } catch (error: any) {
-      console.error("Erro ao trocar senha:", error)
       toast.error(translateError(error.message || "Erro ao trocar senha"))
     } finally {
       setChangingPassword(false)

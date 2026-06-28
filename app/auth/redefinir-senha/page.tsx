@@ -50,11 +50,6 @@ export default function RedefinirSenhaPage() {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
-      console.error("Erro no exchangeCodeForSession:", {
-        message: error.message,
-        status: (error as any)?.status,
-        name: error.name,
-      })
       setErrorMsg(translateError(error.message))
       setIsProcessing(false)
       return

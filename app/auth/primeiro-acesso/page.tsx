@@ -107,7 +107,6 @@ export default function PrimeiroAcessoPage() {
       await supabase.auth.signOut()
       window.location.href = "/auth/login"
     } catch (error: any) {
-      console.error("Erro ao trocar senha:", error)
       toast.error(translateError(error.message || "Erro ao trocar senha"))
     } finally {
       setIsLoading(false)

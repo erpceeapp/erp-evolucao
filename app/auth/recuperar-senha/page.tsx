@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { GraduationCap, ArrowLeft, Mail } from "lucide-react"
 import Link from "next/link"
+import { toast, Toaster } from "sonner"
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("")
@@ -24,7 +25,7 @@ export default function RecuperarSenhaPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       })
     } catch (err) {
-      console.error("Erro ao enviar email de recuperação:", err)
+      toast.error("Erro ao enviar email de recuperação")
     } finally {
       setEnviado(true)
       setIsLoading(false)
@@ -33,6 +34,8 @@ export default function RecuperarSenhaPage() {
 
   if (enviado) {
     return (
+      <>
+      <Toaster richColors position="top-right" />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -68,10 +71,13 @@ export default function RecuperarSenhaPage() {
           </Card>
         </div>
       </div>
+      </>
     )
   }
 
   return (
+    <>
+      <Toaster richColors position="top-right" />
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
@@ -119,5 +125,6 @@ export default function RecuperarSenhaPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }

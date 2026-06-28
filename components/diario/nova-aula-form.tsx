@@ -89,7 +89,6 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
       toast.success("Aula registrada com sucesso!")
       router.push("/diario")
     } catch (error) {
-      console.error("Erro ao registrar aula:", error)
       toast.error("Erro ao registrar aula. Tente novamente.")
     } finally {
       setLoading(false)
