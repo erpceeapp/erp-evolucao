@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header"
 import { DisciplinasTable } from "@/components/disciplinas/disciplinas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 interface SearchParams {
   busca?: string
@@ -67,6 +68,15 @@ export default async function DisciplinasPage({
   const to = from + itemsPerPage - 1
   query = query.range(from, to)
 
+  const filter = await getProfessorFilter()
+  if (filter.isProfessor) {
+    if (filter.disciplinaIds.length > 0) {
+      query = query.in("id", filter.disciplinaIds)
+    } else {
+      query = query.in("id", [])
+    }
+  }
+
   const { data: disciplinas, count, error: disciplinasError } = await query
 
   if (disciplinasError) {
@@ -90,12 +100,14 @@ export default async function DisciplinasPage({
                 Turmas
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/disciplinas/nova">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Disciplina
-              </Link>
-            </Button>
+            {!filter.isProfessor && (
+              <Button asChild>
+                <Link href="/disciplinas/nova">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Disciplina
+                </Link>
+              </Button>
+            )}
           </div>
         }
       />
