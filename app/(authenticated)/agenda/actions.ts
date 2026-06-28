@@ -19,6 +19,16 @@ export async function createEvento(formData: {
     return { error: "Usuário não autenticado" }
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (profile?.tipo_usuario === "professor") {
+    return { error: "Professores não podem criar eventos" }
+  }
+
   const { error } = await supabase.from("eventos").insert([
     {
       titulo: formData.titulo,
@@ -59,6 +69,16 @@ export async function updateEvento(
     return { error: "Usuário não autenticado" }
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (profile?.tipo_usuario === "professor") {
+    return { error: "Professores não podem editar eventos" }
+  }
+
   const { data: evento } = await supabase
     .from("eventos")
     .select("created_by")
@@ -68,12 +88,6 @@ export async function updateEvento(
   if (!evento) {
     return { error: "Evento não encontrado" }
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tipo_usuario")
-    .eq("id", user.id)
-    .single()
 
   const isAdmin = profile && ["admin", "diretor"].includes(profile.tipo_usuario)
 
@@ -107,7 +121,17 @@ export async function deleteEvento(eventoId: string) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return { error: "Usuário nao autenticado" }
+    return { error: "Usuario nao autenticado" }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (profile?.tipo_usuario === "professor") {
+    return { error: "Professores não podem excluir eventos" }
   }
 
   const { data: evento } = await supabase
@@ -119,12 +143,6 @@ export async function deleteEvento(eventoId: string) {
   if (!evento) {
     return { error: "Evento nao encontrado" }
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tipo_usuario")
-    .eq("id", user.id)
-    .single()
 
   const isAdmin = profile && ["admin", "diretor"].includes(profile.tipo_usuario)
 

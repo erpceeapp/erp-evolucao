@@ -103,6 +103,22 @@ export default function AgendaPage() {
 
   const supabase = createClient()
 
+  const [isProfessor, setIsProfessor] = useState(false)
+
+  useEffect(() => {
+    async function checkProfile() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", user.id)
+        .single()
+      setIsProfessor(profile?.tipo_usuario === "professor")
+    }
+    checkProfile()
+  }, [])
+
   useEffect(() => {
     loadEventos()
   }, [])
@@ -330,26 +346,28 @@ export default function AgendaPage() {
         subtitle="Gerencie eventos e calendário acadêmico"
         backHref="/dashboard"
         actions={
-          <Button
-            className="bg-cyan-600 hover:bg-cyan-700"
-            onClick={() => {
-              const hoje = new Date().toISOString().split("T")[0]
-              setNewEventDate(hoje)
-              setNewEventForm({
-                titulo: "",
-                descricao: "",
-                data_inicio: hoje,
-                data_fim: hoje,
-                hora_inicio: "",
-                hora_fim: "",
-                tipo_evento: "",
-              })
-              setIsNewEventOpen(true)
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Evento
-          </Button>
+          !isProfessor ? (
+            <Button
+              className="bg-cyan-600 hover:bg-cyan-700"
+              onClick={() => {
+                const hoje = new Date().toISOString().split("T")[0]
+                setNewEventDate(hoje)
+                setNewEventForm({
+                  titulo: "",
+                  descricao: "",
+                  data_inicio: hoje,
+                  data_fim: hoje,
+                  hora_inicio: "",
+                  hora_fim: "",
+                  tipo_evento: "",
+                })
+                setIsNewEventOpen(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Evento
+            </Button>
+          ) : undefined
         }
       />
 
@@ -370,11 +388,11 @@ export default function AgendaPage() {
             onNavigate={(d) => setCalendarDate(d)}
             onViewChange={(v) => setCalendarView(v)}
             onSelectEvent={handleClickEvent}
-            onSelectSlot={handleSlotClick}
-            onEventDrop={handleEventDrop}
-            onEventResize={handleEventResize}
-            draggable
-            resizable
+            onSelectSlot={isProfessor ? undefined : handleSlotClick}
+            onEventDrop={isProfessor ? undefined : handleEventDrop}
+            onEventResize={isProfessor ? undefined : handleEventResize}
+            draggable={!isProfessor}
+            resizable={!isProfessor}
             style={{ height: "100%" }}
           />
         </div>
@@ -423,6 +441,7 @@ export default function AgendaPage() {
               ))
             })()}
           </div>
+          {!isProfessor && (
           <div className="pt-4 border-t mt-4">
             <Button
               className="bg-cyan-600 hover:bg-cyan-700 w-full"
@@ -437,6 +456,7 @@ export default function AgendaPage() {
               Novo Evento
             </Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -511,7 +531,7 @@ export default function AgendaPage() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Horário</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
+                    {!isProfessor && <TableHead className="w-[100px]">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -541,6 +561,7 @@ export default function AgendaPage() {
                           <>{evento.hora_inicio}{evento.hora_fim && <> - {evento.hora_fim}</>}</>
                         )}
                       </TableCell>
+                      {!isProfessor && (
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button
@@ -563,6 +584,7 @@ export default function AgendaPage() {
                           </Button>
                         </div>
                       </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -642,26 +664,30 @@ export default function AgendaPage() {
               </div>
 
               <DialogFooter>
-                <div className="flex-1">
-                  <Button
-                    variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50"
-                    onClick={() => {
-                      setEventoToDelete(selectedEvento)
-                      setIsDeleteDialogOpen(true)
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
-                  </Button>
-                </div>
+                {!isProfessor && (
+                  <div className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => {
+                        setEventoToDelete(selectedEvento)
+                        setIsDeleteDialogOpen(true)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </Button>
+                  </div>
+                )}
                 <Button variant="outline" onClick={() => setIsModalOpen(false)}>
                   Fechar
                 </Button>
-                <Button onClick={openEditFromDetail} className="bg-cyan-600 hover:bg-cyan-700">
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Editar Evento
-                </Button>
+                {!isProfessor && (
+                  <Button onClick={openEditFromDetail} className="bg-cyan-600 hover:bg-cyan-700">
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Editar Evento
+                  </Button>
+                )}
               </DialogFooter>
             </div>
           )}
