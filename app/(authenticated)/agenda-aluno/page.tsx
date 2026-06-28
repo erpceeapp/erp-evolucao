@@ -5,6 +5,7 @@ import { BookUser } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 import { AgendaAlunoTable } from "@/components/agenda-aluno/agenda-aluno-table"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 interface SearchParams {
   busca?: string
@@ -40,11 +41,23 @@ export default async function AgendaAlunoPage({
   const itemsPerPage = validateLimitParam(params.limit)
 
   // Buscar todas as turmas para o dropdown e lookup
-  const { data: allTurmas } = await supabase
+  const filter = await getProfessorFilter()
+
+  let turmasQuery = supabase
     .from("turmas")
     .select("id, nome")
     .eq("ativo", true)
     .order("nome")
+
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      turmasQuery = turmasQuery.in("id", filter.turmaIds)
+    } else {
+      turmasQuery = turmasQuery.in("id", [])
+    }
+  }
+
+  const { data: allTurmas } = await turmasQuery
 
   const turmas = allTurmas || []
   const turmaMap = new Map(turmas.map((t) => [t.id, t.nome]))
