@@ -15,6 +15,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { createProfessorUser } from "@/app/(authenticated)/professores/novo/actions"
 import { translateError } from "@/lib/error-messages"
+import { maskCPF, maskRG, maskCellPhone } from "@/lib/input-masks"
 
 interface ProfessorData {
   nome_completo: string
@@ -109,6 +110,22 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
 
         if (error) throw error
         professorId = professor.id
+
+        // Sync changes to profiles table
+        const { data: prof } = await supabase
+          .from("professores")
+          .select("user_id")
+          .eq("id", professor.id)
+          .single()
+
+        if (prof?.user_id) {
+          const syncPayload: Record<string, string | null> = { p_user_id: prof.user_id }
+          if (dataToSend.nome_completo !== undefined) syncPayload.p_nome_completo = dataToSend.nome_completo
+          if (dataToSend.telefone !== undefined) syncPayload.p_telefone = dataToSend.telefone
+          if (dataToSend.email !== undefined) syncPayload.p_email = dataToSend.email
+
+          await supabase.rpc("admin_update_user_profile", syncPayload)
+        }
       } else {
         if (formData.email && formData.cpf) {
           const result = await createProfessorUser({
@@ -246,11 +263,11 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF</Label>
-                <Input id="cpf" value={formData.cpf} onChange={(e) => handleInputChange("cpf", e.target.value)} />
+                <Input id="cpf" value={formData.cpf} onChange={(e) => handleInputChange("cpf", maskCPF(e.target.value))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="rg">RG</Label>
-                <Input id="rg" value={formData.rg} onChange={(e) => handleInputChange("rg", e.target.value)} />
+                <Input id="rg" value={formData.rg} onChange={(e) => handleInputChange("rg", maskRG(e.target.value))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="data_nascimento">Data de Nascimento</Label>
@@ -278,7 +295,7 @@ export function ProfessorForm({ professor, isEditing = false }: ProfessorFormPro
                 id="telefone"
                 type="tel"
                 value={formData.telefone}
-                onChange={(e) => handleInputChange("telefone", e.target.value)}
+                onChange={(e) => handleInputChange("telefone", maskCellPhone(e.target.value))}
               />
             </div>
           </CardContent>

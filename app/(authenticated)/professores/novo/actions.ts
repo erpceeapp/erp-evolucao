@@ -123,10 +123,23 @@ export async function deleteProfessor(professorId: string) {
     }
 
     const supabaseAdmin = createAdminClient()
+
+    // Get user_id before deleting the professor
+    const { data: prof } = await supabaseAdmin
+      .from("professores")
+      .select("user_id")
+      .eq("id", professorId)
+      .single()
+
     const { error: deleteError } = await supabaseAdmin.from("professores").delete().eq("id", professorId)
 
     if (deleteError) {
       return { error: deleteError.message }
+    }
+
+    // Cascade delete the linked auth user and profile
+    if (prof?.user_id) {
+      await supabaseAdmin.rpc("admin_delete_user", { p_user_id: prof.user_id })
     }
 
     return { success: true }
