@@ -11,6 +11,7 @@ import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { createUser } from "@/app/(authenticated)/usuarios/actions"
 import { translateError } from "@/lib/error-messages"
+import { maskCellPhone } from "@/lib/input-masks"
 import { toast } from "sonner"
 
 const tipoOptions = [
@@ -89,12 +90,13 @@ export function UsuarioForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  type="tel"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, telefone: e.target.value }))}
-                />
+              <Input
+                id="telefone"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={formData.telefone}
+                onChange={(e) => setFormData((prev) => ({ ...prev, telefone: maskCellPhone(e.target.value) }))}
+              />
               </div>
             </div>
 
