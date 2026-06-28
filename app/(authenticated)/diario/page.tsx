@@ -9,21 +9,38 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { DiarioTurmasView } from "./diario-turmas-view"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
+  const filter = await getProfessorFilter()
 
-  const { data: turmasDisciplinas, error: tdError } = await supabase.from("turma_disciplinas").select("*")
+  let tdQuery = supabase.from("turma_disciplinas").select("*")
+  if (filter.isProfessor && filter.professorId) {
+    tdQuery = tdQuery.eq("professor_id", filter.professorId)
+  }
+
+  const { data: turmasDisciplinas, error: tdError } = await tdQuery
 
   if (tdError) {
     console.error("[v0] Erro ao buscar turma_disciplinas:", tdError)
   }
 
-  const { data: todasTurmas, error: turmasError } = await supabase
+  let turmasQuery = supabase
     .from("turmas")
     .select("id, nome, serie, ano_letivo, ativo")
     .eq("ativo", true)
     .order("nome")
+
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      turmasQuery = turmasQuery.in("id", filter.turmaIds)
+    } else {
+      turmasQuery = turmasQuery.in("id", [])
+    }
+  }
+
+  const { data: todasTurmas, error: turmasError } = await turmasQuery
 
   if (turmasError) {
     console.error("[v0] Erro ao buscar turmas:", turmasError)
