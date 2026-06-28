@@ -104,8 +104,8 @@ export default function PrimeiroAcessoPage() {
         if (profileError) throw profileError
       }
 
-      toast.success("Senha alterada com sucesso!")
-      router.push("/dashboard")
+      await supabase.auth.signOut()
+      window.location.href = "/auth/login"
     } catch (error: any) {
       console.error("Erro ao trocar senha:", error)
       toast.error(translateError(error.message || "Erro ao trocar senha"))

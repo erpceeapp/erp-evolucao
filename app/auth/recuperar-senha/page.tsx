@@ -23,8 +23,8 @@ export default function RecuperarSenhaPage() {
       await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/callback`,
       })
-    } catch {
-      // Silêncio — mesma mensagem de sucesso para não revelar se o email existe
+    } catch (err) {
+      console.error("Erro ao enviar email de recuperação:", err)
     } finally {
       setEnviado(true)
       setIsLoading(false)
