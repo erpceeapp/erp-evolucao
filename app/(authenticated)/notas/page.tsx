@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/page-header"
 import Link from "next/link"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 type TurmaComDisciplinas = {
   id: string
@@ -20,12 +21,24 @@ type TurmaComDisciplinas = {
 async function getTurmasComDisciplinas(): Promise<TurmaComDisciplinas[]> {
   const supabase = await createServerClient()
 
+  const filter = await getProfessorFilter()
+
   // Buscar turmas ativas
-  const { data: turmas, error: turmasError } = await supabase
+  let turmasQuery = supabase
     .from("turmas")
     .select("id, nome, serie, turno, ano_letivo, ativo")
     .eq("ativo", true)
     .order("nome")
+
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      turmasQuery = turmasQuery.in("id", filter.turmaIds)
+    } else {
+      turmasQuery = turmasQuery.in("id", [])
+    }
+  }
+
+  const { data: turmas, error: turmasError } = await turmasQuery
 
   if (turmasError) {
     return []
