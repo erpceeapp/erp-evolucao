@@ -14,6 +14,7 @@ import { ExportGradePDF } from "@/components/grade-horarios/export-grade-pdf"
 import { listarGrade, listarTurmaDisciplinas } from "./actions"
 import type { GradeSlot, TurmaDisciplinaInfo } from "@/types/entities"
 import { CalendarRange } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function GradeHorariosPage() {
   const [filtroTipo, setFiltroTipo] = useState<"turma" | "professor">("turma")
@@ -30,6 +31,37 @@ export default function GradeHorariosPage() {
 
   const gridWrapperRef = useRef<HTMLDivElement>(null)
   const [filtroNome, setFiltroNome] = useState("")
+
+  const [isProfessor, setIsProfessor] = useState(false)
+  const [professorNome, setProfessorNome] = useState("")
+
+  useEffect(() => {
+    async function checkProfile() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", user.id)
+        .single()
+      if (profile?.tipo_usuario === "professor") {
+        const { data: professor } = await supabase
+          .from("professores")
+          .select("id, nome_completo")
+          .eq("user_id", user.id)
+          .single()
+        if (professor) {
+          setIsProfessor(true)
+          setProfessorNome(professor.nome_completo)
+          setFiltroTipo("professor")
+          setFiltroId(professor.id)
+          setFiltroNome(professor.nome_completo)
+        }
+      }
+    }
+    checkProfile()
+  }, [])
 
   const [duracaoPadrao, setDuracaoPadrao] = useState(() => {
     if (typeof window !== "undefined") {
@@ -74,7 +106,7 @@ export default function GradeHorariosPage() {
   }
 
   function handleCellClick(diaSemana: number, hora: string) {
-    if (filtroTipo !== "turma") return
+    if (filtroTipo !== "turma" || isProfessor) return
     setSelectedSlot(null)
     setModalDiaSemana(diaSemana)
     setModalHora(hora)
@@ -82,6 +114,7 @@ export default function GradeHorariosPage() {
   }
 
   function handleSlotClick(slot: GradeSlot) {
+    if (isProfessor) return
     setSelectedSlot(slot)
     setModalDiaSemana(slot.dia_semana)
     setModalHora(slot.hora_inicio.slice(0, 5))
@@ -115,7 +148,13 @@ export default function GradeHorariosPage() {
       />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <GradeFilter filtroTipo={filtroTipo} filtroId={filtroId} onChange={handleFilterChange} />
+        {isProfessor ? (
+          <div className="text-lg font-semibold text-muted-foreground">
+            Minha Grade de Horários
+          </div>
+        ) : (
+          <GradeFilter filtroTipo={filtroTipo} filtroId={filtroId} onChange={handleFilterChange} />
+        )}
         <div className="flex items-center gap-2">
           {filtroId && (
             <ExportGradePDF wrapperRef={gridWrapperRef} filtroTipo={filtroTipo} filtroNome={filtroNome} />
@@ -174,16 +213,18 @@ export default function GradeHorariosPage() {
         </>
       )}
 
-      <SlotModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSaved={handleSaved}
-        slot={selectedSlot}
-        diaSemana={modalDiaSemana}
-        horaSugerida={modalHora}
-        disciplinasDisponiveis={disciplinas}
-        duracaoPadrao={duracaoPadrao}
-      />
+      {!isProfessor && (
+        <SlotModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          onSaved={handleSaved}
+          slot={selectedSlot}
+          diaSemana={modalDiaSemana}
+          horaSugerida={modalHora}
+          disciplinasDisponiveis={disciplinas}
+          duracaoPadrao={duracaoPadrao}
+        />
+      )}
     </div>
   )
 }
