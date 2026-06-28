@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { alunoFormSchema } from "@/lib/schemas/aluno"
+import { translateError } from "@/lib/error-messages"
 
 export async function cadastrarAluno(formData: FormData) {
   const supabase = await createClient()
@@ -42,7 +43,7 @@ export async function cadastrarAluno(formData: FormData) {
   const { error } = await supabase.from("alunos").insert([alunoData])
 
   if (error) {
-    return { error: error.message }
+    return { error: translateError(error.message) }
   }
 
   revalidatePath("/alunos")
@@ -84,7 +85,7 @@ export async function atualizarAluno(id: string, formData: FormData) {
   const { error: updateError } = await supabase.from("alunos").update(parsed.data).eq("id", id)
 
   if (updateError) {
-    return { error: updateError.message }
+    return { error: translateError(updateError.message) }
   }
 
   revalidatePath("/alunos")

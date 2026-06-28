@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { translateError } from "@/lib/error-messages"
 
 export async function salvarAulaPresenca(params: {
   turmaDisciplinaId: string
@@ -20,6 +21,16 @@ export async function salvarAulaPresenca(params: {
     return { error: "Usuário nao autenticado" }
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || !["admin", "diretor", "coordenacao", "professor"].includes(profile.tipo_usuario)) {
+    return { error: "Acesso negado" }
+  }
+
   const { data: aula, error: aulaError } = await supabase
     .from("aulas")
     .insert({
@@ -33,7 +44,7 @@ export async function salvarAulaPresenca(params: {
     .single()
 
   if (aulaError) {
-    return { error: aulaError.message }
+    return { error: translateError(aulaError.message) }
   }
 
   const presencasData = Object.entries(params.presencas).map(([alunoId, status]) => ({
@@ -46,7 +57,7 @@ export async function salvarAulaPresenca(params: {
   const { error: presencaError } = await supabase.from("presencas").insert(presencasData)
 
   if (presencaError) {
-    return { error: presencaError.message }
+    return { error: translateError(presencaError.message) }
   }
 
   revalidatePath(`/diario/${params.turmaId}/${params.disciplinaId}`)

@@ -19,6 +19,16 @@ export async function salvarAviso(params: {
     return { error: "Usuário nao autenticado" }
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || !["admin", "diretor", "coordenacao", "secretaria", "professor"].includes(profile.tipo_usuario)) {
+    return { error: "Acesso negado" }
+  }
+
   if (params.editingAvisoId) {
     const { error } = await supabase
       .from("avisos_aluno")
@@ -56,6 +66,16 @@ export async function deletarAviso(avisoId: string, alunoId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { error: "Usuário nao autenticado" }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || !["admin", "diretor", "coordenacao", "secretaria", "professor"].includes(profile.tipo_usuario)) {
+    return { error: "Acesso negado" }
   }
 
   const { error } = await supabase

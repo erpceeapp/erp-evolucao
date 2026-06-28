@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { translateError } from "@/lib/error-messages"
 import type { TurmaDisciplinaInfo, GradeSlot } from "@/types/entities"
 
 interface SalvarSlotInput {
@@ -26,7 +27,7 @@ export async function listarTurmaDisciplinas(turmaId: string): Promise<TurmaDisc
     `)
     .eq("turma_id", turmaId)
 
-  if (error) throw new Error(`Erro ao carregar disciplinas da turma: ${error.message}`)
+  if (error) throw new Error(`Erro ao carregar disciplinas da turma: ${translateError(error.message)}`)
 
   return (data || []).map((td: any) => ({
     id: td.id,
@@ -73,7 +74,7 @@ export async function listarGrade(
   }
 
   const { data, error } = await query.order("dia_semana").order("hora_inicio")
-  if (error) throw new Error(`Erro ao carregar grade horária: ${error.message}`)
+  if (error) throw new Error(`Erro ao carregar grade horária: ${translateError(error.message)}`)
 
   return (data || []).map((item: any) => ({
     id: item.id,
@@ -94,6 +95,16 @@ export async function salvarSlot(input: SalvarSlotInput): Promise<void> {
   const supabase = await createClient()
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) throw new Error("Não autenticado")
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", userData.user.id)
+    .single()
+
+  if (!profile || !["admin", "diretor", "coordenacao", "secretaria"].includes(profile.tipo_usuario)) {
+    throw new Error("Acesso negado")
+  }
 
   const { data: td, error: tdError } = await supabase
     .from("turma_disciplinas")
@@ -132,7 +143,7 @@ export async function salvarSlot(input: SalvarSlotInput): Promise<void> {
     hora_fim: input.hora_fim,
   })
 
-  if (error) throw new Error(`Erro ao salvar horário: ${error.message}`)
+  if (error) throw new Error(`Erro ao salvar horário: ${translateError(error.message)}`)
   revalidatePath("/grade-horarios")
 }
 
@@ -141,7 +152,17 @@ export async function removerSlot(id: string): Promise<void> {
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) throw new Error("Não autenticado")
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", userData.user.id)
+    .single()
+
+  if (!profile || !["admin", "diretor", "coordenacao", "secretaria"].includes(profile.tipo_usuario)) {
+    throw new Error("Acesso negado")
+  }
+
   const { error } = await supabase.from("grade_horarios").delete().eq("id", id)
-  if (error) throw new Error(`Erro ao remover horário: ${error.message}`)
+  if (error) throw new Error(`Erro ao remover horário: ${translateError(error.message)}`)
   revalidatePath("/grade-horarios")
 }

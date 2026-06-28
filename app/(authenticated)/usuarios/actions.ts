@@ -1,8 +1,10 @@
 "use server"
 
+import crypto from "crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { revalidatePath } from "next/cache"
+import { translateError } from "@/lib/error-messages"
 import bcrypt from "bcryptjs"
 
 const CAN_CREATE = ["admin", "diretor", "coordenacao", "secretaria"]
@@ -48,7 +50,7 @@ export async function createInvite(email: string, tipo_usuario: string) {
   ])
 
   if (error) {
-    return { error: error.message }
+    return { error: translateError(error.message) }
   }
 
   revalidatePath("/usuarios")
@@ -68,7 +70,7 @@ export async function createUser(data: {
     return { error: "Sem permissao para criar usuarios" }
   }
 
-  const senhaTemporaria = "senha123"
+  const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
 
   try {
     const admin = createAdminClient()
@@ -85,7 +87,7 @@ export async function createUser(data: {
     })
 
     if (authError) {
-      return { error: authError.message }
+      return { error: translateError(authError.message) }
     }
 
     const userId = authData.user?.id
@@ -103,14 +105,14 @@ export async function createUser(data: {
       })
 
       if (profError) {
-        return { error: profError.message }
+        return { error: translateError(profError.message) }
       }
     }
 
     revalidatePath("/usuarios")
     return { success: true, userId }
   } catch (error: any) {
-    return { error: error.message || "Erro ao criar usuario" }
+    return { error: translateError(error.message) || "Erro ao criar usuario" }
   }
 }
 

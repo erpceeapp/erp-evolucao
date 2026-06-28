@@ -1,5 +1,6 @@
 "use server"
 
+import crypto from "crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 
@@ -26,8 +27,8 @@ export async function createProfessorUser(professorData: {
       return { error: "Apenas administradores e diretores podem criar professores" }
     }
 
-    // Senha padrão é o CPF sem formatação
-    const senhaTemporaria = professorData.cpf.replace(/[^0-9]/g, "")
+    // Senha temporária aleatória
+    const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
 
     const supabaseAdmin = createAdminClient()
 

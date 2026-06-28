@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { translateError } from "@/lib/error-messages"
 
 export async function createEvento(formData: {
   titulo: string
@@ -43,7 +44,7 @@ export async function createEvento(formData: {
   ])
 
   if (error) {
-    return { error: error.message }
+    return { error: translateError(error.message) }
   }
 
   revalidatePath("/agenda")
@@ -109,7 +110,7 @@ export async function updateEvento(
     .eq("id", eventoId)
 
   if (error) {
-    return { error: error.message }
+    return { error: translateError(error.message) }
   }
 
   revalidatePath("/agenda")
@@ -153,7 +154,7 @@ export async function deleteEvento(eventoId: string) {
   const { error } = await supabase.from("eventos").delete().eq("id", eventoId)
 
   if (error) {
-    return { error: error.message }
+    return { error: translateError(error.message) }
   }
 
   revalidatePath("/agenda")
