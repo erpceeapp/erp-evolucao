@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header"
 import { TurmasTable } from "@/components/turmas/turmas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 interface SearchParams {
   busca?: string
@@ -68,6 +69,15 @@ export default async function TurmasPage({
   const to = from + itemsPerPage - 1
   query = query.range(from, to)
 
+  const filter = await getProfessorFilter()
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      query = query.in("id", filter.turmaIds)
+    } else {
+      query = query.in("id", [])
+    }
+  }
+
   const { data: turmas, count, error: turmasError } = await query
 
   if (turmasError) {
@@ -114,12 +124,14 @@ export default async function TurmasPage({
                 Disciplinas
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/turmas/nova">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Turma
-              </Link>
-            </Button>
+            {!filter.isProfessor && (
+              <Button asChild>
+                <Link href="/turmas/nova">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Turma
+                </Link>
+              </Button>
+            )}
           </div>
         }
       />
