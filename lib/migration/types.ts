@@ -80,6 +80,7 @@ export interface ExportTurmaJson {
 
 export interface ExportMatriculaJson {
   turma_id: string
+  numero_matricula: string
   ano_letivo: number
   data_matricula: string
   status: string
@@ -102,6 +103,9 @@ export interface ExportAlunoJson {
   ativo: boolean
   sexo: string | null
   naturalidade: string | null
+  nivel: string | null
+  periodo_letivo: string | null
+  turno_preferencial: string | null
   matricula: string | null
   matriculas: ExportMatriculaJson[]
   created_at: string

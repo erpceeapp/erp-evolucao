@@ -232,6 +232,10 @@ export async function importAlunos(
         ativo: aluno.ativo,
         sexo: aluno.sexo,
         naturalidade: aluno.naturalidade,
+        matricula: aluno.matricula,
+        nivel: aluno.nivel,
+        periodo_letivo: aluno.periodo_letivo,
+        turno_preferencial: aluno.turno_preferencial,
       })
 
       if (alunoError) {
@@ -245,6 +249,7 @@ export async function importAlunos(
         await admin.from("matriculas").insert({
           aluno_id: aluno.id,
           turma_id: turmaId,
+          numero_matricula: mat.numero_matricula,
           ano_letivo: mat.ano_letivo,
           data_matricula: mat.data_matricula,
           status: mat.status,

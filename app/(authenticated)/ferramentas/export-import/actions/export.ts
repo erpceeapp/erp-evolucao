@@ -190,11 +190,15 @@ export async function exportAlunos(): Promise<{ data?: string; error?: string }>
     ativo: a.ativo,
     sexo: a.sexo,
     naturalidade: a.naturalidade,
+    nivel: a.nivel,
+    periodo_letivo: a.periodo_letivo,
+    turno_preferencial: a.turno_preferencial,
     matricula: a.matricula,
     matriculas: (matriculas || [])
       .filter((m) => m.aluno_id === a.id)
       .map((m) => ({
         turma_id: m.turma_id,
+        numero_matricula: m.numero_matricula,
         ano_letivo: m.ano_letivo,
         data_matricula: m.data_matricula,
         status: m.status,
