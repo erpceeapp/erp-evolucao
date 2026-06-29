@@ -32,10 +32,10 @@ export default async function ExportImportPage() {
       />
 
       <div className="space-y-6">
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Ordem obrigatoria de importacao</AlertTitle>
-          <AlertDescription>
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Ordem obrigatoria de importacao</AlertTitle>
+          <AlertDescription className="text-amber-700">
             A importacao deve seguir a ordem abaixo para preservar os relacionamentos entre os dados.
             O mapping de IDs e mantido automaticamente durante a sessao (ao fechar a aba, os dados sao perdidos).
           </AlertDescription>

@@ -76,6 +76,10 @@ export async function importUsuarios(
         continue
       }
 
+      if (usuario.primeira_senha === false) {
+        await admin.from("profiles").update({ primeira_senha: false }).eq("id", newUserId)
+      }
+
       mapping.auth_users[usuario.auth_user_id] = newUserId
       mapping.profiles[usuario.id] = newUserId
 
