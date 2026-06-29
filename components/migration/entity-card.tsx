@@ -18,7 +18,6 @@ interface EntityCardProps {
   descricao: string
   totalSteps: number
   unlocked: boolean
-  hasMapping: boolean
   resultado: string | null
   onImportComplete: (result: string) => void
 }
@@ -44,7 +43,6 @@ export function EntityCard({
   descricao,
   totalSteps,
   unlocked,
-  hasMapping,
   resultado,
   onImportComplete,
 }: EntityCardProps) {

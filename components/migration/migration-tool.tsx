@@ -88,7 +88,6 @@ export function MigrationTool() {
           descricao={entity.descricao}
           totalSteps={ENTITIES.length}
           unlocked={isUnlocked(entity.type)}
-          hasMapping={!!mapping}
           onImportComplete={(result) => handleImportComplete(entity.type, result)}
           resultado={resultados[entity.type]}
         />
