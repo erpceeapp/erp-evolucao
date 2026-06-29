@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar } from "lucide-react"
+import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
@@ -75,6 +75,13 @@ export default async function ConfiguracoesPage() {
       href: "/configuracoes/seguranca",
       adminOnly: false,
       comingSoon: true,
+    },
+    {
+      icon: ArrowLeftRight,
+      title: "Migração de Dados",
+      description: "Exporte e importe dados entre ambientes (Usuários, Professores, Turmas e Alunos)",
+      href: "/ferramentas/export-import",
+      adminOnly: true,
     },
     {
       icon: Database,
