@@ -4,6 +4,7 @@ import crypto from "crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import type { ExportWrapper, ExportUsuarioJson, ExportProfessorJson, ExportTurmaJson, ExportAlunoJson } from "@/lib/migration/types"
+import { translateError } from "@/lib/error-messages"
 
 async function checkAdminOrDirector(): Promise<{ error: string } | null> {
   const supabase = await createClient()
@@ -33,13 +34,10 @@ export async function exportUsuarios(): Promise<{ data?: string; error?: string 
     .select("*")
     .order("nome_completo")
 
-  if (profilesError) return { error: profilesError.message }
+  if (profilesError) return { error: translateError(profilesError.message) }
   if (!profiles?.length) return { error: "Nenhum usuario encontrado" }
 
-  const { data: { users } } = await admin.auth.admin.listUsers()
-
   const data: ExportUsuarioJson[] = profiles.map((p) => {
-    const authUser = users?.find((u) => u.id === p.id)
     const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
     return {
       id: p.id,
@@ -79,7 +77,7 @@ export async function exportProfessores(): Promise<{ data?: string; error?: stri
     .select("*")
     .order("nome_completo")
 
-  if (error) return { error: error.message }
+  if (error) return { error: translateError(error.message) }
   if (!professores?.length) return { error: "Nenhum professor encontrado" }
 
   const data: ExportProfessorJson[] = professores.map((p) => ({
@@ -96,7 +94,7 @@ export async function exportProfessores(): Promise<{ data?: string; error?: stri
     especializacao: p.especializacao,
     registro_profissional: p.registro_profissional,
     data_admissao: p.data_admissao,
-    salario: p.salario ? Number(p.salario) : null,
+    salario: p.salario !== null && p.salario !== undefined ? Number(p.salario) : null,
     ativo: p.ativo,
     created_at: p.created_at,
     updated_at: p.updated_at,
@@ -122,7 +120,7 @@ export async function exportTurmas(): Promise<{ data?: string; error?: string }>
     .select("*")
     .order("nome")
 
-  if (turmasError) return { error: turmasError.message }
+  if (turmasError) return { error: translateError(turmasError.message) }
   if (!turmas?.length) return { error: "Nenhuma turma encontrada" }
 
   const { data: disciplinas } = await admin
@@ -169,7 +167,7 @@ export async function exportAlunos(): Promise<{ data?: string; error?: string }>
     .select("*")
     .order("nome_completo")
 
-  if (alunosError) return { error: alunosError.message }
+  if (alunosError) return { error: translateError(alunosError.message) }
   if (!alunos?.length) return { error: "Nenhum aluno encontrado" }
 
   const { data: matriculas } = await admin
