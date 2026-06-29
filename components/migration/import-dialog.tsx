@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { Upload, FileText, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { ImportResult } from "@/lib/migration/types"
@@ -19,7 +21,7 @@ interface ImportDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   entityName: string
-  onImport: (jsonData: string) => Promise<ImportResult>
+  onImport: (jsonData: string, conflictStrategy: "skip" | "overwrite") => Promise<ImportResult>
 }
 
 export function ImportDialog({ open, onOpenChange, entityName, onImport }: ImportDialogProps) {
@@ -29,6 +31,7 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
   const [error, setError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
+  const [conflictStrategy, setConflictStrategy] = useState<"skip" | "overwrite">("skip")
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,14 +68,14 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
     setImporting(true)
     setError(null)
     try {
-      const r = await onImport(fileContent)
+      const r = await onImport(fileContent, conflictStrategy)
       setResult(r)
     } catch (err: any) {
       setError(err.message)
     } finally {
       setImporting(false)
     }
-  }, [fileContent, onImport])
+  }, [fileContent, onImport, conflictStrategy])
 
   const handleClose = useCallback(() => {
     if (!importing) {
@@ -129,6 +132,22 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
                   {preview.total > 5 && <li className="text-gray-400">...e mais {preview.total - 5}</li>}
                 </ul>
               )}
+            </div>
+          )}
+
+          {preview && !result && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-700">Conflitos:</p>
+              <RadioGroup value={conflictStrategy} onValueChange={(v: "skip" | "overwrite") => setConflictStrategy(v)} className="flex flex-row gap-4">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="skip" id="cs-skip" />
+                  <Label htmlFor="cs-skip" className="font-normal text-sm cursor-pointer">Pular duplicatas</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="overwrite" id="cs-overwrite" />
+                  <Label htmlFor="cs-overwrite" className="font-normal text-sm cursor-pointer">Sobrescrever duplicatas</Label>
+                </div>
+              </RadioGroup>
             </div>
           )}
 

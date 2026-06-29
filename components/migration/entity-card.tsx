@@ -74,11 +74,11 @@ export function EntityCard({
     }
   }, [type])
 
-  const handleImport = useCallback(async (jsonData: string) => {
+  const handleImport = useCallback(async (jsonData: string, conflictStrategy: "skip" | "overwrite" = "skip") => {
     const parsed = JSON.parse(jsonData)
     const currentMapping = loadMapping()
     const fn = importFns[type]
-    const result = await fn(parsed.data || parsed, currentMapping || { profiles: {}, auth_users: {}, professores: {}, turmas: {} })
+    const result = await fn(parsed.data || parsed, currentMapping || { profiles: {}, auth_users: {}, professores: {}, turmas: {} }, conflictStrategy)
     saveMapping(result.mapping)
 
     const resumo = [
