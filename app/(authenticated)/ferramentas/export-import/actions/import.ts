@@ -81,7 +81,7 @@ export async function importUsuarios(
 
       logs.push({ nome: usuario.nome_completo, identificador: usuario.email, status: "ok" })
     } catch (err: any) {
-      logs.push({ nome: usuario.nome_completo, identificador: usuario.email, status: "erro", mensagem: err.message })
+      logs.push({ nome: usuario.nome_completo, identificador: usuario.email, status: "erro", mensagem: translateError(err.message) })
     }
   }
 
@@ -135,7 +135,7 @@ export async function importProfessores(
       mapping.professores[professor.id] = professor.id
       logs.push({ nome: professor.nome_completo, identificador: professor.cpf || professor.email, status: "ok" })
     } catch (err: any) {
-      logs.push({ nome: professor.nome_completo, identificador: professor.cpf || professor.email, status: "erro", mensagem: err.message })
+      logs.push({ nome: professor.nome_completo, identificador: professor.cpf || professor.email, status: "erro", mensagem: translateError(err.message) })
     }
   }
 
@@ -194,7 +194,7 @@ export async function importTurmas(
       mapping.turmas[turma.id] = turma.id
       logs.push({ nome: turma.nome, identificador: `${turma.nome} (${turma.ano_letivo})`, status: "ok" })
     } catch (err: any) {
-      logs.push({ nome: turma.nome, identificador: `${turma.nome} (${turma.ano_letivo})`, status: "erro", mensagem: err.message })
+      logs.push({ nome: turma.nome, identificador: `${turma.nome} (${turma.ano_letivo})`, status: "erro", mensagem: translateError(err.message) })
     }
   }
 
@@ -254,7 +254,7 @@ export async function importAlunos(
 
       logs.push({ nome: aluno.nome_completo, identificador: aluno.cpf || aluno.matricula || aluno.nome_completo, status: "ok" })
     } catch (err: any) {
-      logs.push({ nome: aluno.nome_completo, identificador: aluno.cpf || aluno.matricula || aluno.nome_completo, status: "erro", mensagem: err.message })
+      logs.push({ nome: aluno.nome_completo, identificador: aluno.cpf || aluno.matricula || aluno.nome_completo, status: "erro", mensagem: translateError(err.message) })
     }
   }
 
