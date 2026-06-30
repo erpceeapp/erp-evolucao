@@ -47,6 +47,11 @@ const errorTranslations: Record<string, string> = {
 export function translateError(errorMessage: string): string {
   if (!errorMessage) return "Ocorreu um erro desconhecido"
   
+  // Caso o erro seja uma string JSON vazia "{}" ou outro placeholder invalido
+  if (errorMessage === "{}" || errorMessage === "[]" || errorMessage === "[object Object]") {
+    return "Ocorreu um erro desconhecido"
+  }
+
   // Normalizar a mensagem removendo espaços extras
   const normalizedMessage = errorMessage.trim()
   

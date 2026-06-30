@@ -26,8 +26,9 @@ async function getTurmaDisciplina(turmaId: string, disciplinaId: string) {
 export default async function NovaAulaPage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const { turmaId, disciplinaId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -37,19 +38,19 @@ export default async function NovaAulaPage({
     redirect("/auth/login")
   }
 
-  const turmaDisciplina = await getTurmaDisciplina(params.turmaId, params.disciplinaId)
+  const turmaDisciplina = await getTurmaDisciplina(turmaId, disciplinaId)
 
   if (!turmaDisciplina) {
     redirect("/diario")
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={BookOpen}
         title="Nova Aula"
         description="Registre uma nova aula no diário de classe"
-        backHref={`/diario/${params.turmaId}/${params.disciplinaId}`}
+        backHref={`/diario/${turmaId}/${disciplinaId}`}
       />
 
       <Card>
@@ -60,6 +61,6 @@ export default async function NovaAulaPage({
           <NovaAulaForm turmaDisciplina={turmaDisciplina} />
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 }

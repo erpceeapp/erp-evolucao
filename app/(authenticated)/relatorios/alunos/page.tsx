@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/page-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 async function getAlunosRelatorio() {
@@ -37,7 +38,7 @@ async function getAlunosRelatorio() {
 
   // Buscar turmas das matrículas
   const turmaIds = matriculas?.map((m) => m.turma_id).filter(Boolean) || []
-  let turmas = []
+  let turmas: { id: string; nome: string; serie: string | null }[] = []
   if (turmaIds.length > 0) {
     const { data: turmasData, error: turmasError } = await supabase
       .from("turmas")
@@ -79,17 +80,14 @@ export default async function RelatorioAlunosPage() {
   const alunos = await getAlunosRelatorio()
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
+      <PageHeader
+        icon={Users}
+        title="Relatório de Alunos"
+        subtitle="Lista completa de alunos cadastrados"
+        backHref="/relatorios"
+      />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Users className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Relatório de Alunos</h1>
-            <p className="text-gray-600">Lista completa de alunos cadastrados</p>
-          </div>
-        </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
@@ -129,7 +127,7 @@ export default async function RelatorioAlunosPage() {
             </TableHeader>
             <TableBody>
               {alunos.map((aluno) => {
-                const matriculaAtiva = aluno.matriculas?.find((m) => m.status === "ativa")
+                const matriculaAtiva = aluno.matriculas?.find((m: any) => m.status === "ativa")
                 return (
                   <TableRow key={aluno.id}>
                     <TableCell>
@@ -162,6 +160,6 @@ export default async function RelatorioAlunosPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 }

@@ -27,6 +27,23 @@ export default async function EditarEventoPage({ params }: PageProps) {
     "use server"
 
     const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error("Usuário não autenticado")
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    const isAdmin = profile && ["admin", "diretor"].includes(profile.tipo_usuario)
+
+    if (!isAdmin && evento.created_by !== user.id) {
+      throw new Error("Você não tem permissão para editar este evento")
+    }
     const titulo = formData.get("titulo") as string
     const descricao = formData.get("descricao") as string
     const data_inicio = formData.get("data_inicio") as string
@@ -47,7 +64,6 @@ export default async function EditarEventoPage({ params }: PageProps) {
       .eq("id", id)
 
     if (error) {
-      console.error("[v0] Erro ao atualizar evento:", error)
       throw new Error("Erro ao atualizar evento")
     }
 

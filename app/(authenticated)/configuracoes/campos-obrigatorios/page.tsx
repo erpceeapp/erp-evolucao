@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { CheckCircle2, Save, Settings } from "lucide-react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
 import { toast } from "sonner"
@@ -100,10 +100,7 @@ export default function CamposObrigatoriosPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userTipo, setUserTipo] = useState<string | null>(null)
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
@@ -147,7 +144,6 @@ export default function CamposObrigatoriosPage() {
         setConfig(configFromDB)
       }
     } catch (error) {
-      console.error("Erro ao carregar configuração:", error)
       toast.error("Erro ao carregar configurações")
     } finally {
       setLoading(false)
@@ -157,31 +153,22 @@ export default function CamposObrigatoriosPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      console.log("[v0] Iniciando salvamento de configurações")
-      console.log("[v0] Config a salvar:", config)
-
       const updates = Object.entries(config).map(async ([campo, obrigatorio]) => {
-        console.log(`[v0] Salvando campo ${campo}: ${obrigatorio}`)
-
         const { data, error } = await supabase
           .from("config_campos_obrigatorios")
           .upsert({ campo, obrigatorio, updated_at: new Date().toISOString() }, { onConflict: "campo" })
 
         if (error) {
-          console.error(`[v0] Erro ao salvar campo ${campo}:`, error)
           throw error
         }
 
-        console.log(`[v0] Campo ${campo} salvo com sucesso`)
         return data
       })
 
       await Promise.all(updates)
 
-      console.log("[v0] Todas as configurações foram salvas")
       toast.success("Configuração salva com sucesso!")
     } catch (error) {
-      console.error("[v0] Erro ao salvar:", error)
       toast.error("Erro ao salvar configuração")
     } finally {
       setSaving(false)

@@ -5,16 +5,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/page-header"
 import Link from "next/link"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
-async function getTurmasComDisciplinas() {
+type TurmaComDisciplinas = {
+  id: string
+  nome: string
+  serie: string | null
+  turno: string | null
+  ano_letivo: number
+  ativo: boolean
+  disciplinas: ({ id: string; nome: string; codigo: string } | undefined)[]
+  totalAlunos: number
+}
+
+async function getTurmasComDisciplinas(): Promise<TurmaComDisciplinas[]> {
   const supabase = await createServerClient()
 
+  const filter = await getProfessorFilter()
+
   // Buscar turmas ativas
-  const { data: turmas, error: turmasError } = await supabase
+  let turmasQuery = supabase
     .from("turmas")
     .select("id, nome, serie, turno, ano_letivo, ativo")
     .eq("ativo", true)
     .order("nome")
+
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      turmasQuery = turmasQuery.in("id", filter.turmaIds)
+    } else {
+      turmasQuery = turmasQuery.in("id", [])
+    }
+  }
+
+  const { data: turmas, error: turmasError } = await turmasQuery
 
   if (turmasError) {
     return []
@@ -29,7 +53,7 @@ async function getTurmasComDisciplinas() {
     .in("turma_id", turmaIds)
 
   if (tdError) {
-    return turmas?.map((t) => ({ ...t, disciplinas: [] })) || []
+    return turmas?.map((t) => ({ ...t, disciplinas: [], totalAlunos: 0 })) || []
   }
 
   // Buscar disciplinas
@@ -86,8 +110,7 @@ export default async function NotasPage() {
         subtitle="Selecione uma turma e disciplina para lancar notas"
         backHref="/dashboard"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        {turmas.length === 0 ? (
+      {turmas.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <GraduationCap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -98,7 +121,7 @@ export default async function NotasPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {turmas.map((turma) => (
-              <Card key={turma.id} className="hover:shadow-md transition-shadow">
+              <Card key={turma.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -142,7 +165,6 @@ export default async function NotasPage() {
             ))}
           </div>
         )}
-      </div>
-    </>
+      </>
   )
 }

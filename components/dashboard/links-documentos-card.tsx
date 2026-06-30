@@ -53,8 +53,6 @@ export function LinksDocumentosCard() {
 
         if (error) throw error
         setLinks(data || [])
-      } catch (error) {
-        console.error("Erro ao carregar links:", error)
       } finally {
         setLoading(false)
       }

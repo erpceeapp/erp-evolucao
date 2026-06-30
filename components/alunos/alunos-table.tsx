@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Edit, Eye, X } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -27,15 +28,17 @@ interface AlunosTableProps {
   alunos: Aluno[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   status: string
 }
 
-export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: AlunosTableProps) {
+export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCount, busca, status }: AlunosTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
-  const [statusFilter, setStatusFilter] = useState(status)
+  const [statusFilter, setStatusFilter] = useState(status || "ativo")
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams)
@@ -51,7 +54,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
   const handleStatusChange = (newStatus: string) => {
     setStatusFilter(newStatus)
     const params = new URLSearchParams(searchParams)
-    if (newStatus !== "todos") {
+    if (newStatus !== "ativo") {
       params.set("status", newStatus)
     } else {
       params.delete("status")
@@ -60,9 +63,24 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
     router.push(`/alunos?${params.toString()}`)
   }
 
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("ativo")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/alunos?${params.toString()}`)
+  }
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
+    router.push(`/alunos?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
     router.push(`/alunos?${params.toString()}`)
   }
 
@@ -108,6 +126,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
             <SelectItem value="inativo">Inativos</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Tabela */}
@@ -171,33 +197,14 @@ export function AlunosTable({ alunos, currentPage, totalPages, busca, status }: 
       </div>
 
       {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

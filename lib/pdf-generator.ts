@@ -1,6 +1,6 @@
 import type { Database } from "@/types/supabase"
 
-type Aluno = Database["public"]["Tables"]["alunos"]["Row"]
+type Aluno = Database["public"]["Tables"]["alunos"]["Row"] & { matricula?: string | null }
 
 type NotasDisciplina = {
   nome: string

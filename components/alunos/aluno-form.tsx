@@ -179,8 +179,6 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
     setIsLoading(true)
     setError(null)
 
-    console.log("[v0] Iniciando submit do formulário de aluno")
-
     try {
       const formDataToSend = new FormData(e.currentTarget)
 
@@ -210,8 +208,6 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
         unmaskedFormData.append(key, processedValue)
       }
 
-      console.log("[v0] Chamando server action...")
-
       let result
       if (isEditing && aluno) {
         result = await atualizarAluno(aluno.id, unmaskedFormData)
@@ -220,13 +216,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
       }
 
       if (result && result.error) {
-        console.error("[v0] Erro retornado pela server action:", result.error)
-        setError(result.error)
+        setError(translateError(result.error))
         setIsLoading(false)
       }
       // Se não houver erro, o redirect() foi chamado e a página será redirecionada
     } catch (error: any) {
-      console.error("[v0] Erro no handleSubmit:", error)
       setError(translateError(error.message || "Erro ao salvar aluno"))
       setIsLoading(false)
     }

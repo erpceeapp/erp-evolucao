@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { translateError } from "@/lib/error-messages"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -106,7 +107,7 @@ export function GerenciarDisciplinasTurma({
       setSearchTerm("")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao adicionar disciplina")
+      setError(translateError(err.message || "Erro ao adicionar disciplina"))
     } finally {
       setIsLoading(false)
     }
@@ -127,7 +128,7 @@ export function GerenciarDisciplinasTurma({
 
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Erro ao remover disciplina")
+      setError(translateError(err.message || "Erro ao remover disciplina"))
     } finally {
       setIsLoading(false)
     }
@@ -142,133 +143,131 @@ export function GerenciarDisciplinasTurma({
             Disciplinas ({disciplinasAtuais.length})
           </CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Disciplina
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Disciplina à Turma</DialogTitle>
-                <DialogDescription>
-                  Selecione uma disciplina. O professor responsável será automaticamente associado.
-                </DialogDescription>
-              </DialogHeader>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Disciplina
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Disciplina à Turma</DialogTitle>
+                  <DialogDescription>
+                    Selecione uma disciplina. O professor já vinculado a ela será automaticamente associado.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+                <div className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
 
-                <div className="space-y-2">
-                  <Label>Disciplina *</Label>
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="w-full justify-between bg-transparent"
-                      >
-                        {selectedDisciplina ? (
-                          <span className="truncate">
-                            {selectedDisciplina.nome} ({selectedDisciplina.codigo})
-                          </span>
-                        ) : (
-                          "Buscar disciplina..."
-                        )}
-                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput
-                          placeholder="Buscar disciplina..."
-                          value={searchTerm}
-                          onValueChange={(value) => {
-                            console.log("[v0] Search term changed:", value)
-                            setSearchTerm(value)
-                          }}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            {searchTerm
-                              ? "Nenhuma disciplina encontrada para sua busca."
-                              : "Nenhuma disciplina disponível."}
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {disciplinasFiltradas.map((disciplina) => (
-                              <CommandItem
-                                key={disciplina.id}
-                                value={disciplina.id}
-                                onSelect={() => {
-                                  console.log("[v0] Disciplina selected:", disciplina.nome)
-                                  setSelectedDisciplina(disciplina)
-                                  setOpen(false)
-                                  setSearchTerm("")
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedDisciplina?.id === disciplina.id ? "opacity-100" : "opacity-0",
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">
-                                    {disciplina.nome} ({disciplina.codigo})
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    {disciplina.carga_horaria}h
-                                    {disciplina.professor && ` • Prof. ${disciplina.professor.nome_completo}`}
-                                  </span>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {selectedDisciplina && (
-                  <div className="p-3 bg-gray-50 rounded-lg space-y-1">
-                    <p className="text-sm font-medium">Detalhes da Disciplina:</p>
-                    <p className="text-sm text-gray-600">Código: {selectedDisciplina.codigo}</p>
-                    <p className="text-sm text-gray-600">Carga Horária: {selectedDisciplina.carga_horaria}h</p>
-                    {selectedDisciplina.professor ? (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Professor: {selectedDisciplina.professor.nome_completo}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-red-600">⚠️ Sem professor associado</p>
-                    )}
+                  <div className="space-y-2">
+                    <Label>Disciplina *</Label>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between bg-transparent"
+                        >
+                          {selectedDisciplina ? (
+                            <span className="truncate">
+                              {selectedDisciplina.nome} ({selectedDisciplina.codigo})
+                            </span>
+                          ) : (
+                            "Buscar disciplina..."
+                          )}
+                          <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder="Buscar disciplina..."
+                            value={searchTerm}
+                            onValueChange={(value) => {
+                              setSearchTerm(value)
+                            }}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {searchTerm
+                                ? "Nenhuma disciplina encontrada para sua busca."
+                                : "Nenhuma disciplina disponível."}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {disciplinasFiltradas.map((disciplina) => (
+                                <CommandItem
+                                  key={disciplina.id}
+                                  value={disciplina.id}
+                                  onSelect={() => {
+                                    setSelectedDisciplina(disciplina)
+                                    setOpen(false)
+                                    setSearchTerm("")
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedDisciplina?.id === disciplina.id ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {disciplina.nome} ({disciplina.codigo})
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                      {disciplina.carga_horaria}h
+                                      {disciplina.professor && ` • Prof. ${disciplina.professor.nome_completo}`}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                )}
 
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddDialogOpen(false)
-                      setSelectedDisciplina(null)
-                      setSearchTerm("")
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleAdicionarDisciplina} disabled={isLoading}>
-                    {isLoading ? "Adicionando..." : "Adicionar"}
-                  </Button>
+                  {selectedDisciplina && (
+                    <div className="p-3 bg-gray-50 rounded-lg space-y-1">
+                      <p className="text-sm font-medium">Detalhes da Disciplina:</p>
+                      <p className="text-sm text-gray-600">Código: {selectedDisciplina.codigo}</p>
+                      <p className="text-sm text-gray-600">Carga Horária: {selectedDisciplina.carga_horaria}h</p>
+                      {selectedDisciplina.professor ? (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Professor: {selectedDisciplina.professor.nome_completo}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-red-600">⚠️ Sem professor associado</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddDialogOpen(false)
+                        setSelectedDisciplina(null)
+                        setSearchTerm("")
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleAdicionarDisciplina} disabled={isLoading}>
+                      {isLoading ? "Adicionando..." : "Adicionar"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
         </div>
       </CardHeader>
       <CardContent>

@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { salvarAviso, deletarAviso } from "../actions"
 import {
   BookUser,
   Plus,
@@ -13,6 +14,7 @@ import {
   User,
   Phone,
   Mail,
+  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,11 +46,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DataPagination } from "@/components/ui/data-pagination"
 import { PageHeader } from "@/components/page-header"
-import { AgendaCalendar } from "@/components/agenda/agenda-calendar"
+import { AgendaRbc } from "@/components/agenda/agenda-rbc"
+import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
+import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, isSameDay } from "date-fns"
+import type { View } from "react-big-calendar"
+import type { DbEvento } from "@/lib/agenda/rbc-adapter"
 
 const categorias = [
   { value: "comportamento", label: "Comportamento" },
@@ -75,6 +83,7 @@ export default function AgendaAlunoDetailPage() {
 
   const [aluno, setAluno] = useState<any>(null)
   const [avisos, setAvisos] = useState<any[]>([])
+  const [periodos, setPeriodos] = useState<{ data_inicio: string; data_fim: string }[]>([])
   const [loading, setLoading] = useState(true)
 
   // Modal de detalhes
@@ -92,6 +101,17 @@ export default function AgendaAlunoDetailPage() {
     hora: "",
   })
   const [saving, setSaving] = useState(false)
+
+  const [calendarDate, setCalendarDate] = useState(new Date())
+  const [calendarView, setCalendarView] = useState<View>("month")
+
+  const [dayHeaderDate, setDayHeaderDate] = useState<Date | null>(null)
+  const [isDayEventsOpen, setIsDayEventsOpen] = useState(false)
+
+  const [tableSearch, setTableSearch] = useState("")
+  const [tableCategoria, setTableCategoria] = useState("todas")
+  const [tablePage, setTablePage] = useState(1)
+  const [tablePageSize, setTablePageSize] = useState(10)
 
   // Delete
   const [avisoToDelete, setAvisoToDelete] = useState<any>(null)
@@ -125,23 +145,80 @@ export default function AgendaAlunoDetailPage() {
       .order("data_aviso", { ascending: false })
 
     if (error) {
-      console.error("[v0] Erro ao buscar avisos:", error)
+      toast.error("Erro ao carregar avisos")
     }
 
     setAvisos(avisosData || [])
+
+    // Buscar perodos letivos
+    const { data: periodosData } = await supabase
+      .from("periodos_letivos")
+      .select("data_inicio, data_fim")
+      .eq("ativo", true)
+
+    setPeriodos(periodosData || [])
     setLoading(false)
   }
 
-  // Mapear avisos para o formato de eventos do calendario
-  const eventosCalendario = avisos.map((aviso) => ({
-    id: aviso.id,
-    titulo: aviso.titulo,
-    descricao: aviso.descricao,
-    data_inicio: aviso.data_aviso,
-    data_fim: aviso.data_aviso,
-    hora_inicio: aviso.hora_aviso,
-    tipo_evento: aviso.tipo_aviso,
-  }))
+  const eventosCalendario = useMemo<DbEvento[]>(
+    () =>
+      avisos.map((aviso) => ({
+        id: aviso.id,
+        titulo: aviso.titulo,
+        descricao: aviso.descricao,
+        data_inicio: aviso.data_aviso,
+        data_fim: aviso.data_aviso,
+        hora_inicio: aviso.hora_aviso,
+        hora_fim: null,
+        tipo_evento: aviso.tipo_aviso,
+        local: null,
+      })),
+    [avisos],
+  )
+
+  const handleNavigate = useCallback((action: "TODAY" | "PREV" | "NEXT" | "DATE", date?: Date) => {
+    if (action === "TODAY") {
+      setCalendarDate(new Date())
+    } else if (action === "PREV") {
+      setCalendarDate((prev) => {
+        if (calendarView === "month") return subMonths(prev, 1)
+        if (calendarView === "week") return subWeeks(prev, 1)
+        return subDays(prev, 1)
+      })
+    } else if (action === "NEXT") {
+      setCalendarDate((prev) => {
+        if (calendarView === "month") return addMonths(prev, 1)
+        if (calendarView === "week") return addWeeks(prev, 1)
+        return addDays(prev, 1)
+      })
+    } else if (action === "DATE" && date) {
+      setCalendarDate(date)
+    }
+  }, [calendarView])
+
+  const handleViewChange = useCallback((view: View) => {
+    setCalendarView(view)
+  }, [])
+
+  function handleDateHeaderClick(date: Date) {
+    setDayHeaderDate(date)
+    setIsDayEventsOpen(true)
+  }
+
+  const filteredAvisos = useMemo(() => {
+    let items = avisos
+    if (tableSearch) {
+      const q = tableSearch.toLowerCase()
+      items = items.filter((a) => a.titulo.toLowerCase().includes(q) || (a.descricao || "").toLowerCase().includes(q))
+    }
+    if (tableCategoria !== "todas") {
+      items = items.filter((a) => a.tipo_aviso === tableCategoria)
+    }
+    return items
+  }, [avisos, tableSearch, tableCategoria])
+
+  const totalAvisoPages = Math.max(1, Math.ceil(filteredAvisos.length / tablePageSize))
+  const paginatedAvisos = filteredAvisos.slice((tablePage - 1) * tablePageSize, tablePage * tablePageSize)
 
   function openNewAviso() {
     setEditingAviso(null)
@@ -177,38 +254,19 @@ export default function AgendaAlunoDetailPage() {
     setSaving(true)
 
     try {
-      // Buscar o user logado para registrar como autor
-      const { data: { user } } = await supabase.auth.getUser()
+      const result = await salvarAviso({
+        alunoId,
+        titulo: formData.titulo,
+        descricao: formData.descricao || null,
+        tipo_aviso: formData.categoria,
+        data_aviso: formData.data,
+        hora_aviso: formData.hora || null,
+        editingAvisoId: editingAviso?.id,
+      })
 
-      if (editingAviso) {
-        const { error } = await supabase
-          .from("avisos_aluno")
-          .update({
-            titulo: formData.titulo,
-            descricao: formData.descricao || null,
-            tipo_aviso: formData.categoria,
-            data_aviso: formData.data,
-            hora_aviso: formData.hora || null,
-          })
-          .eq("id", editingAviso.id)
+      if (result.error) throw new Error(result.error)
 
-        if (error) throw error
-        toast.success("Aviso atualizado com sucesso")
-      } else {
-        const { error } = await supabase.from("avisos_aluno").insert({
-          aluno_id: alunoId,
-          titulo: formData.titulo,
-          descricao: formData.descricao || null,
-          tipo_aviso: formData.categoria,
-          data_aviso: formData.data,
-          hora_aviso: formData.hora || null,
-          created_by: user?.id,
-        })
-
-        if (error) throw error
-        toast.success("Aviso registrado com sucesso")
-      }
-
+      toast.success(editingAviso ? "Aviso atualizado com sucesso" : "Aviso registrado com sucesso")
       setIsFormModalOpen(false)
       loadData()
     } catch (error: any) {
@@ -222,19 +280,17 @@ export default function AgendaAlunoDetailPage() {
     if (!avisoToDelete) return
     setIsDeleting(true)
 
-    const { error } = await supabase
-      .from("avisos_aluno")
-      .delete()
-      .eq("id", avisoToDelete.id)
+    const result = await deletarAviso(avisoToDelete.id, alunoId)
 
-    if (error) {
-      toast.error(translateError(error.message || "Erro ao excluir aviso"))
+    if (result.error) {
+      toast.error(translateError(result.error || "Erro ao excluir aviso"))
       setIsDeleting(false)
       return
     }
 
     toast.success("Aviso excluido com sucesso")
     setIsDeleteDialogOpen(false)
+    setIsFormModalOpen(false)
     setAvisoToDelete(null)
     setIsDeleting(false)
     loadData()
@@ -288,128 +344,243 @@ export default function AgendaAlunoDetailPage() {
         subtitle="Avisos, ocorrencias e comunicados do aluno"
         backHref="/agenda-aluno"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Card com dados do aluno */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <User className="h-7 w-7 text-cyan-700" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">{aluno.nome_completo}</h2>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                    {aluno.cpf && <span>CPF: {aluno.cpf}</span>}
-                    {aluno.telefone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {aluno.telefone}
-                      </span>
-                    )}
-                    {aluno.email && (
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {aluno.email}
-                      </span>
-                    )}
-                  </div>
-                  {aluno.nome_responsavel && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Responsavel: {aluno.nome_responsavel}
-                      {aluno.telefone_responsavel && ` - ${aluno.telefone_responsavel}`}
-                    </p>
+      <div className="space-y-6">
+      {/* Card com dados do aluno */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-full bg-cyan-100 flex items-center justify-center">
+                <User className="h-7 w-7 text-cyan-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{aluno.nome_completo}</h2>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                  {aluno.cpf && <span>CPF: {aluno.cpf}</span>}
+                  {aluno.telefone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {aluno.telefone}
+                    </span>
+                  )}
+                  {aluno.email && (
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      {aluno.email}
+                    </span>
                   )}
                 </div>
+                {aluno.nome_responsavel && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Responsavel: {aluno.nome_responsavel}
+                    {aluno.telefone_responsavel && ` - ${aluno.telefone_responsavel}`}
+                  </p>
+                )}
               </div>
-              <Button onClick={openNewAviso} className="bg-cyan-600 hover:bg-cyan-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Aviso
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <Button onClick={openNewAviso} className="bg-cyan-600 hover:bg-cyan-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Aviso
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Calendario */}
-        <Card>
-          <CardContent className="p-6">
-            <AgendaCalendar
-              eventos={eventosCalendario}
-              onDayClick={(data) => {
-                setEditingAviso(null)
-                setFormData({
-                  titulo: "",
-                  descricao: "",
-                  categoria: "aviso",
-                  data,
-                  hora: "",
-                })
-                setIsFormModalOpen(true)
-              }}
-            />
-          </CardContent>
-        </Card>
+      {/* Calendario */}
+      <div className="space-y-4">
+        <AgendaToolbar
+          date={calendarDate}
+          view={calendarView}
+          views={["month", "week", "day"]}
+          onView={handleViewChange}
+          onNavigate={handleNavigate}
+        />
+        <div style={{ height: 500 }}>
+          <AgendaRbc
+            eventos={eventosCalendario}
+            periodos={periodos}
+            date={calendarDate}
+            view={calendarView}
+            onNavigate={(d) => setCalendarDate(d)}
+            onViewChange={(v) => setCalendarView(v)}
+            onSelectSlot={(start, _end) => {
+              const data = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`
+              setEditingAviso(null)
+              setFormData({
+                titulo: "",
+                descricao: "",
+                categoria: "aviso",
+                data,
+                hora: "",
+              })
+              setIsFormModalOpen(true)
+            }}
+            style={{ height: "100%" }}
+          />
+        </div>
+      </div>
 
-        {/* Lista de avisos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Avisos Registrados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {avisos.length > 0 ? (
-              <div className="space-y-3">
-                {avisos.map((aviso) => (
-                  <div
-                    key={aviso.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleAvisoClick(aviso)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-semibold text-gray-900">{aviso.titulo}</h4>
-                          <Badge
-                            variant="outline"
-                            className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
-                          >
-                            {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
-                          </Badge>
-                        </div>
-                        {aviso.descricao && (
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{aviso.descricao}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(aviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
-                          </span>
-                          {aviso.hora_aviso && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {aviso.hora_aviso}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => openDeleteDialog(aviso, e)}
+      <Dialog open={isDayEventsOpen} onOpenChange={setIsDayEventsOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Avisos — {dayHeaderDate?.toLocaleDateString("pt-BR")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(() => {
+              if (!dayHeaderDate) return null
+              const dayAvisos = avisos.filter((a) =>
+                isSameDay(dayHeaderDate, new Date(a.data_aviso + "T00:00:00")),
+              )
+              if (dayAvisos.length === 0) {
+                return <p className="text-sm text-gray-500 text-center py-8">Nenhum aviso neste dia</p>
+              }
+              return dayAvisos.map((aviso) => (
+                <div
+                  key={aviso.id}
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setSelectedAviso(aviso)
+                    setIsDayEventsOpen(false)
+                    setIsDetailModalOpen(true)
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{aviso.titulo}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                        {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
+                      </Badge>
+                      {aviso.hora_aviso && <span className="ml-2">{aviso.hora_aviso}</span>}
+                    </p>
                   </div>
+                </div>
+              ))
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lista de avisos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Avisos Registrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar avisos..."
+                value={tableSearch}
+                onChange={(e) => { setTableSearch(e.target.value); setTablePage(1) }}
+                className="pl-9"
+              />
+            </div>
+            <Select
+              value={tableCategoria}
+              onValueChange={(v) => { setTableCategoria(v); setTablePage(1) }}
+            >
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filtrar por categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as categorias</SelectItem>
+                {categorias.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
                 ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm text-center py-8">
-                Nenhum aviso registrado para este aluno
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { setTableSearch(""); setTableCategoria("todas"); setTablePage(1) }}
+              title="Limpar filtros"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {paginatedAvisos.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Assunto</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Horário</TableHead>
+                    <TableHead className="w-[120px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedAvisos.map((aviso) => (
+                    <TableRow
+                      key={aviso.id}
+                      className="cursor-pointer"
+                      onClick={() => handleAvisoClick(aviso)}
+                    >
+                      <TableCell className="font-medium">{aviso.titulo}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={categoriaCores[aviso.tipo_aviso] || categoriaCores.outro}
+                        >
+                          {categorias.find((c) => c.value === aviso.tipo_aviso)?.label || aviso.tipo_aviso}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(aviso.data_aviso + "T00:00:00").toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {aviso.hora_aviso || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); openEditAviso(aviso) }}
+                          >
+                            <Edit2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => openDeleteDialog(aviso, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <DataPagination
+                currentPage={tablePage}
+                totalPages={totalAvisoPages}
+                totalCount={filteredAvisos.length}
+                pageSize={tablePageSize}
+                onPageChange={setTablePage}
+                onPageSizeChange={(s) => { setTablePageSize(s); setTablePage(1) }}
+              />
+            </>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-8">
+              Nenhum aviso registrado para este aluno
+            </p>
+          )}
+        </CardContent>
+      </Card>
       </div>
 
       {/* Modal de detalhes do aviso */}
@@ -477,8 +648,8 @@ export default function AgendaAlunoDetailPage() {
             <DialogTitle>{editingAviso ? "Editar Aviso" : "Novo Aviso"}</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
+          <div className="space-y-6">
+            <div className="space-y-2">
               <Label htmlFor="titulo">Titulo *</Label>
               <Input
                 id="titulo"
@@ -488,7 +659,7 @@ export default function AgendaAlunoDetailPage() {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="categoria">Categoria</Label>
               <Select
                 value={formData.categoria}
@@ -508,7 +679,7 @@ export default function AgendaAlunoDetailPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="data">Data *</Label>
                 <Input
                   id="data"
@@ -517,7 +688,7 @@ export default function AgendaAlunoDetailPage() {
                   onChange={(e) => setFormData({ ...formData, data: e.target.value })}
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="hora">Horario</Label>
                 <Input
                   id="hora"
@@ -528,7 +699,7 @@ export default function AgendaAlunoDetailPage() {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="descricao">Descricao</Label>
               <Textarea
                 id="descricao"
@@ -541,6 +712,21 @@ export default function AgendaAlunoDetailPage() {
           </div>
 
           <DialogFooter>
+            {editingAviso && (
+              <div className="flex-1">
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => {
+                    setAvisoToDelete(editingAviso)
+                    setIsDeleteDialogOpen(true)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </Button>
+              </div>
+            )}
             <Button variant="outline" onClick={() => setIsFormModalOpen(false)} disabled={saving}>
               Cancelar
             </Button>

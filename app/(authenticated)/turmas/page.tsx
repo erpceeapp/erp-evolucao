@@ -4,22 +4,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Plus, BookOpen } from "lucide-react"
 import Link from "next/link"
-import { TurmasHeader } from "@/components/turmas/turmas-header"
+import { PageHeader } from "@/components/page-header"
 import { TurmasTable } from "@/components/turmas/turmas-table"
 import { Suspense } from "react"
+import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
+import { getProfessorFilter } from "@/lib/professor-filter"
 
 interface SearchParams {
   busca?: string
   ano?: string
   status?: string
   page?: string
+  limit?: string
 }
 
 export default async function TurmasPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -28,11 +32,11 @@ export default async function TurmasPage({
   }
 
   // Parâmetros de busca
-  const busca = searchParams.busca || ""
-  const ano = searchParams.ano || ""
-  const status = searchParams.status || "todos"
-  const page = Number.parseInt(searchParams.page || "1")
-  const itemsPerPage = 10
+  const busca = sanitizeSearchParam(params.busca)
+  const ano = sanitizeSearchParam(params.ano) || String(new Date().getFullYear())
+  const status = sanitizeSearchParam(params.status) || "ativo"
+  const page = validatePageParam(params.page)
+  const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar turmas com professor responsável
   let query = supabase
@@ -65,24 +69,54 @@ export default async function TurmasPage({
   const to = from + itemsPerPage - 1
   query = query.range(from, to)
 
+  const filter = await getProfessorFilter()
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      query = query.in("id", filter.turmaIds)
+    } else {
+      query = query.in("id", [])
+    }
+  }
+
   const { data: turmas, count, error: turmasError } = await query
 
   if (turmasError) {
     console.error("Erro ao buscar turmas:", turmasError)
   }
 
+  // Buscar quantidade de alunos matriculados ativos por turma
+  const turmaIds = (turmas || []).map((t) => t.id)
+  const alunosCount: Record<string, number> = {}
+
+  if (turmaIds.length > 0) {
+    const { data: counts } = await supabase
+      .from("matriculas")
+      .select("turma_id")
+      .eq("status", "ativa")
+      .in("turma_id", turmaIds)
+
+    if (counts) {
+      for (const row of counts) {
+        alunosCount[row.turma_id] = (alunosCount[row.turma_id] || 0) + 1
+      }
+    }
+  }
+
+  const turmasComCount = (turmas || []).map((t) => ({
+    ...t,
+    alunos_matriculados: alunosCount[t.id] || 0,
+  }))
+
   const totalPages = Math.ceil((count || 0) / itemsPerPage)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TurmasHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Turmas e Disciplinas</h1>
-            <p className="text-gray-600 mt-1">Gerencie turmas, disciplinas e suas associações</p>
-          </div>
+    <>
+      <PageHeader
+        icon={BookOpen}
+        title="Turmas"
+        description="Gerencie turmas, disciplinas e suas associações"
+        showBackButton={false}
+        actions={
           <div className="flex gap-2">
             <Button variant="outline" asChild>
               <Link href="/disciplinas">
@@ -90,14 +124,17 @@ export default async function TurmasPage({
                 Disciplinas
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/turmas/nova">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Turma
-              </Link>
-            </Button>
+            {!filter.isProfessor && (
+              <Button asChild>
+                <Link href="/turmas/nova">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Turma
+                </Link>
+              </Button>
+            )}
           </div>
-        </div>
+        }
+      />
 
         <Card>
           <CardHeader>
@@ -111,9 +148,11 @@ export default async function TurmasPage({
           <CardContent>
             <Suspense fallback={<div className="text-center py-8 text-gray-500">Carregando turmas...</div>}>
               <TurmasTable
-                turmas={turmas || []}
+                turmas={turmasComCount}
                 currentPage={page}
                 totalPages={totalPages}
+                pageSize={itemsPerPage}
+                totalCount={count || 0}
                 busca={busca}
                 ano={ano}
                 status={status}
@@ -121,7 +160,6 @@ export default async function TurmasPage({
             </Suspense>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </>
   )
 }

@@ -106,7 +106,7 @@ export interface Profile {
   id: string
   user_id: string
   primeira_senha: boolean
-  tipo_usuario: "admin" | "professor" | "secretaria"
+  tipo_usuario: "admin" | "professor" | "secretaria" | "coordenacao" | "diretor"
   created_at: string
   updated_at: string
 }
@@ -126,6 +126,43 @@ export interface LinksDocumentos {
   ordem: number
   created_at: string
   updated_at: string
+}
+
+export interface GradeHorario {
+  id: string
+  turma_disciplina_id: string
+  dia_semana: number
+  hora_inicio: string
+  hora_fim: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TurmaDisciplinaInfo {
+  id: string
+  turma_id: string
+  disciplina_id: string
+  professor_id: string | null
+  turma_nome: string
+  turma_serie: string
+  disciplina_nome: string
+  disciplina_codigo: string
+  professor_nome: string | null
+  tem_professor: boolean
+}
+
+export interface GradeSlot {
+  id: string
+  turma_disciplina_id: string
+  dia_semana: number
+  hora_inicio: string
+  hora_fim: string
+  turma_nome: string
+  turma_serie: string
+  disciplina_nome: string
+  disciplina_codigo: string
+  professor_id: string | null
+  professor_nome: string | null
 }
 
 export interface Escola {

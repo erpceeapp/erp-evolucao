@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
 interface TurmaDisciplina {
@@ -73,9 +73,7 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
-
-      console.log("[v0] Registrando aula:", formData)
+      const supabase = createClient()
 
       const { error } = await supabase.from("aulas").insert({
         turma_disciplina_id: formData.turma_disciplina_id,
@@ -91,7 +89,6 @@ export default function NovaAulaForm({ turmasDisciplinas }: NovaAulaFormProps) {
       toast.success("Aula registrada com sucesso!")
       router.push("/diario")
     } catch (error) {
-      console.error("Erro ao registrar aula:", error)
       toast.error("Erro ao registrar aula. Tente novamente.")
     } finally {
       setLoading(false)

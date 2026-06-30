@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from "react"
 import { GraduationCap } from 'lucide-react'
 import { translateError } from "@/lib/error-messages"
+import { maskCellPhone } from "@/lib/input-masks"
 
 export default function CadastroPage() {
   const [formData, setFormData] = useState({
@@ -88,7 +89,7 @@ export default function CadastroPage() {
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">ERP Educacional</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Centro Educacional Evolução</h1>
           <p className="text-gray-600">Sistema de Gestão Escolar</p>
         </div>
 
@@ -121,12 +122,13 @@ export default function CadastroPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
-                  id="telefone"
-                  type="tel"
-                  value={formData.telefone}
-                  onChange={(e) => handleInputChange("telefone", e.target.value)}
-                />
+              <Input
+                id="telefone"
+                type="tel"
+                placeholder="(00) 00000-0000"
+                value={formData.telefone}
+                onChange={(e) => handleInputChange("telefone", maskCellPhone(e.target.value))}
+              />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tipoUsuario">Tipo de Usuário</Label>

@@ -10,9 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
-import { useEffect } from "react"
+import { useEffect, use } from "react"
 
 import { useState } from "react"
+import { salvarPresencas } from "./actions"
 
 async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: string) {
   const supabase = createClient()
@@ -62,7 +63,6 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   let presencas = presencasExistentes || []
 
   if (!presencasExistentes || presencasExistentes.length === 0) {
-    console.log("[v0] Criando registros de presença para todos os alunos...")
     const presencasParaCriar = alunoIds.map((alunoId) => ({
       aula_id: aulaId,
       aluno_id: alunoId,
@@ -76,10 +76,9 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
       .select("id, presente, aluno_id, justificativa")
 
     if (error) {
-      console.error("[v0] Erro ao criar presenças:", error)
+      toast.error("Erro ao carregar presenças")
     } else {
       presencas = novasPresencas || []
-      console.log("[v0] Criadas", presencas.length, "presenças")
     }
   }
 
@@ -114,8 +113,9 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
 export default function AulaDetalhePage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string; aulaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string; aulaId: string }>
 }) {
+  const p = use(params)
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [presencas, setPresencas] = useState<any[]>([])
@@ -127,7 +127,7 @@ export default function AulaDetalhePage({
   }, [])
 
   async function loadData() {
-    const result = await getAulaDetalhes(params.aulaId, params.turmaId, params.disciplinaId)
+    const result = await getAulaDetalhes(p.aulaId, p.turmaId, p.disciplinaId)
     if (result) {
       setData(result)
       setPresencas(result.presencas)
@@ -144,33 +144,27 @@ export default function AulaDetalhePage({
 
   async function salvarAlteracoes() {
     setIsLoading(true)
-    const supabase = createClient()
 
     try {
-      console.log("[v0] Salvando alterações de presença...")
+      const path = `/diario/${p.turmaId}/${p.disciplinaId}/presencas`
+      const result = await salvarPresencas(
+        p.aulaId,
+        presencas.map((p) => ({
+          id: p.id,
+          presente: p.presente,
+          justificativa: p.justificativa || null,
+        })),
+        path
+      )
 
-      for (const presenca of presencas) {
-        const { error } = await supabase
-          .from("presencas")
-          .update({
-            presente: presenca.presente,
-            justificativa: presenca.justificativa || null,
-          })
-          .eq("id", presenca.id)
-
-        if (error) {
-          console.error("[v0] Erro ao atualizar presença:", error)
-          throw error
-        }
-      }
+      if (result.error) throw new Error(result.error)
 
       toast.success("Presenças atualizadas com sucesso!")
       setIsEditing(false)
       await loadData()
       router.refresh()
     } catch (error: any) {
-      console.error("[v0] Erro ao salvar alterações:", error)
-      toast.error("Erro ao salvar alterações: " + error.message)
+      toast.error("Erro ao salvar alterações: " + (error.message || "Erro desconhecido"))
     } finally {
       setIsLoading(false)
     }
@@ -187,12 +181,12 @@ export default function AulaDetalhePage({
   const percentualPresenca = totalAlunos > 0 ? Math.round((totalPresentes / totalAlunos) * 100) : 0
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
       <PageHeader
         icon={Eye}
         title="Detalhes da Aula"
         description={`${disciplina.nome} - ${turma.nome}`}
-        backHref={`/diario/${params.turmaId}/${params.disciplinaId}/presencas`}
+        backHref={`/diario/${p.turmaId}/${p.disciplinaId}/presencas`}
       >
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)}>
@@ -415,6 +409,6 @@ export default function AulaDetalhePage({
           </Card>
         </div>
       </div>
-    </div>
+    </>
   )
 }

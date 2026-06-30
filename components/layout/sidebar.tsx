@@ -82,7 +82,7 @@ export function Sidebar({ userTipo }: SidebarProps) {
       roles: ["admin", "diretor", "coordenacao", "secretaria"],
     },
     {
-      title: "Agenda",
+      title: "Agenda Escolar",
       icon: Calendar,
       href: "/agenda",
       roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
@@ -153,7 +153,7 @@ export function Sidebar({ userTipo }: SidebarProps) {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">ERP Educacional</h1>
+              <h1 className="text-lg font-bold text-gray-900">Centro Educacional Evolução</h1>
               <p className="text-xs text-gray-600">Sistema de Gestão</p>
             </div>
           </div>

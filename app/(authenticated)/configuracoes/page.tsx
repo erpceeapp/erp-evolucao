@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon } from "lucide-react"
+import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 
@@ -33,7 +33,7 @@ export default async function ConfiguracoesPage() {
       icon: Users,
       title: "Gerenciar Usuários",
       description: "Gerencie usuários e permissões do sistema",
-      href: "/gerenciar-usuarios",
+      href: "/usuarios",
       adminOnly: true,
     },
     {
@@ -53,6 +53,14 @@ export default async function ConfiguracoesPage() {
       coordenacaoAccess: true,
     },
     {
+      icon: Calendar,
+      title: "Calendário Letivo",
+      description: "Gerencie períodos letivos, férias e feriados",
+      href: "/configuracoes/calendario-letivo",
+      adminOnly: false,
+      coordenacaoAccess: true,
+    },
+    {
       icon: Bell,
       title: "Notificações",
       description: "Configure preferências de notificações",
@@ -67,6 +75,13 @@ export default async function ConfiguracoesPage() {
       href: "/configuracoes/seguranca",
       adminOnly: false,
       comingSoon: true,
+    },
+    {
+      icon: ArrowLeftRight,
+      title: "Migração de Dados",
+      description: "Exporte e importe dados entre ambientes (Usuários, Professores, Turmas e Alunos)",
+      href: "/ferramentas/export-import",
+      adminOnly: true,
     },
     {
       icon: Database,

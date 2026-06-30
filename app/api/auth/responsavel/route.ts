@@ -1,9 +1,26 @@
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { createResponsavelSession } from "@/lib/responsavel-auth"
 import { NextResponse } from "next/server"
+import { rateLimit } from "@/lib/rate-limit"
+
+type AlunoResponsavel = {
+  id: string
+  nome_completo: string
+  cpf: string
+  email_responsavel: string
+}
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
+    const { success } = rateLimit(ip, 5, 60_000)
+    if (!success) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tente novamente em 1 minuto." },
+        { status: 429 }
+      )
+    }
+
     const { email_responsavel, cpf } = await request.json()
 
     if (!email_responsavel || !cpf) {
@@ -17,49 +34,37 @@ export async function POST(request: Request) {
     const cpfLimpo = cpf.replace(/[^0-9]/g, "")
     const emailLimpo = email_responsavel.trim().toLowerCase()
 
-    const supabase = createAdminClient()
+    const supabase = createResponsavelClient()
 
-    // Buscar todos os alunos do responsavel pelo email
-    const { data: alunos, error: searchError } = await supabase
-      .from("alunos")
-      .select("id, nome_completo, cpf, email_responsavel, ativo")
-      .ilike("email_responsavel", emailLimpo)
-      .eq("ativo", true)
+    // Usa SECURITY DEFINER RPC para buscar aluno
+    const { data: aluno, error: searchError } = (await supabase
+      .rpc("buscar_aluno_responsavel", {
+        p_email: emailLimpo,
+        p_cpf: cpfLimpo,
+      })
+      .maybeSingle()) as unknown as { data: AlunoResponsavel | null; error: any }
 
-    if (searchError || !alunos) {
+    if (searchError || !aluno) {
       return NextResponse.json(
         { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
         { status: 401 }
       )
     }
 
-    // Filtrar pelo CPF do aluno
-    const aluno = alunos.find(a => a.cpf === cpfLimpo)
-
-    if (!aluno) {
-      return NextResponse.json(
-        { error: "Dados invalidos. Verifique o email do responsavel e o CPF do aluno." },
-        { status: 401 }
-      )
-    }
-
-    // Buscar turma do aluno
-    const { data: matricula } = await supabase
-      .from("matriculas")
-      .select("turma_id")
-      .eq("aluno_id", aluno.id)
-      .neq("status", "cancelada")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
+    // Buscar turma do aluno via RPC SECURITY DEFINER
+    const { data: matricula } = (await supabase
+      .rpc("get_matricula_ativa", {
+        p_aluno_id: aluno.id,
+      })
+      .maybeSingle()) as unknown as { data: { id: string; turma_id: string; status: string; numero_matricula: string } | null; error: any }
 
     let turmaNome: string | undefined
     if (matricula?.turma_id) {
-      const { data: turma } = await supabase
-        .from("turmas")
-        .select("nome")
-        .eq("id", matricula.turma_id)
-        .single()
+      const { data: turma } = (await supabase
+        .rpc("get_turma", {
+          p_turma_id: matricula.turma_id,
+        })
+        .maybeSingle()) as unknown as { data: { nome: string; serie: string; turno: string } | null; error: any }
       turmaNome = turma?.nome
     }
 
@@ -79,16 +84,18 @@ export async function POST(request: Request) {
     })
 
     // Definir cookie na resposta (8 horas)
+    const isLocal = request.headers.get("host")?.includes("localhost") || request.headers.get("host")?.includes("127.0.0.1")
     response.cookies.set("responsavel-session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: !isLocal,
+      sameSite: "strict",
       maxAge: 60 * 60 * 8,
       path: "/",
     })
 
     return response
   } catch (error: any) {
+    console.error("[responsavel-auth] Erro interno:", error?.message || error, error?.stack || "")
     return NextResponse.json(
       { error: "Erro interno. Tente novamente mais tarde." },
       { status: 500 }

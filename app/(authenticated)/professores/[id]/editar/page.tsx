@@ -1,9 +1,11 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ProfessoresHeader } from "@/components/professores/professores-header"
+import { GraduationCap } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
 import { ProfessorForm } from "@/components/professores/professor-form"
 
-export default async function EditarProfessorPage({ params }: { params: { id: string } }) {
+export default async function EditarProfessorPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -15,7 +17,7 @@ export default async function EditarProfessorPage({ params }: { params: { id: st
   const { data: professor, error: professorError } = await supabase
     .from("professores")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (professorError || !professor) {
@@ -23,17 +25,15 @@ export default async function EditarProfessorPage({ params }: { params: { id: st
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProfessoresHeader />
+    <>
+      <PageHeader
+        icon={GraduationCap}
+        title="Editar Professor"
+        description={`Atualize os dados de ${professor.nome_completo}`}
+        backHref={`/professores/${id}`}
+      />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Editar Professor</h1>
-          <p className="text-gray-600 mt-1">Atualize os dados de {professor.nome_completo}</p>
-        </div>
-
-        <ProfessorForm professor={professor} isEditing={true} />
-      </main>
-    </div>
+      <ProfessorForm professor={professor} isEditing={true} />
+    </>
   )
 }

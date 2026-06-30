@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Save } from 'lucide-react'
 
@@ -22,7 +22,7 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
   }, [matriculas, disciplinaId, periodo])
 
   const loadNotas = async () => {
-    const supabase = createBrowserClient()
+    const supabase = createClient()
 
     const matriculaIds = matriculas.map((m) => m.id)
     const { data } = await supabase
@@ -44,7 +44,7 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
   const handleSaveNotas = async () => {
     setLoading(true)
     try {
-      const supabase = createBrowserClient()
+      const supabase = createClient()
 
       // Preparar dados para upsert
       const notasParaSalvar = Object.entries(notas)
@@ -81,7 +81,6 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
 
       toast.success("Notas salvas com sucesso!")
     } catch (error) {
-      console.error("Erro ao salvar notas:", error)
       toast.error("Erro ao salvar notas. Tente novamente.")
     } finally {
       setLoading(false)

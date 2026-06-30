@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { Search, Edit, Eye, Trash2, X } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface Matricula {
   id: string
@@ -41,6 +44,8 @@ interface MatriculasTableProps {
   turmas: Turma[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   status: string
   ano: string
@@ -52,6 +57,8 @@ export function MatriculasTable({
   turmas,
   currentPage,
   totalPages,
+  pageSize,
+  totalCount,
   busca,
   status,
   ano,
@@ -99,9 +106,26 @@ export function MatriculasTable({
     }
   }
 
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("")
+    setAnoFilter("")
+    setTurmaFilter("")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/matriculas?${params.toString()}`)
+  }
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
+    router.push(`/matriculas?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
     router.push(`/matriculas?${params.toString()}`)
   }
 
@@ -144,8 +168,7 @@ export function MatriculasTable({
 
       router.refresh()
     } catch (err: any) {
-      console.error("Erro ao remover matrícula:", err)
-      alert("Erro ao remover matrícula. Tente novamente.")
+      toast.error("Erro ao remover matrícula. Tente novamente.")
     } finally {
       setIsDeleting(null)
     }
@@ -153,19 +176,17 @@ export function MatriculasTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 flex gap-2">
-            <Input
-              placeholder="Buscar por número de matrícula..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            />
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 flex gap-2">
+          <Input
+            placeholder="Buscar por número de matrícula..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <Button onClick={handleSearch}>
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Select value={statusFilter || "todos"} onValueChange={(value) => handleFilterChange("status", value)}>
@@ -180,33 +201,29 @@ export function MatriculasTable({
               <SelectItem value="concluida">Concluídas</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={anoFilter || "todos"} onValueChange={(value) => handleFilterChange("ano", value)}>
-            <SelectTrigger className="w-full sm:w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os Anos</SelectItem>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={turmaFilter || "todos"} onValueChange={(value) => handleFilterChange("turma", value)}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todas as Turmas</SelectItem>
-              {turmas.map((turma) => (
-                <SelectItem key={turma.id} value={turma.id}>
-                  {turma.nome} - {turma.serie}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={anoFilter || "todos"}
+            onChange={(value) => handleFilterChange("ano", value)}
+            placeholder="Ano"
+            allLabel="Todos os Anos"
+            options={availableYears.map((year) => ({ value: year.toString(), label: year.toString() }))}
+          />
+          <SearchableSelect
+            value={turmaFilter || "todos"}
+            onChange={(value) => handleFilterChange("turma", value)}
+            placeholder="Turma"
+            allLabel="Todas as Turmas"
+            options={turmas.map((t) => ({ value: t.id, label: `${t.nome} - ${t.serie}` }))}
+          />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="border rounded-lg">
@@ -282,33 +299,14 @@ export function MatriculasTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

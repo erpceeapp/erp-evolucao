@@ -1,5 +1,5 @@
 import { getResponsavelSession } from "@/lib/responsavel-auth"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,41 +28,33 @@ export default async function ResponsavelDashboard() {
   const session = await getResponsavelSession()
   if (!session) redirect("/auth/login")
 
-  const supabase = createAdminClient()
+  const supabase = createResponsavelClient()
 
-  // Buscar dados do aluno
-  const { data: aluno } = await supabase
-    .from("alunos")
-    .select("id, nome_completo, cpf, email, telefone, data_nascimento, nivel, nome_responsavel, email_responsavel")
-    .eq("id", session.aluno_id)
+  // Buscar dados do aluno via RPC
+  const { data: alunoData } = await supabase
+    .rpc("get_aluno_basico", { p_aluno_id: session.aluno_id })
     .single()
 
-  // Buscar ultimos avisos
-  const { data: ultimosAvisos } = await supabase
-    .from("avisos_aluno")
-    .select("id, titulo, descricao, tipo_aviso, data_aviso, hora_aviso")
-    .eq("aluno_id", session.aluno_id)
-    .order("data_aviso", { ascending: false })
-    .limit(5)
+  const aluno = alunoData as { nome_completo: string; cpf: string; email: string; telefone: string; data_nascimento: string; nivel: string; nome_responsavel: string; email_responsavel: string } | null
 
-  // Buscar matricula e turma
-  const { data: matricula } = await supabase
-    .from("matriculas")
-    .select("id, numero_matricula, turma_id, status")
-    .eq("aluno_id", session.aluno_id)
-    .neq("status", "cancelada")
-    .order("created_at", { ascending: false })
-    .limit(1)
+  // Buscar ultimos avisos via RPC
+  const { data: ultimosAvisosData } = await supabase
+    .rpc("get_avisos_aluno", { p_aluno_id: session.aluno_id })
+    .single()
+  const ultimosAvisos = (ultimosAvisosData as any[] | null)?.slice(0, 5) || []
+
+  // Buscar matricula via RPC
+  const { data: matriculaData } = await supabase
+    .rpc("get_matricula_ativa", { p_aluno_id: session.aluno_id })
     .single()
 
-  let turma: any = null
+  let matricula = matriculaData as { id: string; turma_id: string; status: string; numero_matricula: string } | null
+  let turma = null
   if (matricula?.turma_id) {
-    const { data } = await supabase
-      .from("turmas")
-      .select("nome, serie, turno")
-      .eq("id", matricula.turma_id)
+    const { data: turmaData } = await supabase
+      .rpc("get_turma", { p_turma_id: matricula.turma_id })
       .single()
-    turma = data
+    turma = turmaData as { nome: string; serie: string; turno: string } | null
   }
 
   return (
@@ -98,7 +90,7 @@ export default async function ResponsavelDashboard() {
       {/* Links rapidos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/responsavel/agenda">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+          <Card className="cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <BookUser className="h-8 w-8 text-blue-500" />
@@ -111,7 +103,7 @@ export default async function ResponsavelDashboard() {
           </Card>
         </Link>
         <Link href="/responsavel/notas">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-green-500">
+          <Card className="cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <BookOpen className="h-8 w-8 text-green-500" />

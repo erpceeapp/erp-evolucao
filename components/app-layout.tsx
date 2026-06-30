@@ -4,6 +4,7 @@ import type React from "react"
 import { AppSidebar } from "./app-sidebar"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import { Toaster } from "sonner"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(true)
@@ -32,6 +33,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toaster richColors position="top-right" />
       <AppSidebar />
       <main className={cn("transition-all duration-300 min-h-screen", isCollapsed ? "ml-16" : "ml-64")}>
         <div className="p-6">{children}</div>

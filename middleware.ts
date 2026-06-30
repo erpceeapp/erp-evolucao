@@ -7,7 +7,9 @@ export async function middleware(request: NextRequest) {
 
   // Rotas de API do responsavel - nao exigem autenticacao Supabase
   if (pathname.startsWith("/api/auth/responsavel") || pathname.startsWith("/api/responsavel")) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    addSecurityHeaders(response)
+    return response
   }
 
   // Rotas do portal do responsavel - autenticacao propria via JWT cookie
@@ -35,11 +37,22 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    return NextResponse.next()
+    const response = NextResponse.next()
+    addSecurityHeaders(response)
+    return response
   }
 
   // Demais rotas - autenticacao Supabase
-  return await updateSession(request)
+  const response = await updateSession(request)
+  addSecurityHeaders(response)
+  return response
+}
+
+function addSecurityHeaders(response: NextResponse) {
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("X-XSS-Protection", "0")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
 }
 
 export const config = {

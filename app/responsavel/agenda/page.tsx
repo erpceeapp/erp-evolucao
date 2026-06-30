@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { BookUser, Calendar, Clock, User } from "lucide-react"
+import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -51,7 +52,7 @@ export default function ResponsavelAgendaPage() {
         setAvisos(data.avisos || [])
       }
     } catch (err) {
-      console.error("[v0] Erro ao carregar agenda:", err)
+      toast.error("Erro ao carregar agenda")
     } finally {
       setLoading(false)
     }
@@ -64,8 +65,11 @@ export default function ResponsavelAgendaPage() {
     data_inicio: aviso.data_aviso,
     data_fim: aviso.data_aviso,
     hora_inicio: aviso.hora_aviso,
+    hora_fim: null,
     tipo_evento: aviso.tipo_aviso,
-  }))
+    local: null,
+    created_at: aviso.created_at,
+  })) as any[]
 
   if (loading) {
     return (

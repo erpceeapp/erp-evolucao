@@ -1,8 +1,11 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { BookOpen } from "lucide-react"
+import { PageHeader } from "@/components/page-header"
 import { TurmaForm } from "@/components/turmas/turma-form"
 
-export default async function EditarTurmaPage({ params }: { params: { id: string } }) {
+export default async function EditarTurmaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.getUser()
@@ -11,7 +14,7 @@ export default async function EditarTurmaPage({ params }: { params: { id: string
   }
 
   // Buscar dados da turma
-  const { data: turma, error: turmaError } = await supabase.from("turmas").select("*").eq("id", params.id).single()
+  const { data: turma, error: turmaError } = await supabase.from("turmas").select("*").eq("id", id).single()
 
   if (turmaError || !turma) {
     notFound()
@@ -25,15 +28,15 @@ export default async function EditarTurmaPage({ params }: { params: { id: string
     .order("nome_completo")
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Editar Turma</h1>
-          <p className="text-gray-600 mt-1">Atualize os dados de {turma.nome}</p>
-        </div>
+    <>
+      <PageHeader
+        icon={BookOpen}
+        title="Editar Turma"
+        description={`Atualize os dados de ${turma.nome}`}
+        backHref={`/turmas/${id}`}
+      />
 
-        <TurmaForm turma={turma} professores={professores || []} isEditing={true} />
-      </div>
-    </div>
+      <TurmaForm turma={turma} professores={professores || []} isEditing={true} />
+    </>
   )
 }

@@ -1,6 +1,8 @@
 "use server"
 
+import crypto from "crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { createClient } from "@/lib/supabase/server"
 
 export async function createProfessorUser(professorData: {
   email: string
@@ -9,10 +11,24 @@ export async function createProfessorUser(professorData: {
   telefone: string
 }) {
   try {
-    // Senha padrão é o CPF sem formatação
-    const senhaTemporaria = professorData.cpf.replace(/[^0-9]/g, "")
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: "Usuário não autenticado" }
+    }
 
-    console.log("[v0] Server Action: Criando usuário professor")
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "diretor"].includes(profile.tipo_usuario)) {
+      return { error: "Apenas administradores e diretores podem criar professores" }
+    }
+
+    // Senha temporária aleatória
+    const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
 
     const supabaseAdmin = createAdminClient()
 
@@ -23,8 +39,6 @@ export async function createProfessorUser(professorData: {
     )
 
     if (existingUser) {
-      console.log("[v0] Usuário já existe no Auth, verificando se pode ser reutilizado...")
-      
       // Verificar se o usuário já tem um perfil de professor ativo
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
@@ -53,11 +67,8 @@ export async function createProfessorUser(professorData: {
       )
 
       if (updateError) {
-        console.error("[v0] Erro ao atualizar usuário existente:", updateError)
         return { error: updateError.message }
       }
-
-      console.log("[v0] Usuário existente reutilizado com sucesso:", existingUser.id)
 
       return {
         success: true,
@@ -80,11 +91,8 @@ export async function createProfessorUser(professorData: {
     })
 
     if (authError) {
-      console.error("[v0] Erro ao criar usuário:", authError)
       return { error: authError.message }
     }
-
-    console.log("[v0] Usuário criado com sucesso:", authData.user?.id)
 
     return {
       success: true,
@@ -94,5 +102,49 @@ export async function createProfessorUser(professorData: {
   } catch (error: any) {
     console.error("[v0] Erro na Server Action:", error)
     return { error: error.message || "Erro ao criar usuário" }
+  }
+}
+
+export async function deleteProfessor(professorId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: "Usuário não autenticado" }
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "diretor"].includes(profile.tipo_usuario)) {
+      return { error: "Apenas administradores e diretores podem excluir professores" }
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    // Get user_id before deleting the professor
+    const { data: prof } = await supabaseAdmin
+      .from("professores")
+      .select("user_id")
+      .eq("id", professorId)
+      .single()
+
+    const { error: deleteError } = await supabaseAdmin.from("professores").delete().eq("id", professorId)
+
+    if (deleteError) {
+      return { error: deleteError.message }
+    }
+
+    // Cascade delete the linked auth user and profile
+    if (prof?.user_id) {
+      await supabaseAdmin.rpc("admin_delete_user", { p_user_id: prof.user_id })
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message || "Erro ao excluir professor" }
   }
 }

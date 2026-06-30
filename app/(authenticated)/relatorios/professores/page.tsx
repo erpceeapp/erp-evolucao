@@ -64,8 +64,7 @@ export default async function RelatorioProfessoresPage() {
         subtitle="Lista completa de professores cadastrados"
         backHref="/relatorios"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button variant="outline">
               <Filter className="h-4 w-4 mr-2" />
@@ -112,7 +111,7 @@ export default async function RelatorioProfessoresPage() {
                     <TableCell>
                       {professor.disciplinas.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {professor.disciplinas.slice(0, 3).map((disc, idx) => (
+                          {professor.disciplinas.slice(0, 3).map((disc: any, idx: number) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
                               {disc.disciplina_nome}
                             </Badge>
@@ -138,7 +137,6 @@ export default async function RelatorioProfessoresPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
     </>
   )
 }

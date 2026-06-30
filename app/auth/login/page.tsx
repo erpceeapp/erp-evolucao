@@ -44,7 +44,15 @@ export default function LoginPage() {
       if (error) throw error
       router.push("/dashboard")
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : "Erro ao fazer login"
+      let errorMsg: string
+      if (error instanceof Error) {
+        errorMsg = typeof error.message === "string" && error.message ? error.message : "Erro ao fazer login"
+      } else if (error && typeof error === "object" && "message" in error) {
+        const msg = (error as Record<string, unknown>).message
+        errorMsg = typeof msg === "string" && msg ? msg : "Erro ao fazer login"
+      } else {
+        errorMsg = "Erro ao fazer login"
+      }
       setError(translateError(errorMsg))
     } finally {
       setIsLoading(false)
@@ -98,18 +106,18 @@ export default function LoginPage() {
               <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">ERP Educacional</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Centro Educacional Evolução</h1>
           <p className="text-gray-600">Sistema de Gestao Escolar</p>
         </div>
 
         {/* Toggle Funcionario / Responsavel */}
-        <div className="flex mb-4 bg-white rounded-lg p-1 shadow-sm border">
+        <div className="flex mb-4 bg-white rounded-lg p-1 border">
           <button
             type="button"
             onClick={() => switchMode("funcionario")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               mode === "funcionario"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
@@ -121,7 +129,7 @@ export default function LoginPage() {
             onClick={() => switchMode("responsavel")}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
               mode === "responsavel"
-                ? "bg-blue-600 text-white shadow-sm"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}
           >
@@ -179,9 +187,14 @@ export default function LoginPage() {
                         <Eye className="h-4 w-4 text-gray-500" />
                       )}
                     </Button>
-                  </div>
                 </div>
-                {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
+              </div>
+              <div className="flex justify-end">
+                <Link href="/auth/recuperar-senha" className="text-sm text-blue-600 hover:underline">
+                  Esqueceu sua senha?
+                </Link>
+              </div>
+              {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar"}
                 </Button>
@@ -221,14 +234,6 @@ export default function LoginPage() {
               </form>
             )}
 
-            {mode === "funcionario" && (
-              <div className="mt-6 text-center text-sm">
-                {"Nao tem uma conta? "}
-                <Link href="/auth/cadastro" className="text-blue-600 hover:underline font-medium">
-                  Cadastre-se
-                </Link>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

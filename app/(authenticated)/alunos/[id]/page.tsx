@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText, BookUser } from "lucide-react"
 import Link from "next/link"
-import { AlunosHeader } from "@/components/alunos/alunos-header"
+import { PageHeader } from "@/components/page-header"
 import { ExportAlunoPDFWrapper } from "@/components/alunos/export-aluno-pdf-wrapper"
 
 export default async function AlunoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,6 +21,16 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
   const { data, error } = await supabase.auth.getUser()
   if (error || !data?.user) {
     redirect("/auth/login")
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  if (!profile || !["admin", "secretaria", "diretor", "coordenacao", "professor"].includes(profile.tipo_usuario)) {
+    redirect("/dashboard")
   }
 
   if (!id || id === "undefined" || id === "null") {
@@ -50,25 +60,14 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AlunosHeader />
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{aluno.nome_completo}</h1>
-            {aluno.matricula && (
-              <p className="text-lg text-blue-600 font-mono font-semibold mt-1">Matrícula: {aluno.matricula}</p>
-            )}
-            <p className="text-gray-600 mt-1">Detalhes do aluno</p>
-          </div>
+    <>
+      <PageHeader
+        icon={User}
+        title={aluno.nome_completo}
+        description={`${aluno.matricula ? `Matrícula: ${aluno.matricula} • ` : ""}Detalhes do aluno`}
+        backHref="/alunos"
+        actions={
           <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/alunos">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Link>
-            </Button>
             <ExportAlunoPDFWrapper aluno={aluno} />
             <Button variant="outline" asChild>
               <Link href={`/agenda-aluno/${aluno.id}`}>
@@ -83,9 +82,10 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
               </Link>
             </Button>
           </div>
-        </div>
+        }
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Informações Principais */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -229,9 +229,8 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   )
 }
 

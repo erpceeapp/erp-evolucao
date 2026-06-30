@@ -35,12 +35,12 @@ export async function updateSession(request: NextRequest) {
   if (user && !request.nextUrl.pathname.startsWith("/auth/primeiro-acesso")) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("primeira_senha, tipo_usuario")
+      .select("primeira_senha")
       .eq("id", user.id)
       .single()
 
-    // Redirecionar para primeiro acesso apenas se for professor e primeira_senha = true
-    if (profile?.primeira_senha === true && profile?.tipo_usuario === "professor") {
+    // Redirecionar para primeiro acesso se primeira_senha = true (qualquer perfil)
+    if (profile?.primeira_senha === true) {
       const url = request.nextUrl.clone()
       url.pathname = "/auth/primeiro-acesso"
       return NextResponse.redirect(url)

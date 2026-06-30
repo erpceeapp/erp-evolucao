@@ -29,7 +29,7 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
 
   if (matriculasError) {
     console.error("Erro ao buscar matrículas:", matriculasError)
-    return { turma: turmaResult.data, disciplina: disciplinaResult.data, matriculas: [] }
+    return { turma: turmaResult.data, disciplina: disciplinaResult.data, matriculas: [], notas: [] }
   }
 
   // Buscar alunos separadamente
@@ -44,13 +44,18 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
   }
 
   // Combinar dados manualmente
-  const matriculasComAlunos = matriculas?.map((matricula) => {
-    const aluno = alunos?.find((a) => a.id === matricula.aluno_id)
-    return {
-      ...matricula,
-      alunos: aluno || null,
-    }
-  })
+  const matriculasComAlunos = matriculas
+    ?.map((matricula) => {
+      const aluno = alunos?.find((a) => a.id === matricula.aluno_id)
+      if (!aluno) return null
+      return {
+        id: matricula.id,
+        aluno_id: matricula.aluno_id,
+        numero_matricula: matricula.numero_matricula,
+        alunos: aluno,
+      }
+    })
+    .filter(Boolean) as { id: string; aluno_id: string; numero_matricula: string; alunos: { id: string; nome_completo: string; matricula: string } }[]
 
   const matriculaIds = matriculas?.map((m) => m.id) || []
   const { data: notas, error: notasError } = await supabase
@@ -112,14 +117,12 @@ export default async function NotasDetailPage({
         subtitle={`${data.turma.nome} (${data.turma.serie}) - ${data.turma.ano_letivo}`}
         backHref="/notas"
       />
-      <div className="container mx-auto p-6 space-y-6">
-        <NotasTable
-          turmaId={turmaId}
-          disciplinaId={disciplinaId}
-          matriculas={data.matriculas}
-          notasExistentes={data.notas}
-        />
-      </div>
+      <NotasTable
+        turmaId={turmaId}
+        disciplinaId={disciplinaId}
+        matriculas={data.matriculas}
+        notasExistentes={data.notas}
+      />
     </>
   )
 }

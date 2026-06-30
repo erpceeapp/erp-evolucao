@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,7 +35,7 @@ export function NovoEventoForm() {
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const supabase = createClient()
 
       const { error } = await supabase.from("eventos").insert([
         {
@@ -56,7 +56,6 @@ export function NovoEventoForm() {
       toast.success("Evento criado com sucesso!")
       router.push("/agenda")
     } catch (error) {
-      console.error("Erro ao criar evento:", error)
       toast.error("Erro ao criar evento")
     } finally {
       setLoading(false)

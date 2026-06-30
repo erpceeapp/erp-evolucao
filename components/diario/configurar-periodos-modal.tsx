@@ -5,9 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Calendar } from "lucide-react"
+import { translateError } from "@/lib/error-messages"
 
 interface ConfigurarPeriodosModalProps {
   open: boolean
@@ -46,20 +47,14 @@ export default function ConfigurarPeriodosModal({
   const handleSave = async () => {
     setLoading(true)
     try {
-      console.log("[v0] Salvando períodos para ano letivo:", anoLetivo)
-      console.log("[v0] Períodos a salvar:", periodos)
-
-      const supabase = createBrowserClient()
+      const supabase = createClient()
 
       // Deletar períodos existentes do ano
       const { error: deleteError } = await supabase.from("periodos_letivos").delete().eq("ano_letivo", anoLetivo)
 
       if (deleteError) {
-        console.error("[v0] Erro ao deletar períodos existentes:", deleteError)
         throw deleteError
       }
-
-      console.log("[v0] Períodos existentes deletados com sucesso")
 
       // Inserir novos períodos
       const periodosParaInserir = periodos.map((p) => ({
@@ -71,22 +66,17 @@ export default function ConfigurarPeriodosModal({
         ativo: true,
       }))
 
-      console.log("[v0] Inserindo novos períodos:", periodosParaInserir)
-
       const { error: insertError } = await supabase.from("periodos_letivos").insert(periodosParaInserir)
 
       if (insertError) {
-        console.error("[v0] Erro ao inserir períodos:", insertError)
         throw insertError
       }
 
-      console.log("[v0] Períodos inseridos com sucesso")
       toast.success("Períodos configurados com sucesso!")
       onOpenChange(false)
       window.location.reload()
     } catch (error: any) {
-      console.error("[v0] Erro ao salvar períodos:", error)
-      toast.error(`Erro ao salvar períodos: ${error.message}`)
+      toast.error(translateError(error.message) || "Erro ao salvar períodos")
     } finally {
       setLoading(false)
     }

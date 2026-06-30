@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import { Search, Edit, Eye, Clock, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
+import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -28,11 +29,15 @@ interface DisciplinasTableProps {
   disciplinas: Disciplina[]
   currentPage: number
   totalPages: number
+  pageSize: number
+  totalCount: number
   busca: string
   status: string
+  sortBy: string
+  sortOrder: string
 }
 
-export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, status }: DisciplinasTableProps) {
+export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSize, totalCount, busca, status, sortBy, sortOrder }: DisciplinasTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -61,9 +66,37 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
     router.push(`/disciplinas?${params.toString()}`)
   }
 
+  const handleClearFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("todos")
+    const params = new URLSearchParams()
+    params.set("page", "1")
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("limit", size.toString())
+    params.set("page", "1")
+    router.push(`/disciplinas?${params.toString()}`)
+  }
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortBy !== column) return <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+    return sortOrder === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+  }
+
+  const handleSort = (column: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("sortBy", column)
+    params.set("sortOrder", sortBy === column && sortOrder === "asc" ? "desc" : "asc")
+    params.set("page", "1")
     router.push(`/disciplinas?${params.toString()}`)
   }
 
@@ -92,6 +125,14 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
             <SelectItem value="inativo">Inativas</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleClearFilters}
+          title="Limpar filtros"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Tabela */}
@@ -99,12 +140,37 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Código</TableHead>
+              <TableHead>
+                <button onClick={() => handleSort("nome")} className="flex items-center gap-1 font-medium">
+                  Nome
+                  <SortIcon column="nome" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button onClick={() => handleSort("codigo")} className="flex items-center gap-1 font-medium">
+                  Código
+                  <SortIcon column="codigo" />
+                </button>
+              </TableHead>
               <TableHead>Descrição</TableHead>
-              <TableHead>Carga Horária</TableHead>
-              <TableHead>Professor</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <button onClick={() => handleSort("carga_horaria")} className="flex items-center gap-1 font-medium">
+                  Carga Horária
+                  <SortIcon column="carga_horaria" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button onClick={() => handleSort("professor")} className="flex items-center gap-1 font-medium">
+                  Professor
+                  <SortIcon column="professor" />
+                </button>
+              </TableHead>
+              <TableHead>
+                <button onClick={() => handleSort("ativo")} className="flex items-center gap-1 font-medium">
+                  Status
+                  <SortIcon column="ativo" />
+                </button>
+              </TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -171,33 +237,14 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, busca, 
       </div>
 
       {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700">
-            Página {currentPage} de {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <DataPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }

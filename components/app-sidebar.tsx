@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { LogoutConfirmDialog } from "@/components/logout-confirm-dialog"
 import {
   LayoutDashboard,
   Users,
@@ -21,6 +22,7 @@ import {
   BarChart3,
   Settings,
   UserCircle,
+  CalendarRange,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
@@ -59,7 +61,7 @@ const menuItems = [
   },
   {
     icon: Calendar,
-    label: "Agenda",
+    label: "Agenda Escolar",
     href: "/agenda",
     roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
   },
@@ -67,6 +69,12 @@ const menuItems = [
     icon: BookUser,
     label: "Agenda do Aluno",
     href: "/agenda-aluno",
+    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+  },
+  {
+    icon: CalendarRange,
+    label: "Grade de Horários",
+    href: "/grade-horarios",
     roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
   },
   {
@@ -117,7 +125,6 @@ export function AppSidebar() {
         const { data: profile } = await supabase.from("profiles").select("tipo_usuario").eq("id", user.id).single()
 
         if (profile) {
-          console.log("[v0] AppSidebar - User tipo_usuario:", profile.tipo_usuario)
           setUserTipo(profile.tipo_usuario)
         }
       }
@@ -145,7 +152,7 @@ export function AppSidebar() {
     if (href === "/dashboard") {
       return pathname === href
     }
-    return pathname.startsWith(href)
+    return pathname === href || pathname.startsWith(href + "/")
   }
 
   const filteredMenuItems = userTipo
@@ -219,18 +226,19 @@ export function AppSidebar() {
           {!isCollapsed && <span className="font-medium">Perfil</span>}
         </Link>
 
-        <Link
-          href="/auth/logout"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-            "text-red-600 hover:bg-red-50",
-            isCollapsed && "justify-center",
-          )}
-          title={isCollapsed ? "Sair" : undefined}
-        >
-          <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!isCollapsed && <span className="font-medium">Sair</span>}
-        </Link>
+        <LogoutConfirmDialog>
+          <button
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full",
+              "text-red-600 hover:bg-red-50",
+              isCollapsed && "justify-center",
+            )}
+            title={isCollapsed ? "Sair" : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span className="font-medium">Sair</span>}
+          </button>
+        </LogoutConfirmDialog>
       </div>
     </aside>
   )

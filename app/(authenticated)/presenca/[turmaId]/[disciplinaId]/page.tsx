@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Users, Save, Check, X, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { salvarAulaPresenca } from "../../actions"
 
 interface Aluno {
   id: string
@@ -28,8 +29,9 @@ interface TurmaDisciplina {
 export default function PresencaPage({
   params,
 }: {
-  params: { turmaId: string; disciplinaId: string }
+  params: Promise<{ turmaId: string; disciplinaId: string }>
 }) {
+  const p = use(params)
   const [alunos, setAlunos] = useState<Aluno[]>([])
   const [turmaDisciplina, setTurmaDisciplina] = useState<TurmaDisciplina | null>(null)
   const [presencas, setPresencas] = useState<Record<string, "presente" | "ausente" | "justificado">>({})
@@ -50,22 +52,23 @@ export default function PresencaPage({
 
   async function loadData() {
     try {
-      console.log("[v0] Loading presenca data for turma:", params.turmaId, "disciplina:", params.disciplinaId)
-
       const { data: tdData, error: tdError } = await supabase
         .from("turma_disciplinas")
         .select("*")
-        .eq("turma_id", params.turmaId)
-        .eq("disciplina_id", params.disciplinaId)
+        .eq("turma_id", p.turmaId)
+        .eq("disciplina_id", p.disciplinaId)
         .single()
 
       if (tdError) {
-        console.error("[v0] Erro ao buscar turma_disciplina:", tdError)
         throw tdError
       }
 
       if (!tdData) {
-        console.error("[v0] Turma disciplina não encontrada")
+        toast({
+          title: "Erro",
+          description: "Turma disciplina não encontrada",
+          variant: "destructive",
+        })
         return
       }
 
@@ -73,14 +76,14 @@ export default function PresencaPage({
       const { data: turma } = await supabase
         .from("turmas")
         .select("nome, serie, ano_letivo")
-        .eq("id", params.turmaId)
+        .eq("id", p.turmaId)
         .single()
 
       // Buscar disciplina separadamente
       const { data: disciplina } = await supabase
         .from("disciplinas")
         .select("nome, codigo")
-        .eq("id", params.disciplinaId)
+        .eq("id", p.disciplinaId)
         .single()
 
       // Buscar professor separadamente
@@ -101,15 +104,12 @@ export default function PresencaPage({
       const { data: matriculas, error: matriculasError } = await supabase
         .from("matriculas")
         .select("aluno_id")
-        .eq("turma_id", params.turmaId)
+        .eq("turma_id", p.turmaId)
         .eq("status", "ativa")
 
       if (matriculasError) {
-        console.error("[v0] Erro ao buscar matrículas:", matriculasError)
         throw matriculasError
       }
-
-      console.log("[v0] Matrículas encontradas:", matriculas?.length)
 
       if (!matriculas || matriculas.length === 0) {
         setAlunos([])
@@ -126,11 +126,8 @@ export default function PresencaPage({
         .order("nome_completo")
 
       if (alunosError) {
-        console.error("[v0] Erro ao buscar alunos:", alunosError)
         throw alunosError
       }
-
-      console.log("[v0] Alunos encontrados:", alunosData?.length)
 
       setAlunos(alunosData || [])
 
@@ -141,7 +138,6 @@ export default function PresencaPage({
       })
       setPresencas(presencasIniciais)
     } catch (error) {
-      console.error("[v0] Erro ao carregar dados:", error)
       toast({
         title: "Erro",
         description: "Erro ao carregar dados da turma",
@@ -180,62 +176,30 @@ export default function PresencaPage({
 
     setSaving(true)
     try {
-      console.log("[v0] Salvando aula com dados:", {
-        turma_disciplina_id: turmaDisciplina!.id,
-        data_aula: dataAula,
-        hora_inicio: horaInicio,
-        hora_fim: horaFim,
-        conteudo: conteudo,
+      const result = await salvarAulaPresenca({
+        turmaDisciplinaId: turmaDisciplina!.id,
+        dataAula,
+        horaInicio,
+        horaFim,
+        conteudo,
+        presencas,
+        turmaId: p.turmaId,
+        disciplinaId: p.disciplinaId,
       })
 
-      const { data: aula, error: aulaError } = await supabase
-        .from("aulas")
-        .insert({
-          turma_disciplina_id: turmaDisciplina!.id,
-          data_aula: dataAula,
-          hora_inicio: horaInicio,
-          hora_fim: horaFim,
-          conteudo: conteudo,
-        })
-        .select()
-        .single()
-
-      if (aulaError) {
-        console.error("[v0] Erro ao criar aula:", aulaError)
-        throw aulaError
-      }
-
-      console.log("[v0] Aula criada com sucesso:", aula.id)
-
-      // Registrar presenças
-      const presencasData = Object.entries(presencas).map(([alunoId, status]) => ({
-        aula_id: aula.id,
-        aluno_id: alunoId,
-        presente: status === "presente",
-        justificativa: status === "justificado" ? "Justificado" : null,
-      }))
-
-      console.log("[v0] Registrando presenças:", presencasData.length)
-
-      const { error: presencaError } = await supabase.from("presencas").insert(presencasData)
-
-      if (presencaError) {
-        console.error("[v0] Erro ao registrar presenças:", presencaError)
-        throw presencaError
-      }
+      if (result.error) throw new Error(result.error)
 
       toast({
         title: "Sucesso",
         description: "Aula e presenças registradas com sucesso!",
       })
 
-      router.push(`/diario/${params.turmaId}/${params.disciplinaId}`)
+      router.push(`/diario/${p.turmaId}/${p.disciplinaId}`)
       router.refresh()
     } catch (error) {
-      console.error("[v0] Erro ao salvar presença:", error)
       toast({
         title: "Erro",
-        description: "Erro ao registrar aula e presença",
+        description: error instanceof Error ? error.message : "Erro ao registrar aula e presenca",
         variant: "destructive",
       })
     } finally {
@@ -268,7 +232,7 @@ export default function PresencaPage({
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link href={`/diario/${params.turmaId}/${params.disciplinaId}`}>
+            <Link href={`/diario/${p.turmaId}/${p.disciplinaId}`}>
               <BookOpen className="h-4 w-4 mr-2" />
               Ver Diário
             </Link>
