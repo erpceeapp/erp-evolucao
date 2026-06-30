@@ -6,8 +6,10 @@ export function createEmptyMapping(): IdMapping {
   return {
     profiles: {},
     auth_users: {},
+    disciplinas: {},
     professores: {},
     turmas: {},
+    matriculas: {},
   }
 }
 

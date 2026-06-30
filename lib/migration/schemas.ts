@@ -18,6 +18,18 @@ export const ExportUsuarioJsonSchema = z.object({
 })
 
 export const ExportDisciplinaJsonSchema = z.object({
+  id: z.string(),
+  nome: z.string(),
+  codigo: z.string().nullable().optional(),
+  descricao: z.string().nullable().optional(),
+  carga_horaria: z.number().nullable().optional(),
+  ativo: z.boolean(),
+  professor_id: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+})
+
+export const ExportTurmaDisciplinaJsonSchema = z.object({
   disciplina_id: z.string(),
   professor_id: z.string().nullable().optional(),
   carga_horaria_semanal: z.number().nullable().optional(),
@@ -25,14 +37,14 @@ export const ExportDisciplinaJsonSchema = z.object({
 
 export const ExportProfessorJsonSchema = z.object({
   id: z.string(),
-  user_id: z.string(),
+  user_id: z.string().nullable().optional(),
   nome_completo: z.string(),
   cpf: z.string().nullable().optional(),
   rg: z.string().nullable().optional(),
   data_nascimento: z.string().nullable().optional(),
   endereco: z.string().nullable().optional(),
   telefone: z.string().nullable().optional(),
-  email: z.string(),
+  email: z.string().nullable().optional(),
   formacao: z.string().nullable().optional(),
   especializacao: z.string().nullable().optional(),
   registro_profissional: z.string().nullable().optional(),
@@ -52,12 +64,25 @@ export const ExportTurmaJsonSchema = z.object({
   capacidade_maxima: z.number().nullable().optional(),
   professor_responsavel_id: z.string().nullable().optional(),
   ativo: z.boolean(),
-  disciplinas: z.array(ExportDisciplinaJsonSchema),
+  disciplinas: z.array(ExportTurmaDisciplinaJsonSchema),
   created_at: z.string(),
   updated_at: z.string(),
 })
 
 export const ExportMatriculaJsonSchema = z.object({
+  id: z.string(),
+  aluno_id: z.string(),
+  turma_id: z.string(),
+  numero_matricula: z.string(),
+  ano_letivo: z.number(),
+  data_matricula: z.string(),
+  status: z.string(),
+  observacoes: z.string().nullable().optional(),
+})
+
+export const ExportMatriculaRowJsonSchema = z.object({
+  id: z.string(),
+  aluno_id: z.string(),
   turma_id: z.string(),
   numero_matricula: z.string(),
   ano_letivo: z.number(),

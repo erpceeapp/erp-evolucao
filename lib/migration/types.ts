@@ -1,8 +1,10 @@
 export interface IdMapping {
   profiles: Record<string, string>
   auth_users: Record<string, string>
+  disciplinas: Record<string, string>
   professores: Record<string, string>
   turmas: Record<string, string>
+  matriculas: Record<string, string>
 }
 
 export interface ImportLogEntry {
@@ -58,7 +60,30 @@ export interface ExportProfessorJson {
   updated_at: string
 }
 
+export interface ExportMatriculaRowJson {
+  id: string
+  aluno_id: string
+  turma_id: string
+  numero_matricula: string
+  ano_letivo: number
+  data_matricula: string
+  status: string
+  observacoes: string | null
+}
+
 export interface ExportDisciplinaJson {
+  id: string
+  nome: string
+  codigo: string | null
+  descricao: string | null
+  carga_horaria: number | null
+  ativo: boolean
+  professor_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExportTurmaDisciplinaJson {
   disciplina_id: string
   professor_id: string | null
   carga_horaria_semanal: number | null
@@ -73,12 +98,14 @@ export interface ExportTurmaJson {
   capacidade_maxima: number | null
   professor_responsavel_id: string | null
   ativo: boolean
-  disciplinas: ExportDisciplinaJson[]
+  disciplinas: ExportTurmaDisciplinaJson[]
   created_at: string
   updated_at: string
 }
 
 export interface ExportMatriculaJson {
+  id: string
+  aluno_id: string
   turma_id: string
   numero_matricula: string
   ano_letivo: number
@@ -112,7 +139,7 @@ export interface ExportAlunoJson {
   updated_at: string
 }
 
-export type EntityType = "usuarios" | "professores" | "turmas" | "alunos"
+export type EntityType = "usuarios" | "disciplinas" | "professores" | "turmas" | "alunos" | "matriculas"
 
 export interface ExportWrapper<T> {
   entity: string
