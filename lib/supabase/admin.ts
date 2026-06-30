@@ -2,6 +2,11 @@ import { createClient } from "@supabase/supabase-js"
 import fs from "fs"
 import path from "path"
 
+function isLocalSupabase(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+  return url.includes("127.0.0.1") || url.includes("localhost")
+}
+
 function loadServiceRoleKeyFromFile(): string {
   const files = [
     path.join(process.cwd(), ".env.local"),
@@ -14,13 +19,11 @@ function loadServiceRoleKeyFromFile(): string {
         const trimmed = line.trim()
         if (trimmed.startsWith("SUPABASE_SERVICE_ROLE_KEY=")) {
           const val = trimmed.slice("SUPABASE_SERVICE_ROLE_KEY=".length)
-          const clean = val.startsWith('"') && val.endsWith('"')
+          return val.startsWith('"') && val.endsWith('"')
             ? val.slice(1, -1)
             : val.startsWith("'") && val.endsWith("'")
               ? val.slice(1, -1)
               : val
-          console.log("[debug] FILE key from", file, "prefix:", clean.substring(0, 10))
-          return clean
         }
       }
     } catch {
@@ -30,9 +33,20 @@ function loadServiceRoleKeyFromFile(): string {
   throw new Error("SUPABASE_SERVICE_ROLE_KEY not found in .env.local or .env")
 }
 
+function loadServiceRoleKey(): string {
+  if (isLocalSupabase()) {
+    try { return loadServiceRoleKeyFromFile() } catch { /* fallback below */ }
+  }
+
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (key && !key.startsWith("sb_")) return key
+
+  return loadServiceRoleKeyFromFile()
+}
+
 export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRoleKey = loadServiceRoleKeyFromFile()
+  const supabaseServiceRoleKey = loadServiceRoleKey()
 
   if (!supabaseUrl) {
     throw new Error("Missing Supabase environment variables for admin client")
@@ -57,7 +71,7 @@ export async function adminFetch<T>(
   options?: { method?: string; body?: unknown; params?: Record<string, string> }
 ): Promise<{ data: T | null; error: string | null }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = loadServiceRoleKeyFromFile()
+  const key = loadServiceRoleKey()
 
   if (!supabaseUrl) {
     return { data: null, error: "SUPABASE_URL is not set" }
@@ -104,7 +118,7 @@ export async function adminAuthFetch<T>(
   options?: { method?: string; body?: unknown }
 ): Promise<{ data: T | null; error: string | null }> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = loadServiceRoleKeyFromFile()
+  const key = loadServiceRoleKey()
 
   if (!supabaseUrl) {
     return { data: null, error: "SUPABASE_URL is not set" }
