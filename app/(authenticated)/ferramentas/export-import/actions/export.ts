@@ -2,9 +2,8 @@
 
 import crypto from "crypto"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-import type { ExportWrapper, ExportUsuarioJson, ExportProfessorJson, ExportTurmaJson, ExportAlunoJson } from "@/lib/migration/types"
-import { translateError } from "@/lib/error-messages"
+import { adminFetch } from "@/lib/supabase/admin"
+import type { ExportWrapper, ExportUsuarioJson, ExportDisciplinaJson, ExportProfessorJson, ExportTurmaJson, ExportAlunoJson, ExportMatriculaRowJson } from "@/lib/migration/types"
 
 async function checkAdminOrDirector(): Promise<{ error: string } | null> {
   const supabase = await createClient()
@@ -28,16 +27,19 @@ export async function exportUsuarios(): Promise<{ data?: string; error?: string 
   const authError = await checkAdminOrDirector()
   if (authError) return authError
 
-  const admin = createAdminClient()
-  const { data: profiles, error: profilesError } = await admin
-    .from("profiles")
-    .select("*")
-    .order("nome_completo")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  console.log("[debug] URL:", supabaseUrl)
+  console.log("[debug] ENV key prefix:", supabaseKey?.substring(0, 10))
+  console.log("[debug] ENV key length:", supabaseKey?.length)
 
-  if (profilesError) return { error: translateError(profilesError.message) }
+  const { data: profiles, error: profilesError } = await adminFetch<any[]>(
+    "profiles?order=nome_completo"
+  )
+  if (profilesError) return { error: profilesError }
   if (!profiles?.length) return { error: "Nenhum usuario encontrado" }
 
-  const data: ExportUsuarioJson[] = profiles.map((p) => {
+  const data: ExportUsuarioJson[] = profiles.map((p: any) => {
     const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
     return {
       id: p.id,
@@ -71,16 +73,13 @@ export async function exportProfessores(): Promise<{ data?: string; error?: stri
   const authError = await checkAdminOrDirector()
   if (authError) return authError
 
-  const admin = createAdminClient()
-  const { data: professores, error } = await admin
-    .from("professores")
-    .select("*")
-    .order("nome_completo")
-
-  if (error) return { error: translateError(error.message) }
+  const { data: professores, error } = await adminFetch<any[]>(
+    "professores?order=nome_completo"
+  )
+  if (error) return { error }
   if (!professores?.length) return { error: "Nenhum professor encontrado" }
 
-  const data: ExportProfessorJson[] = professores.map((p) => ({
+  const data: ExportProfessorJson[] = professores.map((p: any) => ({
     id: p.id,
     user_id: p.user_id,
     nome_completo: p.nome_completo,
@@ -110,24 +109,51 @@ export async function exportProfessores(): Promise<{ data?: string; error?: stri
   return { data: JSON.stringify(wrapper, null, 2) }
 }
 
+export async function exportDisciplinas(): Promise<{ data?: string; error?: string }> {
+  const authError = await checkAdminOrDirector()
+  if (authError) return authError
+
+  const { data: rows, error } = await adminFetch<any[]>(
+    "disciplinas?order=nome"
+  )
+  if (error) return { error }
+  if (!rows?.length) return { error: "Nenhuma disciplina encontrada" }
+
+  const data: ExportDisciplinaJson[] = rows.map((d: any) => ({
+    id: d.id,
+    nome: d.nome,
+    codigo: d.codigo || null,
+    descricao: d.descricao || null,
+    carga_horaria: d.carga_horaria !== null && d.carga_horaria !== undefined ? Number(d.carga_horaria) : null,
+    ativo: d.ativo,
+    professor_id: d.professor_id || null,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+  }))
+
+  const wrapper: ExportWrapper<ExportDisciplinaJson> = {
+    entity: "disciplinas",
+    version: 1,
+    exported_at: new Date().toISOString(),
+    data,
+  }
+
+  return { data: JSON.stringify(wrapper, null, 2) }
+}
+
 export async function exportTurmas(): Promise<{ data?: string; error?: string }> {
   const authError = await checkAdminOrDirector()
   if (authError) return authError
 
-  const admin = createAdminClient()
-  const { data: turmas, error: turmasError } = await admin
-    .from("turmas")
-    .select("*")
-    .order("nome")
-
-  if (turmasError) return { error: translateError(turmasError.message) }
+  const { data: turmas, error: turmasError } = await adminFetch<any[]>(
+    "turmas?order=nome"
+  )
+  if (turmasError) return { error: turmasError }
   if (!turmas?.length) return { error: "Nenhuma turma encontrada" }
 
-  const { data: disciplinas } = await admin
-    .from("turma_disciplinas")
-    .select("*")
+  const { data: disciplinas } = await adminFetch<any[]>("turma_disciplinas")
 
-  const data: ExportTurmaJson[] = turmas.map((t) => ({
+  const data: ExportTurmaJson[] = turmas.map((t: any) => ({
     id: t.id,
     nome: t.nome,
     ano_letivo: t.ano_letivo,
@@ -137,8 +163,8 @@ export async function exportTurmas(): Promise<{ data?: string; error?: string }>
     professor_responsavel_id: t.professor_responsavel_id,
     ativo: t.ativo,
     disciplinas: (disciplinas || [])
-      .filter((d) => d.turma_id === t.id)
-      .map((d) => ({
+      .filter((d: any) => d.turma_id === t.id)
+      .map((d: any) => ({
         disciplina_id: d.disciplina_id,
         professor_id: d.professor_id,
         carga_horaria_semanal: d.carga_horaria_semanal,
@@ -161,20 +187,15 @@ export async function exportAlunos(): Promise<{ data?: string; error?: string }>
   const authError = await checkAdminOrDirector()
   if (authError) return authError
 
-  const admin = createAdminClient()
-  const { data: alunos, error: alunosError } = await admin
-    .from("alunos")
-    .select("*")
-    .order("nome_completo")
-
-  if (alunosError) return { error: translateError(alunosError.message) }
+  const { data: alunos, error: alunosError } = await adminFetch<any[]>(
+    "alunos?order=nome_completo"
+  )
+  if (alunosError) return { error: alunosError }
   if (!alunos?.length) return { error: "Nenhum aluno encontrado" }
 
-  const { data: matriculas } = await admin
-    .from("matriculas")
-    .select("*")
+  const { data: matriculas } = await adminFetch<any[]>("matriculas")
 
-  const data: ExportAlunoJson[] = alunos.map((a) => ({
+  const data: ExportAlunoJson[] = alunos.map((a: any) => ({
     id: a.id,
     nome_completo: a.nome_completo,
     data_nascimento: a.data_nascimento,
@@ -195,8 +216,10 @@ export async function exportAlunos(): Promise<{ data?: string; error?: string }>
     turno_preferencial: a.turno_preferencial,
     matricula: a.matricula,
     matriculas: (matriculas || [])
-      .filter((m) => m.aluno_id === a.id)
-      .map((m) => ({
+      .filter((m: any) => m.aluno_id === a.id)
+      .map((m: any) => ({
+        id: m.id,
+        aluno_id: a.id,
         turma_id: m.turma_id,
         numero_matricula: m.numero_matricula,
         ano_letivo: m.ano_letivo,
@@ -210,6 +233,35 @@ export async function exportAlunos(): Promise<{ data?: string; error?: string }>
 
   const wrapper: ExportWrapper<ExportAlunoJson> = {
     entity: "alunos",
+    version: 1,
+    exported_at: new Date().toISOString(),
+    data,
+  }
+
+  return { data: JSON.stringify(wrapper, null, 2) }
+}
+
+export async function exportMatriculas(): Promise<{ data?: string; error?: string }> {
+  const authError = await checkAdminOrDirector()
+  if (authError) return authError
+
+  const { data: rows, error } = await adminFetch<any[]>("matriculas")
+  if (error) return { error }
+  if (!rows?.length) return { error: "Nenhuma matricula encontrada" }
+
+  const data: ExportMatriculaRowJson[] = rows.map((m: any) => ({
+    id: m.id,
+    aluno_id: m.aluno_id,
+    turma_id: m.turma_id,
+    numero_matricula: m.numero_matricula,
+    ano_letivo: m.ano_letivo,
+    data_matricula: m.data_matricula,
+    status: m.status,
+    observacoes: m.observacoes,
+  }))
+
+  const wrapper: ExportWrapper<ExportMatriculaRowJson> = {
+    entity: "matriculas",
     version: 1,
     exported_at: new Date().toISOString(),
     data,
