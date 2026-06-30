@@ -16,7 +16,8 @@
     "supabase:reset": "supabase db reset",
     "supabase:migrate": "supabase migration up",
     "supabase:studio": "start http://127.0.0.1:54343",
-    "supabase:mailpit": "start http://localhost:54344"
+    "supabase:mailpit": "start http://localhost:54344",
+    "supabase:clean": "node scripts/clean-local-db.js"
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",
