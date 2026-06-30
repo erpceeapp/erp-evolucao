@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Copy } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { ImportResult } from "@/lib/migration/types"
 
@@ -32,6 +32,7 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [conflictStrategy, setConflictStrategy] = useState<"skip" | "overwrite">("skip")
+  const [copied, setCopied] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,9 +89,25 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
     }
   }, [importing, onOpenChange])
 
+  const resultText = useCallback((r: ImportResult) => [
+    `Total no arquivo: ${r.total}`,
+    `Importados: ${r.importados}`,
+    `Pulados: ${r.pulados}`,
+    `Erros: ${r.erros}`,
+    ...r.logs.filter((l) => l.status === "erro").map((l) => `"${l.nome}": ${l.mensagem}`),
+  ].join("\n"), [])
+
+  const handleCopy = useCallback(async (r: ImportResult) => {
+    try {
+      await navigator.clipboard.writeText(resultText(r))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { /**/ }
+  }, [resultText])
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importar {entityName}</DialogTitle>
           <DialogDescription>
@@ -156,15 +173,13 @@ export function ImportDialog({ open, onOpenChange, entityName, onImport }: Impor
               <div className="flex items-center gap-2 text-sm font-medium">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 Resultado da Importacao
+                <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => handleCopy(result)}>
+                  <Copy className="h-3 w-3 mr-1" />
+                  {copied ? "Copiado" : "Copiar"}
+                </Button>
               </div>
               <div className="bg-gray-50 rounded-md p-3 text-sm space-y-1 font-mono text-gray-700 whitespace-pre-wrap">
-                {[
-                  `Total no arquivo: ${result.total}`,
-                  `Importados: ${result.importados}`,
-                  `Pulados: ${result.pulados}`,
-                  `Erros: ${result.erros}`,
-                  ...result.logs.filter((l) => l.status === "erro").map((l) => `"${l.nome}": ${l.mensagem}`),
-                ].join("\n")}
+                {resultText(result)}
               </div>
             </div>
           )}

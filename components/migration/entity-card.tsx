@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Download, Upload, CheckCircle2, Lock, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { importUsuarios, importProfessores, importTurmas, importAlunos } from "@/app/(authenticated)/ferramentas/export-import/actions/import"
-import { exportUsuarios, exportProfessores, exportTurmas, exportAlunos } from "@/app/(authenticated)/ferramentas/export-import/actions/export"
+import { importUsuarios, importDisciplinas, importProfessores, importTurmas, importAlunos, importMatriculas } from "@/app/(authenticated)/ferramentas/export-import/actions/import"
+import { exportUsuarios, exportDisciplinas, exportProfessores, exportTurmas, exportAlunos, exportMatriculas } from "@/app/(authenticated)/ferramentas/export-import/actions/export"
 import { ImportDialog } from "./import-dialog"
 import type { EntityType } from "@/lib/migration/types"
 import { saveMapping, loadMapping } from "@/lib/migration/mapping"
@@ -24,16 +24,20 @@ interface EntityCardProps {
 
 const exportFns = {
   usuarios: exportUsuarios,
+  disciplinas: exportDisciplinas,
   professores: exportProfessores,
   turmas: exportTurmas,
   alunos: exportAlunos,
+  matriculas: exportMatriculas,
 } as const
 
 const importFns = {
   usuarios: importUsuarios,
+  disciplinas: importDisciplinas,
   professores: importProfessores,
   turmas: importTurmas,
   alunos: importAlunos,
+  matriculas: importMatriculas,
 } as const
 
 export function EntityCard({
@@ -78,7 +82,7 @@ export function EntityCard({
     const parsed = JSON.parse(jsonData)
     const currentMapping = loadMapping()
     const fn = importFns[type]
-    const result = await fn(parsed.data || parsed, currentMapping || { profiles: {}, auth_users: {}, professores: {}, turmas: {} }, conflictStrategy)
+    const result = await fn(parsed.data || parsed, currentMapping || { profiles: {}, auth_users: {}, disciplinas: {}, professores: {}, turmas: {}, matriculas: {} }, conflictStrategy)
     saveMapping(result.mapping)
 
     const resumo = [

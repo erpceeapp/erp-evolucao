@@ -10,8 +10,10 @@ import { RotateCcw } from "lucide-react"
 const ENTITIES: { type: EntityType; label: string; ordem: number; descricao: string }[] = [
   { type: "usuarios", label: "Usuarios", ordem: 1, descricao: "Auth + Profiles" },
   { type: "professores", label: "Professores", ordem: 2, descricao: "Dados de professores (user_id vinculado ao passo 1)" },
-  { type: "turmas", label: "Turmas", ordem: 3, descricao: "Turmas + disciplinas (professor_responsavel vinculado ao passo 2)" },
-  { type: "alunos", label: "Alunos", ordem: 4, descricao: "Alunos + matriculas (turmas vinculadas ao passo 3)" },
+  { type: "disciplinas", label: "Disciplinas", ordem: 3, descricao: "Disciplinas (professor_id vinculado ao passo 2)" },
+  { type: "turmas", label: "Turmas", ordem: 4, descricao: "Turmas + disciplinas (professor_responsavel vinculado ao passo 2, disciplinas ao passo 3)" },
+  { type: "alunos", label: "Alunos", ordem: 5, descricao: "Alunos + matriculas (turmas vinculadas ao passo 4)" },
+  { type: "matriculas", label: "Matriculas", ordem: 6, descricao: "Associacao alunos-turmas (alunos vinculados ao passo 5, turmas ao passo 4)" },
 ]
 
 export function MigrationTool() {
@@ -20,8 +22,10 @@ export function MigrationTool() {
   const [resultados, setResultados] = useState<Record<EntityType, string | null>>({
     usuarios: null,
     professores: null,
+    disciplinas: null,
     turmas: null,
     alunos: null,
+    matriculas: null,
   })
 
   useEffect(() => {
@@ -33,8 +37,10 @@ export function MigrationTool() {
     (type: EntityType): boolean => {
       if (type === "usuarios") return true
       if (type === "professores") return readySteps.includes("usuarios")
-      if (type === "turmas") return readySteps.includes("professores")
+      if (type === "disciplinas") return readySteps.includes("professores")
+      if (type === "turmas") return readySteps.includes("disciplinas")
       if (type === "alunos") return readySteps.includes("turmas")
+      if (type === "matriculas") return readySteps.includes("alunos")
       return false
     },
     [readySteps],
@@ -57,7 +63,7 @@ export function MigrationTool() {
     clearMapping()
     setMapping(null)
     setReadySteps([])
-    setResultados({ usuarios: null, professores: null, turmas: null, alunos: null })
+    setResultados({ usuarios: null, professores: null, disciplinas: null, turmas: null, alunos: null, matriculas: null })
   }, [])
 
   return (
