@@ -106,7 +106,7 @@ export default async function RelatoriosPage() {
           ))}
         </div>
 
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Relatórios Personalizados</CardTitle>
           </CardHeader>
@@ -119,7 +119,7 @@ export default async function RelatoriosPage() {
               Criar Relatório Personalizado
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
       </>
   )
 }
