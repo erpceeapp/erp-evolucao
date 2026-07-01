@@ -5,11 +5,25 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, X } from "lucide-react"
+import { Search, Edit, Eye, Trash2, X } from "lucide-react"
+import { deleteAluno } from "@/app/(authenticated)/alunos/actions"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 interface Aluno {
   id: string
@@ -32,9 +46,10 @@ interface AlunosTableProps {
   totalCount: number
   busca: string
   status: string
+  currentUserTipo: string
 }
 
-export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCount, busca, status }: AlunosTableProps) {
+export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCount, busca, status, currentUserTipo }: AlunosTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -75,6 +90,16 @@ export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCo
     const params = new URLSearchParams(searchParams)
     params.set("page", page.toString())
     router.push(`/alunos?${params.toString()}`)
+  }
+
+  const handleDelete = async (alunoId: string) => {
+    const result = await deleteAluno(alunoId)
+    if (result.error) {
+      toast.error(translateError(result.error))
+    } else {
+      toast.success("Aluno excluído com sucesso")
+      router.refresh()
+    }
   }
 
   const handlePageSizeChange = (size: number) => {
@@ -187,6 +212,32 @@ export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCo
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {["admin", "diretor"].includes(currentUserTipo) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Aluno</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O aluno será removido permanentemente, incluindo todas as matrículas associadas. Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(aluno.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
