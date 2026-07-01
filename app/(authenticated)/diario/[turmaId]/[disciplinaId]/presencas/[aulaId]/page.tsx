@@ -37,7 +37,9 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   const [turmaRes, disciplinaRes, professorRes] = await Promise.all([
     supabase.from("turmas").select("nome, serie").eq("id", turmaId).single(),
     supabase.from("disciplinas").select("nome").eq("id", disciplinaId).single(),
-    supabase.from("professores").select("nome_completo").eq("id", turmaDisciplina.professor_id).single(),
+    turmaDisciplina.professor_id
+      ? supabase.from("professores").select("nome_completo").eq("id", turmaDisciplina.professor_id).single()
+      : Promise.resolve({ data: null, error: null }),
   ])
 
   const { data: matriculas } = await supabase
@@ -72,7 +74,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
 
     const { data: novasPresencas, error } = await supabase
       .from("presencas")
-      .insert(presencasParaCriar)
+      .upsert(presencasParaCriar, { onConflict: "aula_id,aluno_id" })
       .select("id, presente, aluno_id, justificativa")
 
     if (error) {
@@ -393,7 +395,7 @@ export default function AulaDetalhePage({
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Professor</p>
-                <p className="text-sm">{professor.nome_completo}</p>
+                <p className="text-sm">{professor?.nome_completo || "Sem professor"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Turma</p>

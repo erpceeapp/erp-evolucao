@@ -11,9 +11,18 @@ import { toast } from "sonner"
 
 interface NovaAulaFormProps {
   turmaDisciplina: any
+  duracaoPadrao?: number
 }
 
-export default function NovaAulaFormV2({ turmaDisciplina }: NovaAulaFormProps) {
+function calcHoraFim(inicio: string, duracaoMin: number): string {
+  const [h, m] = inicio.split(":").map(Number)
+  const totalMin = h * 60 + m + duracaoMin
+  const nh = Math.floor(totalMin / 60)
+  const nm = totalMin % 60
+  return `${String(nh).padStart(2, "0")}:${String(nm).padStart(2, "0")}`
+}
+
+export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50 }: NovaAulaFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -23,6 +32,14 @@ export default function NovaAulaFormV2({ turmaDisciplina }: NovaAulaFormProps) {
     conteudo: "",
     observacoes: "",
   })
+
+  const handleHoraInicioChange = (hora: string) => {
+    setFormData((prev) => ({ ...prev, hora_inicio: hora }))
+
+    if (hora) {
+      setFormData((prev) => ({ ...prev, hora_fim: calcHoraFim(hora, duracaoPadrao) }))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,7 +104,7 @@ export default function NovaAulaFormV2({ turmaDisciplina }: NovaAulaFormProps) {
             id="hora_inicio"
             type="time"
             value={formData.hora_inicio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, hora_inicio: e.target.value }))}
+            onChange={(e) => handleHoraInicioChange(e.target.value)}
             required
           />
         </div>

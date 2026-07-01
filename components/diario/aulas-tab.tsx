@@ -31,7 +31,7 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aulas Registradas</CardTitle>
             <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-              <Link href={`/diario/nova-aula`}>
+              <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Aula
               </Link>
@@ -103,7 +103,7 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                   Comece registrando a primeira aula com lista de presença desta disciplina.
                 </p>
                 <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-                  <Link href={`/diario/nova-aula`}>
+                  <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
                     <Plus className="h-4 w-4 mr-2" />
                     Registrar Primeira Aula
                   </Link>
