@@ -30,7 +30,7 @@ next-env.d.ts
 supabase/.branches
 supabase/.temp
 supabase/seed.sql
-supabase/snippets 
+supabase/snippets
 
 # dotenvx
 .env.keys
@@ -43,3 +43,4 @@ docs/superpowers/
 
 # contract
 .contract/
+.backup-data/
