@@ -57,17 +57,60 @@ export function NotasTable({
 
   const [saving, setSaving] = useState(false)
 
-  const handleNotaChange = (matriculaId: string, bimestre: number, value: string) => {
-    if (value !== "" && (isNaN(Number(value)) || Number(value) < 0 || Number(value) > 10)) {
+  const handleNotaChange = (matriculaId: string, bimestre: number, rawValue: string) => {
+    if (rawValue === "") {
+      setNotas((prev) => ({
+        ...prev,
+        [matriculaId]: { ...prev[matriculaId], [bimestre]: "" },
+      }))
       return
     }
+
+    const normalized = rawValue.replace(",", ".")
+
+    if (!/^[\d.]*$/.test(normalized)) return
+
+    if ((normalized.match(/\./g) || []).length > 1) return
+
+    if (/^\d+$/.test(normalized)) {
+      const num = Number(normalized)
+      if (num > 10) {
+        const value = normalized.slice(0, -1) + "." + normalized.slice(-1)
+        const converted = Number(value)
+        if (!isNaN(converted) && converted >= 0 && converted <= 10) {
+          setNotas((prev) => ({
+            ...prev,
+            [matriculaId]: { ...prev[matriculaId], [bimestre]: value },
+          }))
+          return
+        }
+        return
+      }
+    }
+
     setNotas((prev) => ({
       ...prev,
       [matriculaId]: {
         ...prev[matriculaId],
-        [bimestre]: value,
+        [bimestre]: rawValue,
       },
     }))
+  }
+
+  const handleBlur = (matriculaId: string, bimestre: number) => {
+    setNotas((prev) => {
+      const value = prev[matriculaId]?.[bimestre]
+      if (!value || value === "") return prev
+
+      const normalized = value.replace(",", ".")
+      const num = Number(normalized)
+      if (isNaN(num) || num < 0 || num > 10) return prev
+
+      return {
+        ...prev,
+        [matriculaId]: { ...prev[matriculaId], [bimestre]: num.toFixed(1) },
+      }
+    })
   }
 
   const handleSalvar = async () => {
@@ -87,7 +130,6 @@ export function NotasTable({
             )
 
             notasToSave.push({
-              ...(notaExistente?.id && { id: notaExistente.id }),
               matricula_id: matriculaId,
               disciplina_id: disciplinaId,
               bimestre: bimestre,
@@ -112,9 +154,6 @@ export function NotasTable({
       }
 
       toast.success("Notas salvas com sucesso!")
-
-      // Reload page to get fresh data
-      window.location.reload()
     } catch (error: any) {
       toast.error(translateError(error.message) || "Erro ao salvar notas")
     } finally {
@@ -177,6 +216,7 @@ export function NotasTable({
                         placeholder="0.0"
                         value={notas[matricula.id]?.[bimestre] || ""}
                         onChange={(e) => handleNotaChange(matricula.id, bimestre, e.target.value)}
+                        onBlur={() => handleBlur(matricula.id, bimestre)}
                         className="w-20 text-center"
                       />
                     </TableCell>

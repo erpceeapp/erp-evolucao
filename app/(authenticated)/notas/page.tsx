@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import PageHeader from "@/components/page-header"
 import Link from "next/link"
-import { getProfessorFilter } from "@/lib/professor-filter"
 
 type TurmaComDisciplinas = {
   id: string
@@ -14,80 +13,98 @@ type TurmaComDisciplinas = {
   turno: string | null
   ano_letivo: number
   ativo: boolean
-  disciplinas: ({ id: string; nome: string; codigo: string } | undefined)[]
+  disciplinas: { id: string; nome: string; codigo: string }[]
   totalAlunos: number
 }
 
-async function getTurmasComDisciplinas(): Promise<TurmaComDisciplinas[]> {
-  const supabase = await createServerClient()
+type SupabaseClient = Awaited<ReturnType<typeof createServerClient>>
 
-  const filter = await getProfessorFilter()
+async function getTurmasComDisciplinas(supabase: SupabaseClient): Promise<TurmaComDisciplinas[]> {
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Buscar turmas ativas
+  let filteredTurmaIds: string[] | null = null
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (profile?.tipo_usuario === "professor") {
+      const { data: professor } = await supabase
+        .from("professores")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (professor) {
+        const [tdResult, tResult] = await Promise.all([
+          supabase.from("turma_disciplinas").select("turma_id").eq("professor_id", professor.id),
+          supabase.from("turmas").select("id").eq("professor_responsavel_id", professor.id).eq("ativo", true),
+        ])
+
+        const idSet = new Set<string>()
+        tdResult.data?.forEach((td) => idSet.add(td.turma_id))
+        tResult.data?.forEach((t) => idSet.add(t.id))
+        filteredTurmaIds = [...idSet]
+      } else {
+        filteredTurmaIds = []
+      }
+    }
+  }
+
   let turmasQuery = supabase
     .from("turmas")
     .select("id, nome, serie, turno, ano_letivo, ativo")
     .eq("ativo", true)
     .order("nome")
 
-  if (filter.isProfessor) {
-    if (filter.turmaIds.length > 0) {
-      turmasQuery = turmasQuery.in("id", filter.turmaIds)
-    } else {
-      turmasQuery = turmasQuery.in("id", [])
-    }
+  if (filteredTurmaIds !== null) {
+    turmasQuery = filteredTurmaIds.length > 0
+      ? turmasQuery.in("id", filteredTurmaIds)
+      : turmasQuery.in("id", [])
   }
 
   const { data: turmas, error: turmasError } = await turmasQuery
+  if (turmasError || !turmas) return []
 
-  if (turmasError) {
-    return []
-  }
+  const turmaIds = turmas.map((t) => t.id)
 
-  // Buscar turma_disciplinas com disciplinas
-  const turmaIds = turmas?.map((t) => t.id) || []
-  
-  const { data: turmaDisciplinas, error: tdError } = await supabase
-    .from("turma_disciplinas")
-    .select("id, turma_id, disciplina_id")
-    .in("turma_id", turmaIds)
+  const [tdResult, matResult] = await Promise.all([
+    supabase
+      .from("turma_disciplinas")
+      .select("id, turma_id, disciplina_id")
+      .in("turma_id", turmaIds),
+    supabase
+      .from("matriculas")
+      .select("turma_id")
+      .in("turma_id", turmaIds)
+      .eq("status", "ativa"),
+  ])
 
-  if (tdError) {
-    return turmas?.map((t) => ({ ...t, disciplinas: [], totalAlunos: 0 })) || []
-  }
+  const turmaDisciplinas = tdResult.data || []
+  const matriculas = matResult.data || []
 
-  // Buscar disciplinas
-  const disciplinaIds = [...new Set(turmaDisciplinas?.map((td) => td.disciplina_id) || [])]
-  
+  const disciplinaIds = [...new Set(turmaDisciplinas.map((td) => td.disciplina_id))]
+
   const { data: disciplinas } = await supabase
     .from("disciplinas")
     .select("id, nome, codigo")
     .in("id", disciplinaIds)
 
-  // Buscar contagem de matriculas por turma
-  const { data: matriculas } = await supabase
-    .from("matriculas")
-    .select("turma_id")
-    .in("turma_id", turmaIds)
-    .eq("status", "ativa")
+  const disciplinasMap = new Map(disciplinas?.map((d) => [d.id, d]) || [])
 
-  // Organizar dados
-  const turmasComDisciplinas = turmas?.map((turma) => {
+  return turmas.map((turma) => {
     const disciplinasDaTurma = turmaDisciplinas
-      ?.filter((td) => td.turma_id === turma.id)
-      .map((td) => disciplinas?.find((d) => d.id === td.disciplina_id))
-      .filter(Boolean) || []
+      .filter((td) => td.turma_id === turma.id)
+      .map((td) => disciplinasMap.get(td.disciplina_id))
+      .filter((d): d is NonNullable<typeof d> => !!d)
 
-    const totalAlunos = matriculas?.filter((m) => m.turma_id === turma.id).length || 0
+    const totalAlunos = matriculas.filter((m) => m.turma_id === turma.id).length
 
-    return {
-      ...turma,
-      disciplinas: disciplinasDaTurma,
-      totalAlunos,
-    }
+    return { ...turma, disciplinas: disciplinasDaTurma, totalAlunos }
   })
-
-  return turmasComDisciplinas || []
 }
 
 export default async function NotasPage() {
@@ -100,7 +117,7 @@ export default async function NotasPage() {
     redirect("/auth/login")
   }
 
-  const turmas = await getTurmasComDisciplinas()
+  const turmas = await getTurmasComDisciplinas(supabase)
 
   return (
     <>
@@ -147,7 +164,7 @@ export default async function NotasPage() {
                         Disciplinas
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {turma.disciplinas.map((disciplina: any) => (
+                        {turma.disciplinas.map((disciplina) => (
                           <Link
                             key={disciplina.id}
                             href={`/notas/${turma.id}/${disciplina.id}`}
@@ -165,6 +182,6 @@ export default async function NotasPage() {
             ))}
           </div>
         )}
-      </>
+    </>
   )
 }

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next dev",
     "dev:local": "dotenv -e .env.local -- next dev",
     "lint": "eslint .",
     "start": "next start",
@@ -88,6 +88,7 @@
     "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "19.2.3",
     "bcryptjs": "^3.0.3",
+    "cross-env": "^10.1.0",
     "dotenv-cli": "11.0.0",
     "postcss": "8.5.15",
     "supabase": "2.107.0",
@@ -96,4 +97,3 @@
     "typescript": "6.0.3"
   }
 }
-
