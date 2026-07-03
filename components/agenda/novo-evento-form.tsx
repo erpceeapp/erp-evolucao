@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -26,6 +26,7 @@ export function NovoEventoForm() {
     hora_inicio: "",
     hora_fim: "",
     tipo_evento: "",
+    dia_inteiro: false,
     turma_id: "",
     professor_id: "",
   })
@@ -43,8 +44,8 @@ export function NovoEventoForm() {
           descricao: formData.descricao,
           data_inicio: formData.data_inicio,
           data_fim: formData.data_fim || formData.data_inicio,
-          hora_inicio: formData.hora_inicio || null,
-          hora_fim: formData.hora_fim || null,
+          hora_inicio: formData.dia_inteiro ? null : (formData.hora_inicio || null),
+          hora_fim: formData.dia_inteiro ? null : (formData.hora_fim || null),
           tipo_evento: formData.tipo_evento,
           turma_id: formData.turma_id || null,
           professor_id: formData.professor_id || null,
@@ -76,13 +77,12 @@ export function NovoEventoForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="descricao">Descrição</Label>
-        <Textarea
-          id="descricao"
+        <Label>Descrição</Label>
+        <RichTextEditor
           value={formData.descricao}
-          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+          onChange={(html) => setFormData({ ...formData, descricao: html })}
           placeholder="Descreva os detalhes do evento..."
-          rows={3}
+          minHeight={120}
         />
       </div>
 
@@ -109,6 +109,18 @@ export function NovoEventoForm() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="dia_inteiro"
+          checked={formData.dia_inteiro}
+          onChange={(e) => setFormData({ ...formData, dia_inteiro: e.target.checked, hora_inicio: "", hora_fim: "" })}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="dia_inteiro" className="cursor-pointer">Dia Inteiro</Label>
+      </div>
+
+      {!formData.dia_inteiro && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="hora_inicio">Hora de Início</Label>
@@ -130,6 +142,7 @@ export function NovoEventoForm() {
           />
         </div>
       </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="tipo_evento">Tipo de Evento *</Label>
@@ -146,6 +159,7 @@ export function NovoEventoForm() {
             <SelectItem value="reuniao">Reunião</SelectItem>
             <SelectItem value="evento">Evento Escolar</SelectItem>
             <SelectItem value="feriado">Feriado</SelectItem>
+            <SelectItem value="aviso_pais">Aviso aos Pais</SelectItem>
           </SelectContent>
         </Select>
       </div>
