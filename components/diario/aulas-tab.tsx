@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Plus, Calendar, Clock, Eye } from "lucide-react"
+import { BookOpen, Plus, Calendar, Clock, Eye, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -75,21 +75,33 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-gray-600 line-clamp-2">
-                          {aula.conteudo || "Sem conteúdo registrado"}
+                          {aula.conteudo ? aula.conteudo.replace(/<[^>]*>/g, "") : "Sem conteúdo registrado"}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/diario/${turmaId}/${disciplinaId}/presencas/${aula.id}`)
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Chamada
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/diario/${turmaId}/${disciplinaId}/aulas/${aula.id}/editar`)
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/diario/${turmaId}/${disciplinaId}/presencas/${aula.id}`)
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver Chamada
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
