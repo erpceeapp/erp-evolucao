@@ -263,7 +263,15 @@ export default function AulaDetalhePage({
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Conteúdo Ministrado</p>
                   </div>
-                  <p className="text-sm text-muted-foreground pl-6">{aula.conteudo_ministrado}</p>
+                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.conteudo_ministrado }} />
+                </div>
+              )}
+              {aula.observacoes && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium">Observações</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.observacoes }} />
                 </div>
               )}
             </CardContent>

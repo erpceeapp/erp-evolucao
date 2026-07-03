@@ -5,13 +5,18 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim()
+}
 
 interface NovaAulaFormProps {
   turmaDisciplina: any
   duracaoPadrao?: number
+  aula?: any
 }
 
 function calcHoraFim(inicio: string, duracaoMin: number): string {
@@ -22,15 +27,20 @@ function calcHoraFim(inicio: string, duracaoMin: number): string {
   return `${String(nh).padStart(2, "0")}:${String(nm).padStart(2, "0")}`
 }
 
-export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50 }: NovaAulaFormProps) {
+function toTimeInput(value: string): string {
+  return value ? value.slice(0, 5) : ""
+}
+
+export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50, aula }: NovaAulaFormProps) {
   const router = useRouter()
+  const isEditing = !!aula
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    data_aula: "",
-    hora_inicio: "",
-    hora_fim: "",
-    conteudo: "",
-    observacoes: "",
+    data_aula: aula?.data_aula || "",
+    hora_inicio: toTimeInput(aula?.hora_inicio) || "",
+    hora_fim: toTimeInput(aula?.hora_fim) || "",
+    conteudo: aula?.conteudo || "",
+    observacoes: aula?.observacoes || "",
   })
 
   const handleHoraInicioChange = (hora: string) => {
@@ -45,29 +55,45 @@ export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50 }: 
     e.preventDefault()
     setLoading(true)
 
+    if (!stripHtml(formData.conteudo)) {
+      toast.error("O campo Conteudo Ministrado e obrigatorio.")
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
 
-      const { error } = await supabase.from("aulas").insert({
+      const payload = {
         turma_disciplina_id: turmaDisciplina.id,
         data_aula: formData.data_aula,
         hora_inicio: formData.hora_inicio,
         hora_fim: formData.hora_fim,
         conteudo: formData.conteudo,
-        observacoes: formData.observacoes || null,
-      })
+        observacoes: formData.observacoes ? stripHtml(formData.observacoes) ? formData.observacoes : null : null,
+      }
+
+      let error
+
+      if (isEditing) {
+        ;({ error } = await supabase.from("aulas").update(payload).eq("id", aula.id))
+      } else {
+        ;({ error } = await supabase.from("aulas").insert(payload))
+      }
 
       if (error) throw error
 
-      toast.success("Aula registrada com sucesso!")
+      toast.success(isEditing ? "Aula atualizada com sucesso!" : "Aula registrada com sucesso!")
       router.push(`/diario/${turmaDisciplina.turmas.id}/${turmaDisciplina.disciplinas.id}`)
       router.refresh()
     } catch (error) {
-      toast.error("Erro ao registrar aula. Tente novamente.")
+      toast.error(isEditing ? "Erro ao atualizar aula. Tente novamente." : "Erro ao registrar aula. Tente novamente.")
     } finally {
       setLoading(false)
     }
   }
+
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -81,7 +107,7 @@ export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50 }: 
             <span className="font-medium">Disciplina:</span> {turmaDisciplina.disciplinas.nome}
           </div>
           <div>
-            <span className="font-medium">Professor:</span> {turmaDisciplina.professores.nome_completo}
+            <span className="font-medium">Professor:</span> {turmaDisciplina.professores?.nome_completo || "Sem professor"}
           </div>
         </div>
       </div>
@@ -122,31 +148,28 @@ export default function NovaAulaFormV2({ turmaDisciplina, duracaoPadrao = 50 }: 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="conteudo">Conteúdo Ministrado *</Label>
-        <Textarea
-          id="conteudo"
-          placeholder="Descreva o conteúdo que foi ministrado na aula..."
+        <Label>Conteúdo Ministrado *</Label>
+        <RichTextEditor
           value={formData.conteudo}
-          onChange={(e) => setFormData((prev) => ({ ...prev, conteudo: e.target.value }))}
-          rows={4}
-          required
+          onChange={(html) => setFormData((prev) => ({ ...prev, conteudo: html }))}
+          placeholder="Descreva o conteúdo que foi ministrado na aula..."
+          minHeight={200}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="observacoes">Observações</Label>
-        <Textarea
-          id="observacoes"
-          placeholder="Observações adicionais sobre a aula (opcional)..."
+        <Label>Observações</Label>
+        <RichTextEditor
           value={formData.observacoes}
-          onChange={(e) => setFormData((prev) => ({ ...prev, observacoes: e.target.value }))}
-          rows={3}
+          onChange={(html) => setFormData((prev) => ({ ...prev, observacoes: html }))}
+          placeholder="Observações adicionais sobre a aula (opcional)..."
+          minHeight={120}
         />
       </div>
 
       <div className="flex gap-4 pt-4">
         <Button type="submit" disabled={loading} className="bg-cyan-600 hover:bg-cyan-700">
-          {loading ? "Salvando..." : "Registrar Aula"}
+          {loading ? "Salvando..." : isEditing ? "Salvar Alterações" : "Registrar Aula"}
         </Button>
         <Button
           type="button"
