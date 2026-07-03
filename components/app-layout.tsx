@@ -36,7 +36,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <Toaster richColors position="top-right" />
       <AppSidebar />
       <main className={cn("transition-all duration-300 min-h-screen", isCollapsed ? "ml-16" : "ml-64")}>
-        <div className="p-6">{children}</div>
+        <div className="px-6 pb-6">{children}</div>
       </main>
     </div>
   )

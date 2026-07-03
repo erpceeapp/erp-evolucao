@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -603,7 +603,7 @@ export default function AgendaAlunoDetailPage() {
                   </Badge>
                 </div>
                 {selectedAviso.descricao && (
-                  <p className="text-gray-600 whitespace-pre-wrap">{selectedAviso.descricao}</p>
+                  <div className="prose prose-sm max-w-none text-gray-600 max-h-60 overflow-y-auto" dangerouslySetInnerHTML={{ __html: selectedAviso.descricao }} />
                 )}
               </div>
 
@@ -701,12 +701,11 @@ export default function AgendaAlunoDetailPage() {
 
             <div className="space-y-2">
               <Label htmlFor="descricao">Descricao</Label>
-              <Textarea
-                id="descricao"
+              <RichTextEditor
                 value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, descricao: html })}
                 placeholder="Descreva detalhes do aviso..."
-                rows={4}
+                minHeight={120}
               />
             </div>
           </div>

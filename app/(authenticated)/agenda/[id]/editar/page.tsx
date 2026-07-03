@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
+import { DescricaoField } from "@/components/agenda/descricao-field"
+import { DiaInteiroField } from "@/components/agenda/dia-inteiro-field"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -48,8 +49,9 @@ export default async function EditarEventoPage({ params }: PageProps) {
     const descricao = formData.get("descricao") as string
     const data_inicio = formData.get("data_inicio") as string
     const data_fim = formData.get("data_fim") as string
-    const hora_inicio = formData.get("hora_inicio") as string
-    const hora_fim = formData.get("hora_fim") as string
+    const dia_inteiro = formData.get("dia_inteiro") === "true"
+    const hora_inicio = dia_inteiro ? null : (formData.get("hora_inicio") as string)
+    const hora_fim = dia_inteiro ? null : (formData.get("hora_fim") as string)
 
     const { error } = await supabase
       .from("eventos")
@@ -105,14 +107,8 @@ export default async function EditarEventoPage({ params }: PageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                name="descricao"
-                defaultValue={evento.descricao || ""}
-                placeholder="Detalhes sobre o evento..."
-                rows={4}
-              />
+              <Label>Descrição</Label>
+              <DescricaoField defaultValue={evento.descricao || ""} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -129,23 +125,11 @@ export default async function EditarEventoPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="hora_inicio" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Hora Início
-                </Label>
-                <Input id="hora_inicio" name="hora_inicio" type="time" defaultValue={evento.hora_inicio || ""} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="hora_fim" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Hora Fim
-                </Label>
-                <Input id="hora_fim" name="hora_fim" type="time" defaultValue={evento.hora_fim || ""} />
-              </div>
-            </div>
+            <DiaInteiroField
+              allDay={!evento.hora_inicio}
+              horaInicioDefault={evento.hora_inicio || ""}
+              horaFimDefault={evento.hora_fim || ""}
+            />
 
             <div className="flex gap-3 justify-end pt-4">
               <Link href="/agenda">

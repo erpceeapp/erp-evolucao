@@ -28,6 +28,14 @@ export default async function AlunosPage({
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  const currentUserTipo = profile?.tipo_usuario || ""
+
   const params = await searchParams
   const busca = sanitizeSearchParam(params.busca)
   const status = sanitizeSearchParam(params.status) || "ativo"
@@ -97,6 +105,7 @@ export default async function AlunosPage({
                 totalCount={count || 0}
                 busca={busca}
                 status={status}
+                currentUserTipo={currentUserTipo}
               />
             </Suspense>
           </CardContent>

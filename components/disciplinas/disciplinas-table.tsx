@@ -5,11 +5,25 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, Clock, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
+import { Search, Edit, Eye, Trash2, Clock, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
+import { deleteDisciplina } from "@/app/(authenticated)/disciplinas/actions"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 interface Disciplina {
   id: string
@@ -35,9 +49,10 @@ interface DisciplinasTableProps {
   status: string
   sortBy: string
   sortOrder: string
+  currentUserTipo: string
 }
 
-export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSize, totalCount, busca, status, sortBy, sortOrder }: DisciplinasTableProps) {
+export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSize, totalCount, busca, status, sortBy, sortOrder, currentUserTipo }: DisciplinasTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -90,6 +105,16 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSiz
   const SortIcon = ({ column }: { column: string }) => {
     if (sortBy !== column) return <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
     return sortOrder === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+  }
+
+  const handleDelete = async (disciplinaId: string) => {
+    const result = await deleteDisciplina(disciplinaId)
+    if (result.error) {
+      toast.error(translateError(result.error))
+    } else {
+      toast.success("Disciplina excluída com sucesso")
+      router.refresh()
+    }
   }
 
   const handleSort = (column: string) => {
@@ -227,6 +252,32 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSiz
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {["admin", "diretor"].includes(currentUserTipo) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Disciplina</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                A disciplina será removida permanentemente, incluindo todas as associações com turmas e professores. Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(disciplina.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -33,6 +33,14 @@ export default async function DisciplinasPage({
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  const currentUserTipo = profile?.tipo_usuario || ""
+
   // Parâmetros de busca
   const busca = sanitizeSearchParam(params.busca)
   const status = sanitizeSearchParam(params.status) || "ativo"
@@ -133,6 +141,7 @@ export default async function DisciplinasPage({
                 status={status}
                 sortBy={finalSortBy}
                 sortOrder={sortOrder}
+                currentUserTipo={currentUserTipo}
               />
             </Suspense>
           </CardContent>

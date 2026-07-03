@@ -24,7 +24,7 @@ export function PageHeader({
   children 
 }: PageHeaderProps) {
   return (
-    <div className="bg-white border-b border-gray-200 -mx-6 -mt-6 px-6 h-16 mb-6 flex items-center justify-between gap-4">
+    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 -mx-6 px-6 h-16 mb-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-4 min-w-0 flex-1">
         {showBackButton && <BackButton backHref={backHref} />}
         <div className="bg-blue-600 p-2.5 rounded-lg shrink-0">

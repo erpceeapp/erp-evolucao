@@ -31,6 +31,14 @@ export default async function TurmasPage({
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", data.user.id)
+    .single()
+
+  const currentUserTipo = profile?.tipo_usuario || ""
+
   // Parâmetros de busca
   const busca = sanitizeSearchParam(params.busca)
   const ano = sanitizeSearchParam(params.ano) || String(new Date().getFullYear())
@@ -156,6 +164,7 @@ export default async function TurmasPage({
                 busca={busca}
                 ano={ano}
                 status={status}
+                currentUserTipo={currentUserTipo}
               />
             </Suspense>
           </CardContent>

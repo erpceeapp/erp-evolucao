@@ -5,12 +5,26 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Eye, Users, X } from "lucide-react"
+import { Search, Edit, Eye, Trash2, Users, X } from "lucide-react"
+import { deleteTurma } from "@/app/(authenticated)/turmas/actions"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
+import { translateError } from "@/lib/error-messages"
 
 interface Turma {
   id: string
@@ -36,9 +50,10 @@ interface TurmasTableProps {
   busca: string
   ano: string
   status: string
+  currentUserTipo: string
 }
 
-export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCount, busca, ano, status }: TurmasTableProps) {
+export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCount, busca, ano, status, currentUserTipo }: TurmasTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
@@ -100,6 +115,16 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
     params.set("limit", size.toString())
     params.set("page", "1")
     router.push(`/turmas?${params.toString()}`)
+  }
+
+  const handleDelete = async (turmaId: string) => {
+    const result = await deleteTurma(turmaId)
+    if (result.error) {
+      toast.error(translateError(result.error))
+    } else {
+      toast.success("Turma excluída com sucesso")
+      router.refresh()
+    }
   }
 
   const getTurnoLabel = (turno: string) => {
@@ -227,6 +252,32 @@ export function TurmasTable({ turmas, currentPage, totalPages, pageSize, totalCo
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {["admin", "diretor"].includes(currentUserTipo) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Turma</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Isso removerá todas as matrículas associadas a esta turma. Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(turma.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -1,23 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from 'next/navigation'
-import { BookOpen } from 'lucide-react'
+import { redirect } from "next/navigation"
+import { BookOpen } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHeader from "@/components/page-header"
 import NovaAulaForm from "@/components/diario/nova-aula-form-v2"
-
-function calcDuracaoPadrao(gradeHorarios: { hora_inicio: string; hora_fim: string }[]): number {
-  if (gradeHorarios.length === 0) return 50
-  const duracaoMin = Math.round(
-    (gradeHorarios
-      .map((g) => {
-        const [hi, mi] = g.hora_inicio.split(":").map(Number)
-        const [hf, mf] = g.hora_fim.split(":").map(Number)
-        return hf * 60 + mf - (hi * 60 + mi)
-      })
-      .reduce((a, b) => a + b, 0)) / gradeHorarios.length
-  )
-  return duracaoMin > 0 ? duracaoMin : 50
-}
 
 async function getTurmaDisciplina(turmaId: string, disciplinaId: string) {
   const supabase = await createServerClient()
@@ -47,6 +33,19 @@ async function getTurmaDisciplina(turmaId: string, disciplinaId: string) {
   }
 }
 
+async function getAula(aulaId: string, turmaDisciplinaId: string) {
+  const supabase = await createServerClient()
+
+  const { data } = await supabase
+    .from("aulas")
+    .select("*")
+    .eq("id", aulaId)
+    .eq("turma_disciplina_id", turmaDisciplinaId)
+    .single()
+
+  return data
+}
+
 async function getDuracaoPadrao(turmaDisciplinaId: string): Promise<number> {
   const supabase = await createServerClient()
 
@@ -55,15 +54,27 @@ async function getDuracaoPadrao(turmaDisciplinaId: string): Promise<number> {
     .select("hora_inicio, hora_fim")
     .eq("turma_disciplina_id", turmaDisciplinaId)
 
-  return calcDuracaoPadrao(gradeHorarios || [])
+  if (!gradeHorarios || gradeHorarios.length === 0) return 50
+
+  const duracaoMin = Math.round(
+    (gradeHorarios
+      .map((g) => {
+        const [hi, mi] = g.hora_inicio.split(":").map(Number)
+        const [hf, mf] = g.hora_fim.split(":").map(Number)
+        return hf * 60 + mf - (hi * 60 + mi)
+      })
+      .reduce((a, b) => a + b, 0)) / gradeHorarios.length
+  )
+
+  return duracaoMin > 0 ? duracaoMin : 50
 }
 
-export default async function NovaAulaPage({
+export default async function EditarAulaPage({
   params,
 }: {
-  params: Promise<{ turmaId: string; disciplinaId: string }>
+  params: Promise<{ turmaId: string; disciplinaId: string; aulaId: string }>
 }) {
-  const { turmaId, disciplinaId } = await params
+  const { turmaId, disciplinaId, aulaId } = await params
   const supabase = await createServerClient()
 
   const {
@@ -79,13 +90,19 @@ export default async function NovaAulaPage({
     redirect("/diario")
   }
 
+  const aula = await getAula(aulaId, turmaDisciplina.id)
+
+  if (!aula) {
+    redirect(`/diario/${turmaId}/${disciplinaId}`)
+  }
+
   const duracaoPadrao = await getDuracaoPadrao(turmaDisciplina.id)
 
   return (
     <>
       <PageHeader
         icon={BookOpen}
-        title={`Nova Aula - ${(turmaDisciplina as any).disciplinas.nome}`}
+        title={`Editar Aula - ${(turmaDisciplina as any).disciplinas.nome}`}
         description={`${(turmaDisciplina as any).turmas.nome} - Prof. ${(turmaDisciplina as any).professores?.nome_completo || "Sem professor"}`}
         backHref={`/diario/${turmaId}/${disciplinaId}`}
       />
@@ -95,7 +112,7 @@ export default async function NovaAulaPage({
           <CardTitle>Dados da Aula</CardTitle>
         </CardHeader>
         <CardContent>
-          <NovaAulaForm turmaDisciplina={turmaDisciplina} duracaoPadrao={duracaoPadrao} />
+          <NovaAulaForm turmaDisciplina={turmaDisciplina} duracaoPadrao={duracaoPadrao} aula={aula} />
         </CardContent>
       </Card>
     </>

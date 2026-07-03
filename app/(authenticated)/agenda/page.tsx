@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import {
@@ -54,6 +54,7 @@ export default function AgendaPage() {
     hora_inicio: "",
     hora_fim: "",
     tipo_evento: "",
+    dia_inteiro: false,
   })
   const [saving, setSaving] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -65,6 +66,7 @@ export default function AgendaPage() {
     hora_inicio: "",
     hora_fim: "",
     tipo_evento: "",
+    dia_inteiro: false,
   })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
@@ -181,6 +183,7 @@ export default function AgendaPage() {
       hora_inicio: "",
       hora_fim: "",
       tipo_evento: "",
+      dia_inteiro: false,
     })
     setIsNewEventOpen(true)
   }
@@ -231,8 +234,8 @@ export default function AgendaPage() {
       descricao: newEventForm.descricao || null,
       data_inicio: newEventForm.data_inicio,
       data_fim: newEventForm.data_fim || null,
-      hora_inicio: newEventForm.hora_inicio || null,
-      hora_fim: newEventForm.hora_fim || null,
+      hora_inicio: newEventForm.dia_inteiro ? null : (newEventForm.hora_inicio || null),
+      hora_fim: newEventForm.dia_inteiro ? null : (newEventForm.hora_fim || null),
       tipo_evento: newEventForm.tipo_evento,
     })
 
@@ -258,6 +261,7 @@ export default function AgendaPage() {
       hora_inicio: evento.hora_inicio || "",
       hora_fim: evento.hora_fim || "",
       tipo_evento: evento.tipo_evento || "",
+      dia_inteiro: !evento.hora_inicio,
     })
     setIsModalOpen(false)
     setIsEditModalOpen(true)
@@ -279,8 +283,8 @@ export default function AgendaPage() {
       descricao: editForm.descricao || null,
       data_inicio: editForm.data_inicio,
       data_fim: editForm.data_fim || null,
-      hora_inicio: editForm.hora_inicio || null,
-      hora_fim: editForm.hora_fim || null,
+      hora_inicio: editForm.dia_inteiro ? null : (editForm.hora_inicio || null),
+      hora_fim: editForm.dia_inteiro ? null : (editForm.hora_fim || null),
       tipo_evento: editForm.tipo_evento,
     })
 
@@ -360,6 +364,7 @@ export default function AgendaPage() {
                   hora_inicio: "",
                   hora_fim: "",
                   tipo_evento: "",
+                  dia_inteiro: false,
                 })
                 setIsNewEventOpen(true)
               }}
@@ -504,6 +509,7 @@ export default function AgendaPage() {
                 <SelectItem value="reuniao">Reunião</SelectItem>
                 <SelectItem value="evento">Evento Escolar</SelectItem>
                 <SelectItem value="feriado">Feriado</SelectItem>
+                <SelectItem value="aviso_pais">Aviso aos Pais</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -620,7 +626,7 @@ export default function AgendaPage() {
                     {selectedEvento.tipo_evento}
                   </Badge>
                 </div>
-                {selectedEvento.descricao && <p className="text-gray-600">{selectedEvento.descricao}</p>}
+                {selectedEvento.descricao && <div className="prose prose-sm max-w-none text-gray-600 max-h-60 overflow-y-auto" dangerouslySetInnerHTML={{ __html: selectedEvento.descricao }} />}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -752,13 +758,12 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="novo-descricao">Descrição</Label>
-              <Textarea
-                id="novo-descricao"
+              <Label>Descrição</Label>
+              <RichTextEditor
                 value={newEventForm.descricao}
-                onChange={(e) => setNewEventForm({ ...newEventForm, descricao: e.target.value })}
+                onChange={(html) => setNewEventForm({ ...newEventForm, descricao: html })}
                 placeholder="Descreva os detalhes do evento..."
-                rows={3}
+                minHeight={120}
               />
             </div>
 
@@ -783,6 +788,18 @@ export default function AgendaPage() {
               </div>
             </div>
 
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="novo-dia-inteiro"
+                checked={newEventForm.dia_inteiro}
+                onChange={(e) => setNewEventForm({ ...newEventForm, dia_inteiro: e.target.checked, hora_inicio: "", hora_fim: "" })}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="novo-dia-inteiro" className="cursor-pointer">Dia Inteiro</Label>
+            </div>
+
+            {!newEventForm.dia_inteiro && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="novo-hora-inicio">Hora de Início</Label>
@@ -803,6 +820,7 @@ export default function AgendaPage() {
                 />
               </div>
             </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="novo-tipo">Tipo de Evento *</Label>
@@ -819,6 +837,7 @@ export default function AgendaPage() {
                   <SelectItem value="reuniao">Reunião</SelectItem>
                   <SelectItem value="evento">Evento Escolar</SelectItem>
                   <SelectItem value="feriado">Feriado</SelectItem>
+                  <SelectItem value="aviso_pais">Aviso aos Pais</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -853,13 +872,12 @@ export default function AgendaPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-descricao">Descrição</Label>
-              <Textarea
-                id="edit-descricao"
+              <Label>Descrição</Label>
+              <RichTextEditor
                 value={editForm.descricao}
-                onChange={(e) => setEditForm({ ...editForm, descricao: e.target.value })}
+                onChange={(html) => setEditForm({ ...editForm, descricao: html })}
                 placeholder="Descreva os detalhes do evento..."
-                rows={3}
+                minHeight={120}
               />
             </div>
 
@@ -884,6 +902,18 @@ export default function AgendaPage() {
               </div>
             </div>
 
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="edit-dia-inteiro"
+                checked={editForm.dia_inteiro}
+                onChange={(e) => setEditForm({ ...editForm, dia_inteiro: e.target.checked, hora_inicio: "", hora_fim: "" })}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="edit-dia-inteiro" className="cursor-pointer">Dia Inteiro</Label>
+            </div>
+
+            {!editForm.dia_inteiro && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-hora-inicio">Hora de Início</Label>
@@ -904,6 +934,7 @@ export default function AgendaPage() {
                 />
               </div>
             </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-tipo">Tipo de Evento *</Label>
@@ -920,6 +951,7 @@ export default function AgendaPage() {
                   <SelectItem value="reuniao">Reunião</SelectItem>
                   <SelectItem value="evento">Evento Escolar</SelectItem>
                   <SelectItem value="feriado">Feriado</SelectItem>
+                  <SelectItem value="aviso_pais">Aviso aos Pais</SelectItem>
                 </SelectContent>
               </Select>
             </div>

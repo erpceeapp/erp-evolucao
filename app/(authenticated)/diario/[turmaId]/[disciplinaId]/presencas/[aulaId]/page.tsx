@@ -37,7 +37,9 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   const [turmaRes, disciplinaRes, professorRes] = await Promise.all([
     supabase.from("turmas").select("nome, serie").eq("id", turmaId).single(),
     supabase.from("disciplinas").select("nome").eq("id", disciplinaId).single(),
-    supabase.from("professores").select("nome_completo").eq("id", turmaDisciplina.professor_id).single(),
+    turmaDisciplina.professor_id
+      ? supabase.from("professores").select("nome_completo").eq("id", turmaDisciplina.professor_id).single()
+      : Promise.resolve({ data: null, error: null }),
   ])
 
   const { data: matriculas } = await supabase
@@ -72,7 +74,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
 
     const { data: novasPresencas, error } = await supabase
       .from("presencas")
-      .insert(presencasParaCriar)
+      .upsert(presencasParaCriar, { onConflict: "aula_id,aluno_id" })
       .select("id, presente, aluno_id, justificativa")
 
     if (error) {
@@ -261,7 +263,15 @@ export default function AulaDetalhePage({
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Conteúdo Ministrado</p>
                   </div>
-                  <p className="text-sm text-muted-foreground pl-6">{aula.conteudo_ministrado}</p>
+                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.conteudo_ministrado }} />
+                </div>
+              )}
+              {aula.observacoes && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium">Observações</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.observacoes }} />
                 </div>
               )}
             </CardContent>
@@ -393,7 +403,7 @@ export default function AulaDetalhePage({
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Professor</p>
-                <p className="text-sm">{professor.nome_completo}</p>
+                <p className="text-sm">{professor?.nome_completo || "Sem professor"}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Turma</p>
