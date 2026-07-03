@@ -150,6 +150,7 @@ export const TIPO_CORES: Record<string, string> = {
   prova: "#9333ea",
   evento: "#0891b2",
   aviso: "#ca8a04",
+  aviso_pais: "#ca8a04",
   out: "#6b7280",
 }
 
