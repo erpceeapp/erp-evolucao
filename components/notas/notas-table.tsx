@@ -124,11 +124,6 @@ export function NotasTable({
         for (let bimestre = 1; bimestre <= 4; bimestre++) {
           const notaValue = notas[matriculaId][bimestre]
           if (notaValue !== "") {
-            // Buscar nota existente no banco para obter o ID correto
-            const notaExistente = notasExistentes.find(
-              (n) => n.matricula_id === matriculaId && n.bimestre === bimestre
-            )
-
             notasToSave.push({
               matricula_id: matriculaId,
               disciplina_id: disciplinaId,
@@ -142,7 +137,6 @@ export function NotasTable({
       }
 
       if (notasToSave.length > 0) {
-        // Usar upsert para inserir ou atualizar baseado na constraint UNIQUE
         const { error } = await supabase
           .from("notas")
           .upsert(notasToSave, {
@@ -191,12 +185,12 @@ export function NotasTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[200px]">Aluno</TableHead>
-                <TableHead className="min-w-[120px]">Matrícula</TableHead>
-                <TableHead className="text-center">1º Bim</TableHead>
-                <TableHead className="text-center">2º Bim</TableHead>
-                <TableHead className="text-center">3º Bim</TableHead>
-                <TableHead className="text-center">4º Bim</TableHead>
-                <TableHead className="text-center">Média</TableHead>
+                <TableHead className="min-w-[120px]">Matricula</TableHead>
+                <TableHead className="text-center">1o Bim</TableHead>
+                <TableHead className="text-center">2o Bim</TableHead>
+                <TableHead className="text-center">3o Bim</TableHead>
+                <TableHead className="text-center">4o Bim</TableHead>
+                <TableHead className="text-center">Media</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
