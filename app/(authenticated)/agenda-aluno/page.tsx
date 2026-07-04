@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookUser } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AgendaAlunoTable } from "@/components/agenda-aluno/agenda-aluno-table"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 import { getProfessorFilter } from "@/lib/professor-filter"
@@ -118,6 +119,14 @@ export default async function AgendaAlunoPage({
         title="Agenda do Aluno"
         subtitle="Registre avisos, ocorrências e comunicados individuais para os alunos"
         backHref="/dashboard"
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda do Aluno" },
+        ]}
+        className="mt-2"
       />
 
       <Card>

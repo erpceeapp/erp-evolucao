@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { LinkIcon } from "lucide-react"
 import { LinksDocumentosManager } from "@/components/configuracoes/links-documentos-manager"
 
@@ -28,6 +29,14 @@ export default async function LinksDocumentosPage() {
         title="Links de Documentos"
         subtitle="Gerencie os links de documentos que aparecem no dashboard"
         backHref="/configuracoes"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Links e Documentos" },
+        ]}
+        className="mt-2"
       />
 
       <LinksDocumentosManager />

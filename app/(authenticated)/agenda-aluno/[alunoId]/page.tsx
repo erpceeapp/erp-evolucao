@@ -49,6 +49,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AgendaRbc } from "@/components/agenda/agenda-rbc"
 import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { useParams } from "next/navigation"
@@ -316,6 +317,14 @@ export default function AgendaAlunoDetailPage() {
           subtitle="Carregando..."
           backHref="/agenda-aluno"
         />
+        <BreadcrumbNav
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Agenda do Aluno", href: "/agenda-aluno" },
+            { label: "Detalhes" },
+          ]}
+          className="mt-2"
+        />
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600" />
         </div>
@@ -332,6 +341,14 @@ export default function AgendaAlunoDetailPage() {
           subtitle="Aluno nao encontrado"
           backHref="/agenda-aluno"
         />
+        <BreadcrumbNav
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Agenda do Aluno", href: "/agenda-aluno" },
+            { label: "Detalhes" },
+          ]}
+          className="mt-2"
+        />
       </>
     )
   }
@@ -343,6 +360,14 @@ export default function AgendaAlunoDetailPage() {
         title={`Agenda - ${aluno.nome_completo}`}
         subtitle="Avisos, ocorrencias e comunicados do aluno"
         backHref="/agenda-aluno"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda do Aluno", href: "/agenda-aluno" },
+          { label: aluno?.nome_completo || "Detalhes" },
+        ]}
+        className="mt-2"
       />
       <div className="space-y-6">
       {/* Card com dados do aluno */}

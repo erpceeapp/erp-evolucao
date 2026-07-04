@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DiarioTurmasView } from "./diario-turmas-view"
 import { getProfessorFilter } from "@/lib/professor-filter"
 
@@ -121,6 +122,13 @@ export default async function DiarioPage() {
             </Link>
           </Button>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe" },
+        ]}
+        className="mt-2"
       />
 
       {turmasSemDisciplinas.length > 0 && (

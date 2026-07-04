@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient()
@@ -108,6 +109,14 @@ export default async function ConfiguracoesPage() {
         title="Configurações"
         subtitle="Gerencie as configurações do sistema"
         backHref="/dashboard"
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes" },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

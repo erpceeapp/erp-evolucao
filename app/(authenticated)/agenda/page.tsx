@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AgendaRbc } from "@/components/agenda/agenda-rbc"
 import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toast } from "sonner"
@@ -374,6 +375,14 @@ export default function AgendaPage() {
             </Button>
           ) : undefined
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda Escolar" },
+        ]}
+        className="mt-2"
       />
 
       <div className="space-y-4">

@@ -13,6 +13,7 @@ import { translateError } from "@/lib/error-messages"
 import { User, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 interface Profile {
   id: string
@@ -179,6 +180,13 @@ export default function PerfilPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={User} title="Meu Perfil" subtitle="Atualize suas informações pessoais" backHref="/dashboard" />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Perfil" },
+        ]}
+        className="mt-2"
+      />
 
       <Card>
         <CardHeader>

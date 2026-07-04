@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { BookOpen } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { TurmaForm } from "@/components/turmas/turma-form"
 
 export default async function EditarTurmaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,6 +35,16 @@ export default async function EditarTurmaPage({ params }: { params: Promise<{ id
         title="Editar Turma"
         description={`Atualize os dados de ${turma.nome}`}
         backHref={`/turmas/${id}`}
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Turmas", href: "/turmas" },
+          { label: turma.nome, href: `/turmas/${turma.id}` },
+          { label: "Editar" },
+        ]}
+        className="mt-2"
       />
 
       <TurmaForm turma={turma} professores={professores || []} isEditing={true} />

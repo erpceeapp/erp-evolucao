@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { ExportBoletimButton } from "@/components/notas/export-boletim-button"
 
 async function getAlunoNotasData(alunoId: string) {
@@ -157,6 +158,14 @@ export default async function AlunoNotasPage({ params }: { params: Promise<{ alu
         title={`Notas - ${aluno.nome_completo}`}
         subtitle={`Matricula: ${aluno.matricula || "N/A"} | Serie: ${aluno.nivel || "N/A"}${turma ? ` | Turma: ${turma}` : ""}`}
         backHref="/notas"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Notas", href: "/notas" },
+          { label: aluno.nome_completo },
+        ]}
+        className="mt-2"
       />
       <Card>
           <CardHeader>

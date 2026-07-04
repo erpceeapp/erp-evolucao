@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { GraduationCap } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { ProfessorForm } from "@/components/professores/professor-form"
 
 export default async function EditarProfessorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,6 +32,15 @@ export default async function EditarProfessorPage({ params }: { params: Promise<
         title="Editar Professor"
         description={`Atualize os dados de ${professor.nome_completo}`}
         backHref={`/professores/${id}`}
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Professores", href: "/professores" },
+          { label: professor.nome_completo, href: `/professores/${id}` },
+          { label: "Editar" },
+        ]}
+        className="mt-2"
       />
 
       <ProfessorForm professor={professor} isEditing={true} />

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Calendar, Plus, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
@@ -245,6 +246,14 @@ export default function CalendarioLetivoPage() {
     return (
       <div className="space-y-6">
         <PageHeader icon={Calendar} title="Calendário Letivo" subtitle="Gerencie períodos letivos, férias e feriados" backHref="/configuracoes" />
+        <BreadcrumbNav
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Configuracoes", href: "/configuracoes" },
+            { label: "Calendario Letivo" },
+          ]}
+          className="mt-2"
+        />
         <div className="text-center py-12 text-gray-500">Carregando...</div>
       </div>
     )
@@ -253,6 +262,14 @@ export default function CalendarioLetivoPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={Calendar} title="Calendário Letivo" subtitle="Gerencie períodos letivos, férias e feriados" backHref="/configuracoes" />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Calendario Letivo" },
+        ]}
+        className="mt-2"
+      />
 
       <div className="grid gap-6">
         <Card>

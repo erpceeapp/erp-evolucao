@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { NotasTable } from "@/components/notas/notas-table"
 
 async function getNotasData(turmaId: string, disciplinaId: string) {
@@ -116,6 +117,15 @@ export default async function NotasDetailPage({
         title={`Notas - ${data.disciplina.nome}`}
         subtitle={`${data.turma.nome} (${data.turma.serie}) - ${data.turma.ano_letivo}`}
         backHref="/notas"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Notas", href: "/notas" },
+          { label: data.turma.nome },
+          { label: data.disciplina.nome },
+        ]}
+        className="mt-2"
       />
       <NotasTable
         turmaId={turmaId}

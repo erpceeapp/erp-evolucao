@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { TurmasTable } from "@/components/turmas/turmas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -142,6 +143,14 @@ export default async function TurmasPage({
             )}
           </div>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Turmas" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

@@ -9,6 +9,7 @@ import { CheckCircle2, Save, Settings } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 
@@ -196,6 +197,14 @@ export default function CamposObrigatoriosPage() {
           subtitle="Configure quais campos são obrigatórios no cadastro de alunos"
           backHref="/configuracoes"
         />
+        <BreadcrumbNav
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Configuracoes", href: "/configuracoes" },
+            { label: "Campos Obrigatorios" },
+          ]}
+          className="mt-2"
+        />
         <Card className="w-full max-w-md mx-auto">
           <CardHeader>
             <CardTitle className="text-red-600">Acesso Negado</CardTitle>
@@ -212,7 +221,15 @@ export default function CamposObrigatoriosPage() {
         icon={Settings}
         title="Campos Obrigatórios - Cadastro de Alunos"
         subtitle="Defina quais campos são obrigatórios no formulário de cadastro"
-        backHref="/configuracoes"
+          backHref="/configuracoes"
+        />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Campos Obrigatorios" },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid gap-6">

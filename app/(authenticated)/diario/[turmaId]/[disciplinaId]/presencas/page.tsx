@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 async function getPresencasHistorico(turmaId: string, disciplinaId: string) {
@@ -99,15 +100,16 @@ export default async function HistoricoPresencasPage({
         title="Histórico de Presenças"
         description={`${disciplina.nome} - ${turma.nome} - Prof. ${professor.nome_completo}`}
         backHref={`/diario/${turmaId}/${disciplinaId}`}
-      >
-        <Button asChild>
-          <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Nova Chamada
-          </Link>
-        </Button>
-      </PageHeader>
-
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          { label: `${turma.nome} / ${disciplina.nome}`, href: `/diario/${turmaId}/${disciplinaId}` },
+          { label: "Historico de Presencas" },
+        ]}
+        className="mt-2"
+      />
       {aulas.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">

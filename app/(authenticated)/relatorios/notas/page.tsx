@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getNotasRelatorio() {
   const supabase = await createServerClient()
@@ -45,6 +46,14 @@ export default async function RelatorioNotasPage() {
         title="Relatório de Notas"
         subtitle="Desempenho acadêmico dos alunos"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Notas" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">

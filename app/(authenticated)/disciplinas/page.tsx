@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, ArrowLeft, Book } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DisciplinasTable } from "@/components/disciplinas/disciplinas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -118,6 +119,13 @@ export default async function DisciplinasPage({
             )}
           </div>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Disciplinas", href: "/disciplinas" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

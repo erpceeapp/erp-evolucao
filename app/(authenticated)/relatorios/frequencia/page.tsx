@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getFrequenciaRelatorio() {
   const supabase = await createServerClient()
@@ -44,6 +45,14 @@ export default async function RelatorioFrequenciaPage() {
         title="Relatório de Frequência"
         subtitle="Frequência dos alunos por turma e disciplina"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Frequencia" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">

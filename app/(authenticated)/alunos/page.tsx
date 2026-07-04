@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, Users } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AlunosTable } from "@/components/alunos/alunos-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -84,6 +85,13 @@ export default async function AlunosPage({
             </Link>
           </Button>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Alunos", href: "/alunos" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

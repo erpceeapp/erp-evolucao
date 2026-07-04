@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, UserCheck } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { MatriculasTable } from "@/components/matriculas/matriculas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -99,6 +100,14 @@ export default async function MatriculasPage({
             </Link>
           </Button>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Matriculas" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

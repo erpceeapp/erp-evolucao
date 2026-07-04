@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { salvarAulaPresenca } from "../../actions"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 interface Aluno {
   id: string
@@ -243,6 +244,15 @@ export default function PresencaPage({
           </Button>
         </div>
       </div>
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Presenca", href: "/presenca" },
+          { label: turmaDisciplina?.turmas.nome || "Turma" },
+          { label: turmaDisciplina?.disciplinas.nome || "Disciplina" },
+        ]}
+        className="mt-2"
+      />
 
       {alunos.length === 0 ? (
         <Card>

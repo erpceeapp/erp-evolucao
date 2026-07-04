@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
@@ -79,6 +80,13 @@ export default async function PresencaPage() {
         title="Controle de Presença"
         subtitle="Registre e gerencie a frequência dos alunos"
         backHref="/dashboard"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Presenca" },
+        ]}
+        className="mt-2"
       />
       <Card>
           <CardHeader>

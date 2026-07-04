@@ -3,10 +3,11 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, FileText, BookUser } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { ExportAlunoPDFWrapper } from "@/components/alunos/export-aluno-pdf-wrapper"
 
 export default async function AlunoDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -83,6 +84,14 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
             </Button>
           </div>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Alunos", href: "/alunos" },
+          { label: aluno.nome_completo },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -204,9 +213,7 @@ export default async function AlunoDetalhePage({ params }: { params: Promise<{ i
                 <CardTitle>Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <Badge variant={aluno.ativo ? "default" : "secondary"} className="text-sm">
-                  {aluno.ativo ? "Ativo" : "Inativo"}
-                </Badge>
+                <AtivoStatusBadge ativo={aluno.ativo} className="text-sm" />
               </CardContent>
             </Card>
 

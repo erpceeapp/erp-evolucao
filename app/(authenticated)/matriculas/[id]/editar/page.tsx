@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { UserCheck } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { MatriculaForm } from "@/components/matriculas/matricula-form"
 
 export default async function EditarMatriculaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -46,6 +47,15 @@ export default async function EditarMatriculaPage({ params }: { params: Promise<
         title="Editar Matrícula"
         description={`Atualize os dados da matrícula #${matricula.numero_matricula}`}
         backHref={`/matriculas/${id}`}
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Matriculas", href: "/matriculas" },
+          { label: "Editar Matricula" },
+        ]}
+        className="mt-2"
       />
 
       <MatriculaForm matricula={matricula} alunos={alunos || []} turmas={turmas || []} isEditing={true} />

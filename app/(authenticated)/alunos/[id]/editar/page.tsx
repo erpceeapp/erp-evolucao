@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Users } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AlunoForm } from "@/components/alunos/aluno-form"
 
 export default async function EditarAlunoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +29,15 @@ export default async function EditarAlunoPage({ params }: { params: Promise<{ id
         title="Editar Aluno"
         description={`Atualize os dados de ${aluno.nome_completo}`}
         backHref={`/alunos/${id}`}
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Alunos", href: "/alunos" },
+          { label: aluno.nome_completo, href: `/alunos/${id}` },
+          { label: "Editar" },
+        ]}
+        className="mt-2"
       />
 
       <AlunoForm aluno={aluno} isEditing={true} />

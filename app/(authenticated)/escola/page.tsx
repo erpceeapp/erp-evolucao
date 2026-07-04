@@ -10,6 +10,7 @@ import { Building2, Save } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { saveEscolaData } from "./actions"
 import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
@@ -205,6 +206,13 @@ export default function EscolaPage() {
         title="Dados da Escola"
         subtitle="Configure as informações básicas da sua instituição de ensino"
         backHref="/configuracoes"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Escola" },
+        ]}
+        className="mt-2"
       />
 
       <Card>

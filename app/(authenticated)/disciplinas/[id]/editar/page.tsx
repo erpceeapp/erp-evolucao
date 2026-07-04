@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DisciplinaForm } from "@/components/disciplinas/disciplina-form"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { BookOpen } from "lucide-react"
 
 export default async function EditarDisciplinaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,6 +36,15 @@ export default async function EditarDisciplinaPage({ params }: { params: Promise
         title="Editar Disciplina"
         subtitle={`Editando: ${disciplina.nome}`}
         backHref="/disciplinas"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Disciplinas", href: "/disciplinas" },
+          { label: disciplina.nome, href: `/disciplinas/${id}` },
+          { label: "Editar" },
+        ]}
+        className="mt-2"
       />
 
       <DisciplinaForm disciplina={disciplina} isEditing />

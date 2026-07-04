@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Users } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { UsuarioForm } from "@/components/usuarios/usuario-form"
 
 const ALLOWED_ROLES = ["admin", "diretor", "coordenacao", "secretaria"]
@@ -31,6 +32,14 @@ export default async function NovoUsuarioPage() {
         title="Novo Usuário"
         description="Preencha os dados para criar um novo usuario no sistema"
         backHref="/usuarios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Usuarios", href: "/usuarios" },
+          { label: "Novo Usuario" },
+        ]}
+        className="mt-2"
       />
 
       <UsuarioForm />

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getProfessoresRelatorio() {
   const supabase = await createServerClient()
@@ -63,6 +65,14 @@ export default async function RelatorioProfessoresPage() {
         title="Relatório de Professores"
         subtitle="Lista completa de professores cadastrados"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Professores" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">
@@ -127,9 +137,7 @@ export default async function RelatorioProfessoresPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={professor.ativo ? "default" : "secondary"}>
-                        {professor.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+                      <AtivoStatusBadge ativo={professor.ativo} />
                     </TableCell>
                   </TableRow>
                 ))}

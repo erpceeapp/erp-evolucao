@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DescricaoField } from "@/components/agenda/descricao-field"
 import { DiaInteiroField } from "@/components/agenda/dia-inteiro-field"
 
@@ -82,6 +83,15 @@ export default async function EditarEventoPage({ params }: PageProps) {
           </Button>
         </Link>
       </div>
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda Escolar", href: "/agenda" },
+          { label: "Editar Evento" },
+        ]}
+        className="mt-2 mb-6"
+      />
 
       <Card>
         <CardHeader>
