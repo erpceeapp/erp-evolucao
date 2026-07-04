@@ -131,7 +131,11 @@ export default function EscolaPage() {
 
   const loadEscolaData = async () => {
     try {
-      const { data, error } = await supabase.from("escola").select("*").limit(1).single()
+      const { data, error } = await supabase
+        .from("escola")
+        .select("nome, logradouro, numero, complemento, cidade, estado, cep, cnpj, telefone, telefone2, email, site")
+        .limit(1)
+        .single()
 
       if (error) {
         console.log("Nenhum registro encontrado na tabela escola")

@@ -30,7 +30,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: Promis
   // Buscar dados da disciplina
   const { data: disciplina, error: disciplinaError } = await supabase
     .from("disciplinas")
-    .select("*")
+    .select("id, nome, codigo, descricao, carga_horaria, ativo, created_at, updated_at")
     .eq("id", id)
     .single()
 

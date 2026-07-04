@@ -132,7 +132,7 @@ export default function AgendaAlunoDetailPage() {
     // Buscar aluno
     const { data: alunoData } = await supabase
       .from("alunos")
-      .select("*")
+      .select("nome_completo, cpf, telefone, email, nome_responsavel, telefone_responsavel")
       .eq("id", alunoId)
       .single()
 
@@ -141,7 +141,7 @@ export default function AgendaAlunoDetailPage() {
     // Buscar avisos
     const { data: avisosData, error } = await supabase
       .from("avisos_aluno")
-      .select("*")
+      .select("id, titulo, descricao, data_aviso, hora_aviso, tipo_aviso")
       .eq("aluno_id", alunoId)
       .order("data_aviso", { ascending: false })
 
@@ -151,7 +151,7 @@ export default function AgendaAlunoDetailPage() {
 
     setAvisos(avisosData || [])
 
-    // Buscar perodos letivos
+    // Buscar periodos letivos
     const { data: periodosData } = await supabase
       .from("periodos_letivos")
       .select("data_inicio, data_fim")
@@ -541,7 +541,7 @@ export default function AgendaAlunoDetailPage() {
                     <TableHead>Categoria</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Horário</TableHead>
-                    <TableHead className="w-[120px]">Ações</TableHead>
+                    <TableHead className="w-30">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

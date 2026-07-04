@@ -16,7 +16,7 @@ async function getProfessoresRelatorio() {
   // Buscar todos os professores
   const { data: professores, error: professoresError } = await supabase
     .from("professores")
-    .select("*")
+    .select("id, nome_completo, email, telefone, formacao, ativo")
     .order("nome_completo", { ascending: true })
 
   if (professoresError) {
@@ -29,7 +29,7 @@ async function getProfessoresRelatorio() {
   // Buscar disciplinas dos professores usando a view
   const { data: profDisciplinas, error: profDisciplinasError } = await supabase
     .from("vw_professores_disciplinas")
-    .select("*")
+    .select("professor_id, disciplina_nome")
 
   if (profDisciplinasError) {
     console.error("[v0] Erro ao buscar disciplinas dos professores:", profDisciplinasError)

@@ -15,7 +15,7 @@ async function getMatriculasRelatorio() {
   // Usar a view vw_alunos_matriculados que já tem as informações combinadas
   const { data: matriculas, error: matriculasError } = await supabase
     .from("vw_alunos_matriculados")
-    .select("*")
+    .select("matricula_id, nome_completo, numero_matricula, turma_nome, serie, turno, ano_letivo, status_matricula")
     .order("nome_completo", { ascending: true })
 
   if (matriculasError) {

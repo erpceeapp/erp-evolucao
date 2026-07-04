@@ -35,7 +35,7 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
   // Buscar dados do professor
   const { data: professor, error: professorError } = await supabase
     .from("professores")
-    .select("*")
+    .select("id, nome_completo, email, cpf, rg, data_nascimento, endereco, telefone, formacao, especializacao, registro_profissional, data_admissao, salario, ativo, created_at, updated_at")
     .eq("id", id)
     .single()
 

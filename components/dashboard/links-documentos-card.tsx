@@ -47,7 +47,7 @@ export function LinksDocumentosCard() {
       try {
         const { data, error } = await supabase
           .from("links_documentos")
-          .select("*")
+          .select("id, titulo, url, descricao, icone, cor, ordem")
           .eq("ativo", true)
           .order("ordem", { ascending: true })
 

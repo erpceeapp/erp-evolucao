@@ -128,7 +128,7 @@ export default function AgendaPage() {
 
   async function loadEventos() {
     const [eventosRes, periodosRes] = await Promise.all([
-      supabase.from("eventos").select("*").order("data_inicio", { ascending: true }),
+      supabase.from("eventos").select("id, titulo, descricao, data_inicio, data_fim, hora_inicio, hora_fim, tipo_evento, local").order("data_inicio", { ascending: true }),
       supabase.from("periodos_letivos").select("data_inicio, data_fim").eq("ativo", true),
     ])
 
@@ -546,7 +546,7 @@ export default function AgendaPage() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Horário</TableHead>
-                    {!isProfessor && <TableHead className="w-[100px]">Ações</TableHead>}
+                    {!isProfessor && <TableHead className="w-25">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>

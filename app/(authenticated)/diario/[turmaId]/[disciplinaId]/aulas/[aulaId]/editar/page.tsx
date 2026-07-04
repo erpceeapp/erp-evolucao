@@ -39,7 +39,7 @@ async function getAula(aulaId: string, turmaDisciplinaId: string) {
 
   const { data } = await supabase
     .from("aulas")
-    .select("*")
+    .select("id, data_aula, hora_inicio, hora_fim, conteudo, observacoes")
     .eq("id", aulaId)
     .eq("turma_disciplina_id", turmaDisciplinaId)
     .single()

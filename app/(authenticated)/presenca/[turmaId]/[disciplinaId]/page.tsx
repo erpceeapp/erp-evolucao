@@ -55,7 +55,7 @@ export default function PresencaPage({
     try {
       const { data: tdData, error: tdError } = await supabase
         .from("turma_disciplinas")
-        .select("*")
+        .select("id, professor_id")
         .eq("turma_id", p.turmaId)
         .eq("disciplina_id", p.disciplinaId)
         .single()

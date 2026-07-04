@@ -30,10 +30,10 @@ type PeriodoLetivo = {
 type EventoCalendario = {
   id: string
   titulo: string
-  descricao: string | null
+  descricao?: string | null
   data_inicio: string
   data_fim: string | null
-  tipo_evento: string
+  tipo_evento?: string
 }
 
 function formatDate(dateStr: string) {
@@ -63,9 +63,9 @@ export default function CalendarioLetivoPage() {
 
   async function reloadData() {
     const [periodosRes, feriasRes, feriadosRes] = await Promise.all([
-      supabase.from("periodos_letivos").select("*").order("ano_letivo", { ascending: false }).order("numero_periodo"),
-      supabase.from("eventos").select("*").eq("tipo_evento", "ferias").order("data_inicio"),
-      supabase.from("eventos").select("*").eq("tipo_evento", "feriado").order("data_inicio"),
+      supabase.from("periodos_letivos").select("id, ano_letivo, numero_periodo, nome, data_inicio, data_fim, ativo").order("ano_letivo", { ascending: false }).order("numero_periodo"),
+      supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "ferias").order("data_inicio"),
+      supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "feriado").order("data_inicio"),
     ])
     if (periodosRes.data) setPeriodos(periodosRes.data)
     if (feriasRes.data) setFerias(feriasRes.data)
@@ -84,9 +84,9 @@ export default function CalendarioLetivoPage() {
       }
 
       const [periodosRes, feriasRes, feriadosRes] = await Promise.all([
-        supabase.from("periodos_letivos").select("*").order("ano_letivo", { ascending: false }).order("numero_periodo"),
-        supabase.from("eventos").select("*").eq("tipo_evento", "ferias").order("data_inicio"),
-        supabase.from("eventos").select("*").eq("tipo_evento", "feriado").order("data_inicio"),
+        supabase.from("periodos_letivos").select("id, ano_letivo, numero_periodo, nome, data_inicio, data_fim, ativo").order("ano_letivo", { ascending: false }).order("numero_periodo"),
+        supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "ferias").order("data_inicio"),
+        supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "feriado").order("data_inicio"),
       ])
       if (periodosRes.data) setPeriodos(periodosRes.data)
       if (feriasRes.data) setFerias(feriasRes.data)

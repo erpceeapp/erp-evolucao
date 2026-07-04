@@ -15,7 +15,7 @@ async function getFrequenciaRelatorio() {
   // Usar a view vw_frequencia_alunos que já calcula a frequência
   const { data: frequencias, error: frequenciasError } = await supabase
     .from("vw_frequencia_alunos")
-    .select("*")
+    .select("aluno_nome, turma_nome, disciplina_nome, total_aulas, presencas, faltas, percentual_presenca")
     .order("aluno_nome", { ascending: true })
 
   if (frequenciasError) {

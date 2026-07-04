@@ -34,7 +34,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       supabase.from("professores").select("id, nome_completo").eq("id", turmaDisciplinas.professor_id).single(),
       supabase
         .from("aulas")
-        .select("*")
+        .select("id, data_aula, hora_inicio, hora_fim, conteudo")
         .eq("turma_disciplina_id", turmaDisciplinas.id)
         .order("data_aula", { ascending: false }),
       supabase
@@ -62,7 +62,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     // Buscar períodos letivos
     const { data: periodos } = await supabase
       .from("periodos_letivos")
-      .select("*")
+      .select("id, numero_periodo, nome, data_inicio, data_fim")
       .eq("ano_letivo", turmaRes.data.ano_letivo)
       .order("numero_periodo")
 

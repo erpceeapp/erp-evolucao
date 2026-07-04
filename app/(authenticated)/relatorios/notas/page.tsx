@@ -15,7 +15,7 @@ async function getNotasRelatorio() {
   // Usar a view vw_notas_alunos que já tem as informações combinadas
   const { data: notas, error: notasError } = await supabase
     .from("vw_notas_alunos")
-    .select("*")
+    .select("aluno_nome, turma_nome, disciplina_codigo, disciplina_nome, bimestre, tipo_avaliacao, nota, data_avaliacao")
     .order("aluno_nome", { ascending: true })
     .order("bimestre", { ascending: true })
 

@@ -15,7 +15,11 @@ export default async function EditarTurmaPage({ params }: { params: Promise<{ id
   }
 
   // Buscar dados da turma
-  const { data: turma, error: turmaError } = await supabase.from("turmas").select("*").eq("id", id).single()
+  const { data: turma, error: turmaError } = await supabase
+    .from("turmas")
+    .select("id, nome, ano_letivo, serie, turno, capacidade_maxima, professor_responsavel_id, ativo")
+    .eq("id", id)
+    .single()
 
   if (turmaError || !turma) {
     notFound()

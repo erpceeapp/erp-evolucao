@@ -44,7 +44,7 @@ export default async function AlunosPage({
   const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar alunos
-  let query = supabase.from("alunos").select("*", { count: "exact" }).order("nome_completo")
+  let query = supabase.from("alunos").select("id, nome_completo, matricula, data_nascimento, cpf, email, ativo, nome_responsavel, created_at", { count: "exact" }).order("nome_completo")
 
   // Aplicar filtros
   if (busca) {

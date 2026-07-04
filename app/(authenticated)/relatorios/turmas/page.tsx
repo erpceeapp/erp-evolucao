@@ -16,7 +16,7 @@ async function getTurmasRelatorio() {
   // Buscar todas as turmas
   const { data: turmas, error: turmasError } = await supabase
     .from("turmas")
-    .select("*")
+    .select("id, nome, serie, turno, ano_letivo, capacidade_maxima, ativo")
     .order("nome", { ascending: true })
 
   if (turmasError) {

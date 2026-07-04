@@ -17,7 +17,7 @@ export default async function EditarProfessorPage({ params }: { params: Promise<
   // Buscar dados do professor
   const { data: professor, error: professorError } = await supabase
     .from("professores")
-    .select("*")
+    .select("id, nome_completo, cpf, rg, data_nascimento, endereco, telefone, email, formacao, especializacao, registro_profissional, data_admissao, salario, ativo")
     .eq("id", id)
     .single()
 

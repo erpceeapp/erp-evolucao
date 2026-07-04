@@ -16,7 +16,7 @@ async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
   const filter = await getProfessorFilter()
 
-  let tdQuery = supabase.from("turma_disciplinas").select("*")
+  let tdQuery = supabase.from("turma_disciplinas").select("turma_id, disciplina_id, professor_id")
   if (filter.isProfessor && filter.professorId) {
     tdQuery = tdQuery.eq("professor_id", filter.professorId)
   }
@@ -82,13 +82,13 @@ async function getTurmasComDisciplinas() {
   const turmasSemDisciplinas = todasTurmas?.filter((t) => !turmasComDisciplinasIds.includes(t.id)) || []
 
   // Combinar dados das turmas com disciplinas
-  const turmasComDisciplinas = turmasDisciplinas.map((td) => {
+  const turmasComDisciplinas: any[] = turmasDisciplinas.map((td: any) => {
     const turma = todasTurmas?.find((t) => t.id === td.turma_id)
     return {
       ...td,
-      turmas: turma,
-      disciplinas: disciplinas?.find((d) => d.id === td.disciplina_id),
-      professores: professores?.find((p) => p.id === td.professor_id),
+      turmas: turma ?? null,
+      disciplinas: disciplinas?.find((d) => d.id === td.disciplina_id) ?? null,
+      professores: professores?.find((p) => p.id === td.professor_id) ?? null,
     }
   })
 

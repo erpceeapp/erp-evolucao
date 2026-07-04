@@ -44,7 +44,7 @@ export default async function MatriculasPage({
     .from("matriculas")
     .select(
       `
-      *,
+      id, numero_matricula, status, data_matricula, ano_letivo, created_at,
       aluno:alunos!matriculas_aluno_id_fkey(nome_completo, cpf),
       turma:turmas!matriculas_turma_id_fkey(nome, serie, ano_letivo)
     `,
@@ -74,7 +74,7 @@ export default async function MatriculasPage({
   const to = from + itemsPerPage - 1
   query = query.range(from, to)
 
-  const { data: matriculas, count, error: matriculasError } = await query
+  const { data: matriculas, count, error: matriculasError } = await (query as any)
 
   if (matriculasError) {
     console.error("Erro ao buscar matrículas:", matriculasError)

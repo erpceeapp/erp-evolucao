@@ -15,7 +15,7 @@ async function getTurmasComDisciplinas() {
   // Buscar turma_disciplinas
   const { data: turmasDisciplinas, error: tdError } = await supabase
     .from("turma_disciplinas")
-    .select("*")
+    .select("turma_id, disciplina_id, professor_id")
 
   if (tdError) {
     console.error("Erro ao buscar turma_disciplinas:", tdError)

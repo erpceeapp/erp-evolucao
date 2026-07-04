@@ -39,13 +39,13 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
     .from("matriculas")
     .select(
       `
-      *,
-      aluno:alunos!matriculas_aluno_id_fkey(*),
-      turma:turmas!matriculas_turma_id_fkey(*, professor_responsavel:professores!turmas_professor_responsavel_fkey(nome_completo))
+      id, numero_matricula, status, data_matricula, ano_letivo, observacoes, created_at, updated_at,
+      aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, data_nascimento, cpf, email, nome_responsavel),
+      turma:turmas!matriculas_turma_id_fkey(id, nome, serie, turno, capacidade_maxima, professor_responsavel:professores!turmas_professor_responsavel_fkey(nome_completo))
     `,
     )
     .eq("id", id)
-    .single()
+    .single() as any
 
   if (matriculaError || !matricula) {
     notFound()

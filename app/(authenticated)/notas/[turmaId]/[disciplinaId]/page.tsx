@@ -12,8 +12,8 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
   const supabase = await createServerClient()
 
   const [turmaResult, disciplinaResult] = await Promise.all([
-    supabase.from("turmas").select("*").eq("id", turmaId).single(),
-    supabase.from("disciplinas").select("*").eq("id", disciplinaId).single(),
+    supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
+    supabase.from("disciplinas").select("id, nome").eq("id", disciplinaId).single(),
   ])
 
   if (turmaResult.error || disciplinaResult.error) {
@@ -61,7 +61,7 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
   const matriculaIds = matriculas?.map((m) => m.id) || []
   const { data: notas, error: notasError } = await supabase
     .from("notas")
-    .select("*")
+    .select("id, matricula_id, disciplina_id, bimestre, nota, tipo_avaliacao, observacoes, data_avaliacao")
     .eq("disciplina_id", disciplinaId)
     .in("matricula_id", matriculaIds)
 

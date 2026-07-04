@@ -67,6 +67,7 @@ export interface Database {
           nivel: string | null
           periodo_letivo: string | null
           turno_preferencial: string | null
+          matricula: string | null
           observacoes: string | null
           ativo: boolean
           created_at: string

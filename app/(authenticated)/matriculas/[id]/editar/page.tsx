@@ -17,7 +17,7 @@ export default async function EditarMatriculaPage({ params }: { params: Promise<
   // Buscar dados da matrícula
   const { data: matricula, error: matriculaError } = await supabase
     .from("matriculas")
-    .select("*")
+    .select("id, numero_matricula, aluno_id, turma_id, ano_letivo, data_matricula, status, observacoes")
     .eq("id", id)
     .single()
 

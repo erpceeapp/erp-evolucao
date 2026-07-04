@@ -21,7 +21,7 @@ export default async function EditarDisciplinaPage({ params }: { params: Promise
 
   const { data: disciplina, error: disciplinaError } = await supabase
     .from("disciplinas")
-    .select("*")
+    .select("id, nome, codigo, descricao, carga_horaria, ativo, professor_id")
     .eq("id", id)
     .single()
 

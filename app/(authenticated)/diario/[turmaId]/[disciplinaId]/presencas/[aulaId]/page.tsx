@@ -20,7 +20,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   const supabase = createClient()
 
   // Buscar aula
-  const { data: aula } = await supabase.from("aulas").select("*").eq("id", aulaId).single()
+  const { data: aula } = await supabase.from("aulas").select("data_aula, hora_inicio, hora_fim, conteudo_ministrado, observacoes").eq("id", aulaId).single()
 
   if (!aula) return null
 
