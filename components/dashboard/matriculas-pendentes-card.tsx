@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { MatriculaStatusBadge } from "@/components/ui/matricula-status-badge"
 import { AlertTriangle } from "lucide-react"
 
 export async function MatriculasPendentesCard() {
@@ -26,20 +26,6 @@ export async function MatriculasPendentesCard() {
   const alunos = new Map((alunosRes.data || []).map((a) => [a.id, a.nome_completo]))
   const turmas = new Map((turmasRes.data || []).map((t) => [t.id, t.nome]))
 
-  const statusLabels: Record<string, string> = {
-    transferida: "Transferida",
-    cancelada: "Cancelada",
-    concluida: "Concluída",
-    trancada: "Trancada",
-  }
-
-  const statusColors: Record<string, string> = {
-    transferida: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-    cancelada: "bg-red-100 text-red-800 hover:bg-red-100",
-    concluida: "bg-green-100 text-green-800 hover:bg-green-100",
-    trancada: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -56,9 +42,7 @@ export async function MatriculasPendentesCard() {
                 <div className="font-medium truncate">{alunos.get(m.aluno_id) || "—"}</div>
                 <div className="text-gray-500 text-xs">{turmas.get(m.turma_id) || "—"}</div>
               </div>
-              <Badge className={statusColors[m.status] || ""} variant="outline">
-                {statusLabels[m.status] || m.status}
-              </Badge>
+              <MatriculaStatusBadge status={m.status} />
             </div>
           ))}
         </div>

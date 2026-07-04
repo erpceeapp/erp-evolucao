@@ -198,7 +198,8 @@ export function isNotaValida(nota: number): boolean {
 export function getStatusBadge(status: string): { label: string; color: string } {
   const statusMap: Record<string, { label: string; color: string }> = {
     ativa: { label: "Ativa", color: "bg-green-100 text-green-800" },
-    cancelada: { label: "Cancelada", color: "bg-red-100 text-red-800" },
+    transferida: { label: "Transferida", color: "bg-purple-100 text-purple-800" },
+    cancelada: { label: "Cancelada", color: "bg-orange-100 text-orange-800" },
     trancada: { label: "Trancada", color: "bg-yellow-100 text-yellow-800" },
     concluida: { label: "Concluída", color: "bg-blue-100 text-blue-800" },
   }

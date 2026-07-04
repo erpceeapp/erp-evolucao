@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { MatriculaStatusBadge } from "@/components/ui/matricula-status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Edit, Eye, Trash2, X } from "lucide-react"
@@ -133,21 +133,7 @@ export function MatriculasTable({
     return new Date(dateString).toLocaleDateString("pt-BR")
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-      ativa: { label: "Ativa", variant: "default" },
-      transferida: { label: "Transferida", variant: "secondary" },
-      cancelada: { label: "Cancelada", variant: "destructive" },
-      concluida: { label: "Concluída", variant: "secondary" },
-    }
-
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return (
-      <Badge variant={config.variant} className="capitalize">
-        {config.label}
-      </Badge>
-    )
-  }
+  const getStatusBadge = (status: string) => <MatriculaStatusBadge status={status} />
 
   const currentYear = new Date().getFullYear()
   const availableYears = Array.from({ length: 8 }, (_, i) => currentYear - 3 + i)
