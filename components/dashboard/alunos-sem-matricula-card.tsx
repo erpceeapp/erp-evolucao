@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserX } from "lucide-react"
+import { AlunosSemMatriculaTable } from "./alunos-sem-matricula-table"
 
 export async function AlunosSemMatriculaCard() {
   const supabase = await createClient()
@@ -40,16 +41,7 @@ export async function AlunosSemMatriculaCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {semMatricula.map((aluno) => (
-            <div key={aluno.id} className="flex items-center justify-between text-sm">
-              <span>{aluno.nome_completo}</span>
-              {aluno.matricula && (
-                <span className="text-gray-400 font-mono text-xs">{aluno.matricula}</span>
-              )}
-            </div>
-          ))}
-        </div>
+        <AlunosSemMatriculaTable data={semMatricula} />
       </CardContent>
     </Card>
   )

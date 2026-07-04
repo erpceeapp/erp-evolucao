@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Cake } from "lucide-react"
+import { AniversariantesTable } from "./aniversariantes-table"
+
+const meses = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+]
 
 export async function AniversariantesCard() {
   const supabase = await createClient()
@@ -27,11 +33,6 @@ export async function AniversariantesCard() {
 
   if (aniversariantes.length === 0) return null
 
-  const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-  ]
-
   return (
     <Card>
       <CardHeader>
@@ -41,17 +42,7 @@ export async function AniversariantesCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          {aniversariantes.map((aluno) => {
-            const dia = new Date(aluno.data_nascimento).getDate()
-            return (
-              <div key={aluno.id} className="flex items-center justify-between text-sm">
-                <span>{aluno.nome_completo}</span>
-                <span className="text-gray-500 tabular-nums">{String(dia).padStart(2, "0")}</span>
-              </div>
-            )
-          })}
-        </div>
+        <AniversariantesTable data={aniversariantes} />
       </CardContent>
     </Card>
   )

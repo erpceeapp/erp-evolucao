@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DoorOpen } from "lucide-react"
+import { TurmasVagaTable } from "./turmas-vaga-table"
 
 export async function TurmasVagaCard() {
   const supabase = await createClient()
@@ -41,21 +42,7 @@ export async function TurmasVagaCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {comVaga.map((turma) => (
-            <div key={turma.id} className="flex items-center justify-between text-sm">
-              <div>
-                <span className="font-medium">{turma.nome}</span>
-                <span className="text-gray-500 ml-2">
-                  {turma.serie} · {turma.turno}
-                </span>
-              </div>
-              <span className="text-green-600 font-semibold tabular-nums">
-                {turma.vagas} vaga{turma.vagas !== 1 ? "s" : ""}
-              </span>
-            </div>
-          ))}
-        </div>
+        <TurmasVagaTable data={comVaga} />
       </CardContent>
     </Card>
   )
