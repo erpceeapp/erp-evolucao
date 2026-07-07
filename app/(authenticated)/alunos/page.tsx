@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, Users } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AlunosTable } from "@/components/alunos/alunos-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -43,7 +44,7 @@ export default async function AlunosPage({
   const itemsPerPage = validateLimitParam(params.limit)
 
   // Query para buscar alunos
-  let query = supabase.from("alunos").select("*", { count: "exact" }).order("nome_completo")
+  let query = supabase.from("alunos").select("id, nome_completo, matricula, data_nascimento, cpf, email, ativo, nome_responsavel, created_at", { count: "exact" }).order("nome_completo")
 
   // Aplicar filtros
   if (busca) {
@@ -84,6 +85,13 @@ export default async function AlunosPage({
             </Link>
           </Button>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Alunos", href: "/alunos" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

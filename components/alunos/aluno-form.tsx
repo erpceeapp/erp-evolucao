@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Save, Loader2 } from "lucide-react"
@@ -948,13 +948,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             {formData.uso_medicamento_continuo && (
               <div className="space-y-2 ml-6">
                 <Label htmlFor="medicamento_continuo_qual">Qual medicamento?</Label>
-                <Textarea
-                  id="medicamento_continuo_qual"
-                  name="medicamento_continuo_qual"
-                  rows={2}
-                  placeholder="Descreva o(s) medicamento(s) e a dosagem"
+                <RichTextEditor
                   value={formData.medicamento_continuo_qual}
-                  onChange={(e) => handleInputChange("medicamento_continuo_qual", e.target.value)}
+                  onChange={(html) => handleInputChange("medicamento_continuo_qual", html)}
+                  placeholder="Descreva o(s) medicamento(s) e a dosagem"
+                  minHeight={80}
                 />
               </div>
             )}
@@ -977,13 +975,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             {formData.alergia_medicamento && (
               <div className="space-y-2 ml-6">
                 <Label htmlFor="alergia_medicamento_qual">Qual medicamento?</Label>
-                <Textarea
-                  id="alergia_medicamento_qual"
-                  name="alergia_medicamento_qual"
-                  rows={2}
-                  placeholder="Descreva o(s) medicamento(s) que causam alergia"
+                <RichTextEditor
                   value={formData.alergia_medicamento_qual}
-                  onChange={(e) => handleInputChange("alergia_medicamento_qual", e.target.value)}
+                  onChange={(html) => handleInputChange("alergia_medicamento_qual", html)}
+                  placeholder="Descreva o(s) medicamento(s) que causam alergia"
+                  minHeight={80}
                 />
               </div>
             )}
@@ -1005,13 +1001,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
             {formData.alergia_alimento && (
               <div className="space-y-2 ml-6">
                 <Label htmlFor="alergia_alimento_qual">Qual alimento?</Label>
-                <Textarea
-                  id="alergia_alimento_qual"
-                  name="alergia_alimento_qual"
-                  rows={2}
-                  placeholder="Descreva o(s) alimento(s) que causam alergia"
+                <RichTextEditor
                   value={formData.alergia_alimento_qual}
-                  onChange={(e) => handleInputChange("alergia_alimento_qual", e.target.value)}
+                  onChange={(html) => handleInputChange("alergia_alimento_qual", html)}
+                  placeholder="Descreva o(s) alimento(s) que causam alergia"
+                  minHeight={80}
                 />
               </div>
             )}
@@ -1095,13 +1089,11 @@ export function AlunoForm({ aluno, isEditing = false }: AlunoFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              name="observacoes"
-              rows={4}
-              placeholder="Informações adicionais sobre o aluno ou a matrícula"
+            <RichTextEditor
               value={formData.observacoes}
-              onChange={(e) => handleInputChange("observacoes", e.target.value)}
+              onChange={(html) => handleInputChange("observacoes", html)}
+              placeholder="Informações adicionais sobre o aluno ou a matrícula"
+              minHeight={120}
             />
           </div>
 

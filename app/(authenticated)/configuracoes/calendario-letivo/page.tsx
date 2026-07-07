@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Switch } from "@/components/ui/switch"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Calendar, Plus, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
@@ -29,10 +30,10 @@ type PeriodoLetivo = {
 type EventoCalendario = {
   id: string
   titulo: string
-  descricao: string | null
+  descricao?: string | null
   data_inicio: string
   data_fim: string | null
-  tipo_evento: string
+  tipo_evento?: string
 }
 
 function formatDate(dateStr: string) {
@@ -62,9 +63,9 @@ export default function CalendarioLetivoPage() {
 
   async function reloadData() {
     const [periodosRes, feriasRes, feriadosRes] = await Promise.all([
-      supabase.from("periodos_letivos").select("*").order("ano_letivo", { ascending: false }).order("numero_periodo"),
-      supabase.from("eventos").select("*").eq("tipo_evento", "ferias").order("data_inicio"),
-      supabase.from("eventos").select("*").eq("tipo_evento", "feriado").order("data_inicio"),
+      supabase.from("periodos_letivos").select("id, ano_letivo, numero_periodo, nome, data_inicio, data_fim, ativo").order("ano_letivo", { ascending: false }).order("numero_periodo"),
+      supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "ferias").order("data_inicio"),
+      supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "feriado").order("data_inicio"),
     ])
     if (periodosRes.data) setPeriodos(periodosRes.data)
     if (feriasRes.data) setFerias(feriasRes.data)
@@ -83,9 +84,9 @@ export default function CalendarioLetivoPage() {
       }
 
       const [periodosRes, feriasRes, feriadosRes] = await Promise.all([
-        supabase.from("periodos_letivos").select("*").order("ano_letivo", { ascending: false }).order("numero_periodo"),
-        supabase.from("eventos").select("*").eq("tipo_evento", "ferias").order("data_inicio"),
-        supabase.from("eventos").select("*").eq("tipo_evento", "feriado").order("data_inicio"),
+        supabase.from("periodos_letivos").select("id, ano_letivo, numero_periodo, nome, data_inicio, data_fim, ativo").order("ano_letivo", { ascending: false }).order("numero_periodo"),
+        supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "ferias").order("data_inicio"),
+        supabase.from("eventos").select("id, titulo, data_inicio, data_fim").eq("tipo_evento", "feriado").order("data_inicio"),
       ])
       if (periodosRes.data) setPeriodos(periodosRes.data)
       if (feriasRes.data) setFerias(feriasRes.data)
@@ -245,6 +246,14 @@ export default function CalendarioLetivoPage() {
     return (
       <div className="space-y-6">
         <PageHeader icon={Calendar} title="Calendário Letivo" subtitle="Gerencie períodos letivos, férias e feriados" backHref="/configuracoes" />
+        <BreadcrumbNav
+          items={[
+            { label: "Inicio", href: "/dashboard" },
+            { label: "Configuracoes", href: "/configuracoes" },
+            { label: "Calendario Letivo" },
+          ]}
+          className="mt-2"
+        />
         <div className="text-center py-12 text-gray-500">Carregando...</div>
       </div>
     )
@@ -253,6 +262,14 @@ export default function CalendarioLetivoPage() {
   return (
     <div className="space-y-6">
       <PageHeader icon={Calendar} title="Calendário Letivo" subtitle="Gerencie períodos letivos, férias e feriados" backHref="/configuracoes" />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Calendario Letivo" },
+        ]}
+        className="mt-2"
+      />
 
       <div className="grid gap-6">
         <Card>

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getTurmasRelatorio() {
   const supabase = await createServerClient()
@@ -14,7 +16,7 @@ async function getTurmasRelatorio() {
   // Buscar todas as turmas
   const { data: turmas, error: turmasError } = await supabase
     .from("turmas")
-    .select("*")
+    .select("id, nome, serie, turno, ano_letivo, capacidade_maxima, ativo")
     .order("nome", { ascending: true })
 
   if (turmasError) {
@@ -83,6 +85,14 @@ export default async function RelatorioTurmasPage() {
         title="Relatório de Turmas"
         subtitle="Informações das turmas e disciplinas"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Turmas" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">
@@ -163,9 +173,7 @@ export default async function RelatorioTurmasPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={turma.ativo ? "default" : "secondary"}>
-                          {turma.ativo ? "Ativa" : "Inativa"}
-                        </Badge>
+                        <AtivoStatusBadge ativo={turma.ativo} labelAtivo="Ativa" labelInativo="Inativa" />
                       </TableCell>
                     </TableRow>
                   )

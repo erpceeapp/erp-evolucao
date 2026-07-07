@@ -3,10 +3,11 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { MatriculaStatusBadge } from "@/components/ui/matricula-status-badge"
 import { Edit, ArrowLeft, User, GraduationCap, Calendar, FileText, Hash, UserCheck } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DeleteMatriculaButton } from "@/components/matriculas/delete-matricula-button"
 
 export default async function MatriculaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,13 +39,13 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
     .from("matriculas")
     .select(
       `
-      *,
-      aluno:alunos(*),
-      turma:turmas(*, professor_responsavel:professores(nome_completo))
+      id, numero_matricula, status, data_matricula, ano_letivo, observacoes, created_at, updated_at,
+      aluno:alunos!matriculas_aluno_id_fkey(id, nome_completo, data_nascimento, cpf, email, nome_responsavel),
+      turma:turmas!matriculas_turma_id_fkey(id, nome, serie, turno, capacidade_maxima, professor_responsavel:professores!turmas_professor_responsavel_fkey(nome_completo))
     `,
     )
     .eq("id", id)
-    .single()
+    .single() as any
 
   if (matriculaError || !matricula) {
     notFound()
@@ -54,21 +55,7 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
     return new Date(dateString).toLocaleDateString("pt-BR")
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-      ativa: { label: "Ativa", variant: "default" },
-      transferida: { label: "Transferida", variant: "secondary" },
-      cancelada: { label: "Cancelada", variant: "destructive" },
-      concluida: { label: "Concluída", variant: "secondary" },
-    }
-
-    const config = statusConfig[status] || { label: status, variant: "secondary" }
-    return (
-      <Badge variant={config.variant} className="capitalize text-sm">
-        {config.label}
-      </Badge>
-    )
-  }
+  const getStatusBadge = (status: string) => <MatriculaStatusBadge status={status} />
 
   const calculateAge = (birthDate: string) => {
     const today = new Date()
@@ -103,6 +90,15 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
             </Button>
           </div>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Matriculas", href: "/matriculas" },
+          { label: "Detalhes da Matricula" },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

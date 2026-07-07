@@ -40,7 +40,7 @@ export async function salvarAulaPresenca(params: {
       hora_fim: params.horaFim,
       conteudo: params.conteudo,
     })
-    .select()
+    .select("id")
     .single()
 
   if (aulaError) {

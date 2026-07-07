@@ -27,7 +27,7 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
     const matriculaIds = matriculas.map((m) => m.id)
     const { data } = await supabase
       .from("notas")
-      .select("*")
+      .select("matricula_id, nota")
       .in("matricula_id", matriculaIds)
       .eq("disciplina_id", disciplinaId)
       .eq("bimestre", periodo.numero_periodo)

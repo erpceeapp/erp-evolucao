@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { BookOpen } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import NovaAulaForm from "@/components/diario/nova-aula-form-v2"
 
 async function getTurmaDisciplina(turmaId: string, disciplinaId: string) {
@@ -38,7 +39,7 @@ async function getAula(aulaId: string, turmaDisciplinaId: string) {
 
   const { data } = await supabase
     .from("aulas")
-    .select("*")
+    .select("id, data_aula, hora_inicio, hora_fim, conteudo, observacoes")
     .eq("id", aulaId)
     .eq("turma_disciplina_id", turmaDisciplinaId)
     .single()
@@ -105,6 +106,18 @@ export default async function EditarAulaPage({
         title={`Editar Aula - ${(turmaDisciplina as any).disciplinas.nome}`}
         description={`${(turmaDisciplina as any).turmas.nome} - Prof. ${(turmaDisciplina as any).professores?.nome_completo || "Sem professor"}`}
         backHref={`/diario/${turmaId}/${disciplinaId}`}
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          {
+            label: `${(turmaDisciplina as any).turmas.nome} / ${(turmaDisciplina as any).disciplinas.nome}`,
+            href: `/diario/${turmaId}/${disciplinaId}`,
+          },
+          { label: "Editar Aula" },
+        ]}
+        className="mt-2"
       />
 
       <Card>

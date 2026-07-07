@@ -3,10 +3,11 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Edit, BookOpen, Users, Calendar, Clock } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function DisciplinaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -29,7 +30,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: Promis
   // Buscar dados da disciplina
   const { data: disciplina, error: disciplinaError } = await supabase
     .from("disciplinas")
-    .select("*")
+    .select("id, nome, codigo, descricao, carga_horaria, ativo, created_at, updated_at")
     .eq("id", id)
     .single()
 
@@ -70,6 +71,14 @@ export default async function DisciplinaDetalhePage({ params }: { params: Promis
           </Button>
         }
       />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Disciplinas", href: "/disciplinas" },
+          { label: disciplina.nome },
+        ]}
+        className="mt-2"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Informações Principais */}
@@ -96,7 +105,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: Promis
               {disciplina.descricao && (
                 <div>
                   <Label>Descrição</Label>
-                  <p className="text-sm text-gray-700">{disciplina.descricao}</p>
+                  <div className="prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: disciplina.descricao }} />
                 </div>
               )}
 
@@ -151,9 +160,7 @@ export default async function DisciplinaDetalhePage({ params }: { params: Promis
               <CardTitle>Status</CardTitle>
             </CardHeader>
             <CardContent>
-              <Badge variant={disciplina.ativo ? "default" : "secondary"} className="text-sm">
-                {disciplina.ativo ? "Ativa" : "Inativa"}
-              </Badge>
+              <AtivoStatusBadge ativo={disciplina.ativo} labelAtivo="Ativa" labelInativo="Inativa" className="text-sm" />
             </CardContent>
           </Card>
 

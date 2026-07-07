@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Book } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DisciplinaForm } from "@/components/disciplinas/disciplina-form"
 
 export default async function NovaDisciplinaPage() {
@@ -19,6 +20,14 @@ export default async function NovaDisciplinaPage() {
         title="Nova Disciplina"
         description="Preencha os dados para cadastrar uma nova disciplina"
         backHref="/disciplinas"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Disciplinas", href: "/disciplinas" },
+          { label: "Nova Disciplina" },
+        ]}
+        className="mt-2"
       />
 
       <DisciplinaForm />

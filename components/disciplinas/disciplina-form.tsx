@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import { Switch } from "@/components/ui/switch"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -144,12 +144,11 @@ export function DisciplinaForm({ disciplina, isEditing = false }: DisciplinaForm
 
             <div className="space-y-2">
               <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                rows={3}
-                placeholder="Descrição da disciplina..."
+              <RichTextEditor
                 value={formData.descricao}
-                onChange={(e) => handleInputChange("descricao", e.target.value)}
+                onChange={(html) => handleInputChange("descricao", html)}
+                placeholder="Descrição da disciplina..."
+                minHeight={150}
               />
             </div>
 

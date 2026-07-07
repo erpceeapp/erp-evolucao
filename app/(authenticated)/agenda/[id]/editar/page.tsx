@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Calendar } from "lucide-react"
 import Link from "next/link"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DescricaoField } from "@/components/agenda/descricao-field"
 import { DiaInteiroField } from "@/components/agenda/dia-inteiro-field"
 
@@ -18,7 +19,7 @@ export default async function EditarEventoPage({ params }: PageProps) {
   const supabase = await createClient()
 
   // Buscar evento
-  const { data: evento, error } = await supabase.from("eventos").select("*").eq("id", id).single()
+  const { data: evento, error } = await supabase.from("eventos").select("titulo, descricao, data_inicio, data_fim, hora_inicio, hora_fim, created_by").eq("id", id).single()
 
   if (error || !evento) {
     notFound()
@@ -42,7 +43,7 @@ export default async function EditarEventoPage({ params }: PageProps) {
 
     const isAdmin = profile && ["admin", "diretor"].includes(profile.tipo_usuario)
 
-    if (!isAdmin && evento.created_by !== user.id) {
+    if (!isAdmin && evento!.created_by !== user.id) {
       throw new Error("Você não tem permissão para editar este evento")
     }
     const titulo = formData.get("titulo") as string
@@ -82,6 +83,15 @@ export default async function EditarEventoPage({ params }: PageProps) {
           </Button>
         </Link>
       </div>
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda Escolar", href: "/agenda" },
+          { label: "Editar Evento" },
+        ]}
+        className="mt-2 mb-6"
+      />
 
       <Card>
         <CardHeader>

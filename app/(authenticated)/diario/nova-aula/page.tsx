@@ -3,12 +3,13 @@ import { redirect } from "next/navigation"
 import { BookOpen } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import NovaAulaForm from "@/components/diario/nova-aula-form"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createClient()
 
-  const { data: turmasDisciplinas, error: tdError } = await supabase.from("turma_disciplinas").select("*")
+  const { data: turmasDisciplinas, error: tdError } = await supabase.from("turma_disciplinas").select("id, turma_id, disciplina_id, professor_id")
 
   if (tdError) {
     console.error("[v0] Erro ao buscar turma_disciplinas:", tdError)
@@ -53,11 +54,11 @@ async function getTurmasComDisciplinas() {
   }
 
   // Combinar dados
-  const resultado = turmasDisciplinas.map((td) => ({
+  const resultado: any[] = turmasDisciplinas.map((td: any) => ({
     ...td,
-    turmas: turmas?.find((t) => t.id === td.turma_id),
-    disciplinas: disciplinas?.find((d) => d.id === td.disciplina_id),
-    professores: professores?.find((p) => p.id === td.professor_id),
+    turmas: turmas?.find((t) => t.id === td.turma_id) ?? null,
+    disciplinas: disciplinas?.find((d) => d.id === td.disciplina_id) ?? null,
+    professores: professores?.find((p) => p.id === td.professor_id) ?? null,
   }))
 
   return resultado
@@ -82,6 +83,14 @@ export default async function NovaAulaPage() {
         title="Nova Aula"
         subtitle="Registre uma nova aula no diário de classe"
         backHref="/diario"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          { label: "Nova Aula" },
+        ]}
+        className="mt-2"
       />
 
       <Card>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
@@ -236,9 +237,7 @@ export function DisciplinasTable({ disciplinas, currentPage, totalPages, pageSiz
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={disciplina.ativo ? "default" : "secondary"}>
-                      {disciplina.ativo ? "Ativa" : "Inativa"}
-                    </Badge>
+                    <AtivoStatusBadge ativo={disciplina.ativo} labelAtivo="Ativa" labelInativo="Inativa" />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

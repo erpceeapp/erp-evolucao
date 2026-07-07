@@ -78,7 +78,7 @@ export function LinksDocumentosManager() {
 
   async function loadLinks() {
     try {
-      const { data, error } = await supabase.from("links_documentos").select("*").order("ordem", { ascending: true })
+      const { data, error } = await supabase.from("links_documentos").select("id, titulo, url, descricao, icone, cor, ordem, ativo").order("ordem", { ascending: true })
 
       if (error) {
         throw error

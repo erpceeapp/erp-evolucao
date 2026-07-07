@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Edit, Eye, Trash2, X } from "lucide-react"
@@ -206,9 +207,7 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
                   <TableCell>{professor.data_admissao ? formatDate(professor.data_admissao) : "-"}</TableCell>
                   <TableCell>{formatSalary(professor.salario)}</TableCell>
                   <TableCell>
-                    <Badge variant={professor.ativo ? "default" : "secondary"}>
-                      {professor.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
+                    <AtivoStatusBadge ativo={professor.ativo} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, UserCheck } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { MatriculasTable } from "@/components/matriculas/matriculas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -43,7 +44,7 @@ export default async function MatriculasPage({
     .from("matriculas")
     .select(
       `
-      *,
+      id, numero_matricula, status, data_matricula, ano_letivo, created_at,
       aluno:alunos!matriculas_aluno_id_fkey(nome_completo, cpf),
       turma:turmas!matriculas_turma_id_fkey(nome, serie, ano_letivo)
     `,
@@ -73,7 +74,7 @@ export default async function MatriculasPage({
   const to = from + itemsPerPage - 1
   query = query.range(from, to)
 
-  const { data: matriculas, count, error: matriculasError } = await query
+  const { data: matriculas, count, error: matriculasError } = await (query as any)
 
   if (matriculasError) {
     console.error("Erro ao buscar matrículas:", matriculasError)
@@ -99,6 +100,14 @@ export default async function MatriculasPage({
             </Link>
           </Button>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Matriculas" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

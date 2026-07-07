@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getTurmasComDisciplinas() {
   const supabase = await createServerClient()
@@ -14,7 +15,7 @@ async function getTurmasComDisciplinas() {
   // Buscar turma_disciplinas
   const { data: turmasDisciplinas, error: tdError } = await supabase
     .from("turma_disciplinas")
-    .select("*")
+    .select("turma_id, disciplina_id, professor_id")
 
   if (tdError) {
     console.error("Erro ao buscar turma_disciplinas:", tdError)
@@ -79,6 +80,13 @@ export default async function PresencaPage() {
         title="Controle de Presença"
         subtitle="Registre e gerencie a frequência dos alunos"
         backHref="/dashboard"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Presenca" },
+        ]}
+        className="mt-2"
       />
       <Card>
           <CardHeader>

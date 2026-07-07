@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { NovoEventoForm } from "@/components/agenda/novo-evento-form"
 import { Calendar } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default function NovoEventoPage() {
   return (
@@ -15,6 +16,15 @@ export default function NovoEventoPage() {
           <p className="text-gray-600">Adicione um novo evento ao calendário escolar</p>
         </div>
       </div>
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda Escolar", href: "/agenda" },
+          { label: "Novo Evento" },
+        ]}
+        className="mt-2 mb-6"
+      />
 
       <Card>
         <CardHeader>

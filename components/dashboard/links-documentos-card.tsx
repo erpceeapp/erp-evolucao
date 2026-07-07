@@ -47,7 +47,7 @@ export function LinksDocumentosCard() {
       try {
         const { data, error } = await supabase
           .from("links_documentos")
-          .select("*")
+          .select("id, titulo, url, descricao, icone, cor, ordem")
           .eq("ativo", true)
           .order("ordem", { ascending: true })
 
@@ -81,14 +81,14 @@ export function LinksDocumentosCard() {
           <CardDescription>Acesse documentos e recursos importantes rapidamente</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-3">
             {links.map((link) => {
               const Icon = iconMap[link.icone] || FileText
               const colorClass = colorMap[link.cor] || colorMap.blue
 
               return (
-                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer">
-                  <Button className={`${colorClass} w-full h-auto p-4 flex flex-col items-start text-white`}>
+                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex h-full">
+                  <Button className={`${colorClass} w-full h-full p-4 flex flex-col items-start text-white`}>
                     <div className="flex items-center space-x-2 mb-1">
                       <Icon className="h-5 w-5" />
                       <span className="font-medium text-left">{link.titulo}</span>

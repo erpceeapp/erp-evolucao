@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Settings, School, Users, Bell, Shield, Database, Palette, CheckSquare, LinkIcon, Calendar, ArrowLeftRight } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient()
@@ -110,6 +111,14 @@ export default async function ConfiguracoesPage() {
         backHref="/dashboard"
       />
 
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes" },
+        ]}
+        className="mt-2"
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {configSections.map((section) => {
           const Icon = section.icon
@@ -127,7 +136,7 @@ export default async function ConfiguracoesPage() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{section.title}</CardTitle>
-                      {section.adminOnly && <span className="text-xs text-orange-600 font-medium">Apenas Admin</span>}
+                      {section.adminOnly && <span className="text-xs text-orange-600 font-medium">Admin/Diretor</span>}
                       {section.coordenacaoAccess && !section.adminOnly && (
                         <span className="text-xs text-blue-600 font-medium">Admin/Coordenação</span>
                       )}

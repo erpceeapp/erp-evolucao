@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -145,6 +146,13 @@ export default function GradeHorariosPage() {
         icon={CalendarRange}
         title="Grade de Horários"
         description="Visualize e gerencie os horários das turmas e professores"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Grade de Horarios" },
+        ]}
+        className="mt-2"
       />
 
       <div className="flex flex-wrap items-center justify-between gap-4">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 async function getAlunosRelatorio() {
@@ -86,6 +87,14 @@ export default async function RelatorioAlunosPage() {
         title="Relatório de Alunos"
         subtitle="Lista completa de alunos cadastrados"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Alunos" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
         <div className="flex gap-2">

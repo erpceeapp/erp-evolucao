@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getFrequenciaRelatorio() {
   const supabase = await createServerClient()
@@ -14,7 +15,7 @@ async function getFrequenciaRelatorio() {
   // Usar a view vw_frequencia_alunos que já calcula a frequência
   const { data: frequencias, error: frequenciasError } = await supabase
     .from("vw_frequencia_alunos")
-    .select("*")
+    .select("aluno_nome, turma_nome, disciplina_nome, total_aulas, presencas, faltas, percentual_presenca")
     .order("aluno_nome", { ascending: true })
 
   if (frequenciasError) {
@@ -44,6 +45,14 @@ export default async function RelatorioFrequenciaPage() {
         title="Relatório de Frequência"
         subtitle="Frequência dos alunos por turma e disciplina"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Frequencia" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">

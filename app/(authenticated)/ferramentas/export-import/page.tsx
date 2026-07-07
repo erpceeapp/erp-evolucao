@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Database, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { MigrationTool } from "@/components/migration/migration-tool"
@@ -29,6 +30,14 @@ export default async function ExportImportPage() {
         icon={Database}
         title="Ferramentas de Migracao"
         description="Exporte e importe dados entre ambientes. Apenas para administradores e diretores."
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Ferramentas" },
+          { label: "Exportar / Importar" },
+        ]}
+        className="mt-2"
       />
 
       <div className="space-y-6">

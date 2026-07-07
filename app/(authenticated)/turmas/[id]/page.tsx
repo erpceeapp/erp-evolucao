@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Edit, ArrowLeft, BookOpen, Users, Calendar, User } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { GerenciarAlunosTurma } from "@/components/turmas/gerenciar-alunos-turma"
 import { GerenciarDisciplinasTurma } from "@/components/turmas/gerenciar-disciplinas-turma"
 
@@ -113,6 +115,15 @@ export default async function TurmaDetalhePage({ params }: { params: Promise<{ i
             </Link>
           </Button>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Turmas", href: "/turmas" },
+          { label: turma.nome },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -274,9 +285,7 @@ export default async function TurmaDetalhePage({ params }: { params: Promise<{ i
                 <CardTitle>Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <Badge variant={turma.ativo ? "default" : "secondary"} className="text-sm">
-                  {turma.ativo ? "Ativa" : "Inativa"}
-                </Badge>
+                <AtivoStatusBadge ativo={turma.ativo} labelAtivo="Ativa" labelInativo="Inativa" className="text-sm" />
               </CardContent>
             </Card>
 

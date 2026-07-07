@@ -5,6 +5,7 @@ import { Users, Plus } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { UsuariosTable } from "@/components/usuarios/usuarios-table"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
 
@@ -100,6 +101,14 @@ export default async function UsuariosPage({
             </Button>
           ) : undefined
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Gerenciar Usuarios" },
+        ]}
+        className="mt-2"
       />
 
       <div className="space-y-6">

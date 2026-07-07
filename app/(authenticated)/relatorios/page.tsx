@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function RelatoriosPage() {
   const supabase = await createServerClient()
@@ -74,6 +75,13 @@ export default async function RelatoriosPage() {
         title="Relatórios"
         subtitle="Gere e exporte relatórios do sistema"
         backHref="/dashboard"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios" },
+        ]}
+        className="mt-2"
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {relatorios.map((relatorio) => (

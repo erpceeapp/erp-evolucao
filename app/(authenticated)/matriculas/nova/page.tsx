@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { UserCheck } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { MatriculaForm } from "@/components/matriculas/matricula-form"
 
 export default async function NovaMatriculaPage() {
@@ -34,6 +35,15 @@ export default async function NovaMatriculaPage() {
         title="Nova Matrícula"
         description="Preencha os dados para realizar uma nova matrícula"
         backHref="/matriculas"
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Matriculas", href: "/matriculas" },
+          { label: "Nova Matricula" },
+        ]}
+        className="mt-2"
       />
 
       <MatriculaForm alunos={alunos || []} turmas={turmas || []} />

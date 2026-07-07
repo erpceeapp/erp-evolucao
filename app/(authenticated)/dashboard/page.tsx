@@ -8,6 +8,7 @@ import { TurmasVagaCard } from "@/components/dashboard/turmas-vaga-card"
 import { AlunosSemMatriculaCard } from "@/components/dashboard/alunos-sem-matricula-card"
 import { MatriculasPendentesCard } from "@/components/dashboard/matriculas-pendentes-card"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function DashboardPage() {
   const quickActions = [
@@ -47,6 +48,12 @@ export default async function DashboardPage() {
         icon={LayoutDashboard}
         title="Dashboard"
         description="Visão geral do sistema"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio" },
+        ]}
+        className="mt-2"
       />
       <div className="space-y-8">
         <StatsCards />

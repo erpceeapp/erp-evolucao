@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -19,7 +20,7 @@ async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: st
   const supabase = createClient()
 
   // Buscar aula
-  const { data: aula } = await supabase.from("aulas").select("*").eq("id", aulaId).single()
+  const { data: aula } = await supabase.from("aulas").select("data_aula, hora_inicio, hora_fim, conteudo_ministrado, observacoes").eq("id", aulaId).single()
 
   if (!aula) return null
 
@@ -215,6 +216,16 @@ export default function AulaDetalhePage({
           </div>
         )}
       </PageHeader>
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          { label: `${turma.nome} / ${disciplina.nome}`, href: `/diario/${p.turmaId}/${p.disciplinaId}` },
+          { label: "Historico de Presencas", href: `/diario/${p.turmaId}/${p.disciplinaId}/presencas` },
+          { label: "Detalhes da Aula" },
+        ]}
+        className="mt-2"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

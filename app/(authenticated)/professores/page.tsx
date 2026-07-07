@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { ProfessoresTable } from "@/components/professores/professores-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -83,6 +84,13 @@ export default async function ProfessoresPage({
             </Link>
           </Button>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Professores", href: "/professores" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getMatriculasRelatorio() {
   const supabase = await createServerClient()
@@ -14,7 +15,7 @@ async function getMatriculasRelatorio() {
   // Usar a view vw_alunos_matriculados que já tem as informações combinadas
   const { data: matriculas, error: matriculasError } = await supabase
     .from("vw_alunos_matriculados")
-    .select("*")
+    .select("matricula_id, nome_completo, numero_matricula, turma_nome, serie, turno, ano_letivo, status_matricula")
     .order("nome_completo", { ascending: true })
 
   if (matriculasError) {
@@ -47,6 +48,14 @@ export default async function RelatorioMatriculasPage() {
         title="Relatório de Matrículas"
         subtitle="Matrículas por período, turma e status"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Matriculas" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="grid grid-cols-3 gap-4">

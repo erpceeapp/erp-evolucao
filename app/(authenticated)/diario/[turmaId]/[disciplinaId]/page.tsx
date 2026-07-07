@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { BookOpen, Calendar, FileText } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import AulasTab from "@/components/diario/aulas-tab"
 import NotasTab from "@/components/diario/notas-tab"
 
@@ -33,7 +34,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
       supabase.from("professores").select("id, nome_completo").eq("id", turmaDisciplinas.professor_id).single(),
       supabase
         .from("aulas")
-        .select("*")
+        .select("id, data_aula, hora_inicio, hora_fim, conteudo")
         .eq("turma_disciplina_id", turmaDisciplinas.id)
         .order("data_aula", { ascending: false }),
       supabase
@@ -61,7 +62,7 @@ async function getDiarioData(turmaId: string, disciplinaId: string) {
     // Buscar períodos letivos
     const { data: periodos } = await supabase
       .from("periodos_letivos")
-      .select("*")
+      .select("id, numero_periodo, nome, data_inicio, data_fim")
       .eq("ano_letivo", turmaRes.data.ano_letivo)
       .order("numero_periodo")
 
@@ -112,7 +113,15 @@ export default async function DiarioDetalhePage({
         title={turmaDisciplina.disciplinas.nome}
         description={`${turmaDisciplina.turmas.nome} - Prof. ${turmaDisciplina.professores.nome_completo}`}
         backHref="/diario"
-      >
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          { label: `${turmaDisciplina.turmas.nome} / ${turmaDisciplina.disciplinas.nome}` },
+        ]}
+        className="mt-2"
+      />
         {/* <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link href={`/presenca/${turmaId}/${disciplinaId}`}>
@@ -121,8 +130,6 @@ export default async function DiarioDetalhePage({
             </Link>
           </Button>
         </div> */}
-      </PageHeader>
-
       <Tabs defaultValue="aulas" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="aulas" className="flex items-center gap-2">

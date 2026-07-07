@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { BookOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import NovaAulaForm from "@/components/diario/nova-aula-form-v2"
 
 function calcDuracaoPadrao(gradeHorarios: { hora_inicio: string; hora_fim: string }[]): number {
@@ -88,6 +89,18 @@ export default async function NovaAulaPage({
         title={`Nova Aula - ${(turmaDisciplina as any).disciplinas.nome}`}
         description={`${(turmaDisciplina as any).turmas.nome} - Prof. ${(turmaDisciplina as any).professores?.nome_completo || "Sem professor"}`}
         backHref={`/diario/${turmaId}/${disciplinaId}`}
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Diario de Classe", href: "/diario" },
+          {
+            label: `${(turmaDisciplina as any).turmas.nome} / ${(turmaDisciplina as any).disciplinas.nome}`,
+            href: `/diario/${turmaId}/${disciplinaId}`,
+          },
+          { label: "Nova Aula" },
+        ]}
+        className="mt-2"
       />
 
       <Card>

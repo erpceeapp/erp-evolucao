@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 async function getProfessoresRelatorio() {
   const supabase = await createServerClient()
@@ -14,7 +16,7 @@ async function getProfessoresRelatorio() {
   // Buscar todos os professores
   const { data: professores, error: professoresError } = await supabase
     .from("professores")
-    .select("*")
+    .select("id, nome_completo, email, telefone, formacao, ativo")
     .order("nome_completo", { ascending: true })
 
   if (professoresError) {
@@ -27,7 +29,7 @@ async function getProfessoresRelatorio() {
   // Buscar disciplinas dos professores usando a view
   const { data: profDisciplinas, error: profDisciplinasError } = await supabase
     .from("vw_professores_disciplinas")
-    .select("*")
+    .select("professor_id, disciplina_nome")
 
   if (profDisciplinasError) {
     console.error("[v0] Erro ao buscar disciplinas dos professores:", profDisciplinasError)
@@ -63,6 +65,14 @@ export default async function RelatorioProfessoresPage() {
         title="Relatório de Professores"
         subtitle="Lista completa de professores cadastrados"
         backHref="/relatorios"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Relatorios", href: "/relatorios" },
+          { label: "Professores" },
+        ]}
+        className="mt-2"
       />
       <div className="flex items-center justify-between">
           <div className="flex gap-2">
@@ -127,9 +137,7 @@ export default async function RelatorioProfessoresPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={professor.ativo ? "default" : "secondary"}>
-                        {professor.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
+                      <AtivoStatusBadge ativo={professor.ativo} />
                     </TableCell>
                   </TableRow>
                 ))}

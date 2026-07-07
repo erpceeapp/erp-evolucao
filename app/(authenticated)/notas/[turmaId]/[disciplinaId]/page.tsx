@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 import PageHeader from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { NotasTable } from "@/components/notas/notas-table"
 
 async function getNotasData(turmaId: string, disciplinaId: string) {
   const supabase = await createServerClient()
 
   const [turmaResult, disciplinaResult] = await Promise.all([
-    supabase.from("turmas").select("*").eq("id", turmaId).single(),
-    supabase.from("disciplinas").select("*").eq("id", disciplinaId).single(),
+    supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
+    supabase.from("disciplinas").select("id, nome").eq("id", disciplinaId).single(),
   ])
 
   if (turmaResult.error || disciplinaResult.error) {
@@ -60,7 +61,7 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
   const matriculaIds = matriculas?.map((m) => m.id) || []
   const { data: notas, error: notasError } = await supabase
     .from("notas")
-    .select("*")
+    .select("id, matricula_id, disciplina_id, bimestre, nota, tipo_avaliacao, observacoes, data_avaliacao")
     .eq("disciplina_id", disciplinaId)
     .in("matricula_id", matriculaIds)
 
@@ -116,6 +117,15 @@ export default async function NotasDetailPage({
         title={`Notas - ${data.disciplina.nome}`}
         subtitle={`${data.turma.nome} (${data.turma.serie}) - ${data.turma.ano_letivo}`}
         backHref="/notas"
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Notas", href: "/notas" },
+          { label: data.turma.nome },
+          { label: data.disciplina.nome },
+        ]}
+        className="mt-2"
       />
       <NotasTable
         turmaId={turmaId}

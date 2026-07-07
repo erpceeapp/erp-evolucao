@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { AgendaRbc } from "@/components/agenda/agenda-rbc"
 import { AgendaToolbar } from "@/components/agenda/agenda-toolbar"
 import { toast } from "sonner"
@@ -127,7 +128,7 @@ export default function AgendaPage() {
 
   async function loadEventos() {
     const [eventosRes, periodosRes] = await Promise.all([
-      supabase.from("eventos").select("*").order("data_inicio", { ascending: true }),
+      supabase.from("eventos").select("id, titulo, descricao, data_inicio, data_fim, hora_inicio, hora_fim, tipo_evento, local").order("data_inicio", { ascending: true }),
       supabase.from("periodos_letivos").select("data_inicio, data_fim").eq("ativo", true),
     ])
 
@@ -376,6 +377,14 @@ export default function AgendaPage() {
         }
       />
 
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Agenda Escolar" },
+        ]}
+        className="mt-2"
+      />
+
       <div className="space-y-4">
         <AgendaToolbar
           date={calendarDate}
@@ -537,7 +546,7 @@ export default function AgendaPage() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Horário</TableHead>
-                    {!isProfessor && <TableHead className="w-[100px]">Ações</TableHead>}
+                    {!isProfessor && <TableHead className="w-25">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>

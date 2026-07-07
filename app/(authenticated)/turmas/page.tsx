@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { TurmasTable } from "@/components/turmas/turmas-table"
 import { Suspense } from "react"
 import { sanitizeSearchParam, validatePageParam, validateLimitParam } from "@/lib/validate-params"
@@ -51,7 +52,7 @@ export default async function TurmasPage({
     .from("turmas")
     .select(
       `
-      *,
+      id, nome, serie, ano_letivo, turno, capacidade_maxima, ativo, created_at,
       professor_responsavel:professores!turmas_professor_responsavel_id_fkey(nome_completo)
     `,
       { count: "exact" },
@@ -86,14 +87,14 @@ export default async function TurmasPage({
     }
   }
 
-  const { data: turmas, count, error: turmasError } = await query
+  const { data: turmas, count, error: turmasError } = await (query as any)
 
   if (turmasError) {
     console.error("Erro ao buscar turmas:", turmasError)
   }
 
   // Buscar quantidade de alunos matriculados ativos por turma
-  const turmaIds = (turmas || []).map((t) => t.id)
+  const turmaIds = (turmas || []).map((t: any) => t.id)
   const alunosCount: Record<string, number> = {}
 
   if (turmaIds.length > 0) {
@@ -110,7 +111,7 @@ export default async function TurmasPage({
     }
   }
 
-  const turmasComCount = (turmas || []).map((t) => ({
+  const turmasComCount = (turmas || []).map((t: any) => ({
     ...t,
     alunos_matriculados: alunosCount[t.id] || 0,
   }))
@@ -142,6 +143,14 @@ export default async function TurmasPage({
             )}
           </div>
         }
+      />
+
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Turmas" },
+        ]}
+        className="mt-2"
       />
 
         <Card>

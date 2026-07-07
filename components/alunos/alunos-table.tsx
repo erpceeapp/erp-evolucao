@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
@@ -198,7 +198,7 @@ export function AlunosTable({ alunos, currentPage, totalPages, pageSize, totalCo
                   <TableCell>{aluno.cpf || "-"}</TableCell>
                   <TableCell>{aluno.nome_responsavel || "-"}</TableCell>
                   <TableCell>
-                    <Badge variant={aluno.ativo ? "default" : "secondary"}>{aluno.ativo ? "Ativo" : "Inativo"}</Badge>
+                    <AtivoStatusBadge ativo={aluno.ativo} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">

@@ -3,10 +3,11 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, GraduationCap, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
+import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 
 export default async function ProfessorDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -34,7 +35,7 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
   // Buscar dados do professor
   const { data: professor, error: professorError } = await supabase
     .from("professores")
-    .select("*")
+    .select("id, nome_completo, email, cpf, rg, data_nascimento, endereco, telefone, formacao, especializacao, registro_profissional, data_admissao, salario, ativo, created_at, updated_at")
     .eq("id", id)
     .single()
 
@@ -83,6 +84,14 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
             </Button>
           </div>
         }
+      />
+      <BreadcrumbNav
+        items={[
+          { label: "Inicio", href: "/dashboard" },
+          { label: "Professores", href: "/professores" },
+          { label: professor.nome_completo },
+        ]}
+        className="mt-2"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -197,9 +206,7 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
                 <CardTitle>Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <Badge variant={professor.ativo ? "default" : "secondary"} className="text-sm">
-                  {professor.ativo ? "Ativo" : "Inativo"}
-                </Badge>
+                <AtivoStatusBadge ativo={professor.ativo} className="text-sm" />
               </CardContent>
             </Card>
 
