@@ -12,11 +12,13 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:pull": "supabase db pull",
-    "supabase:sync": "node scripts/sync-local.js",
     "supabase:reset": "supabase db reset",
-    "supabase:migrate": "supabase migration up",
+    "supabase:migration:up": "supabase migration up",
+    "supabase:migration:list": "supabase migration list",
+    "supabase:migration:push": "supabase db push --linked",
     "supabase:studio": "start http://127.0.0.1:54343",
     "supabase:mailpit": "start http://localhost:54344",
+    "supabase:sync": "node scripts/sync-local.js",
     "supabase:clean": "node scripts/clean-local-db.js"
   },
   "dependencies": {
