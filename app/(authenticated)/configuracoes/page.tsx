@@ -62,43 +62,11 @@ export default async function ConfiguracoesPage() {
       coordenacaoAccess: true,
     },
     {
-      icon: Bell,
-      title: "Notificações",
-      description: "Configure preferências de notificações",
-      href: "/configuracoes/notificacoes",
-      adminOnly: false,
-      comingSoon: true,
-    },
-    {
-      icon: Shield,
-      title: "Segurança",
-      description: "Configurações de segurança e privacidade",
-      href: "/configuracoes/seguranca",
-      adminOnly: false,
-      comingSoon: true,
-    },
-    {
       icon: ArrowLeftRight,
       title: "Migração de Dados",
       description: "Exporte e importe dados entre ambientes (Usuários, Professores, Turmas e Alunos)",
       href: "/ferramentas/export-import",
       adminOnly: true,
-    },
-    {
-      icon: Database,
-      title: "Backup e Dados",
-      description: "Gerencie backups e exportação de dados",
-      href: "/configuracoes/backup",
-      adminOnly: true,
-      comingSoon: true,
-    },
-    {
-      icon: Palette,
-      title: "Aparência",
-      description: "Personalize a aparência do sistema",
-      href: "/configuracoes/aparencia",
-      adminOnly: false,
-      comingSoon: true,
     },
   ]
 
@@ -124,7 +92,7 @@ export default async function ConfiguracoesPage() {
           const Icon = section.icon
           const hasAccess =
             !section.adminOnly || isAdmin || isDiretor || (section.coordenacaoAccess && (isCoordenacao || isSecretaria))
-          const isDisabled = section.comingSoon || !hasAccess
+          const isDisabled = !hasAccess
 
           return (
             <Card key={section.href} className={isDisabled ? "opacity-60" : ""}>
@@ -142,9 +110,6 @@ export default async function ConfiguracoesPage() {
                       )}
                     </div>
                   </div>
-                  {section.comingSoon && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Em breve</span>
-                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -155,7 +120,7 @@ export default async function ConfiguracoesPage() {
                   </Button>
                 ) : (
                   <Button variant="outline" className="w-full bg-transparent" disabled>
-                    {section.comingSoon ? "Em breve" : "Sem permissão"}
+                    Sem permissão
                   </Button>
                 )}
               </CardContent>
