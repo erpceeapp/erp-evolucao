@@ -136,7 +136,7 @@ export default async function ConfiguracoesPage() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{section.title}</CardTitle>
-                      {section.adminOnly && <span className="text-xs text-orange-600 font-medium">Apenas Admin</span>}
+                      {section.adminOnly && <span className="text-xs text-orange-600 font-medium">Admin/Diretor</span>}
                       {section.coordenacaoAccess && !section.adminOnly && (
                         <span className="text-xs text-blue-600 font-medium">Admin/Coordenação</span>
                       )}

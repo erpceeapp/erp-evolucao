@@ -199,13 +199,13 @@ export default function PerfilPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+            <div className="space-y-3">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={profile?.email || ""} disabled className="bg-gray-50" />
               <p className="text-xs text-gray-500 mt-1">O email não pode ser alterado</p>
             </div>
 
-            <div>
+            <div className="space-y-3">
               <Label htmlFor="nome_completo">Nome Completo</Label>
               <Input
                 id="nome_completo"
@@ -221,7 +221,7 @@ export default function PerfilPage() {
               )}
             </div>
 
-            <div>
+            <div className="space-y-3">
               <Label htmlFor="telefone">Telefone</Label>
               <Input
                 id="telefone"
@@ -232,7 +232,7 @@ export default function PerfilPage() {
               />
             </div>
 
-            <div>
+            <div className="space-y-3">
               <Label htmlFor="tipo_usuario">Tipo de Usuário</Label>
               <Input
                 id="tipo_usuario"
@@ -274,7 +274,7 @@ export default function PerfilPage() {
             </Button>
           ) : (
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div>
+              <div className="space-y-3">
                 <Label htmlFor="currentPassword">Senha Atual</Label>
                 <div className="relative">
                   <Input
@@ -301,7 +301,7 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <Label htmlFor="newPassword">Nova Senha</Label>
                 <div className="relative">
                   <Input
@@ -329,7 +329,7 @@ export default function PerfilPage() {
                 </div>
               </div>
 
-              <div>
+              <div className="space-y-3">
                 <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
                 <div className="relative">
                   <Input

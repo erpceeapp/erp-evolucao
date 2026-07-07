@@ -36,7 +36,8 @@ export default async function NovoUsuarioPage() {
       <BreadcrumbNav
         items={[
           { label: "Inicio", href: "/dashboard" },
-          { label: "Usuarios", href: "/usuarios" },
+          { label: "Configuracoes", href: "/configuracoes" },
+          { label: "Gerenciar Usuarios", href: "/usuarios" },
           { label: "Novo Usuario" },
         ]}
         className="mt-2"
