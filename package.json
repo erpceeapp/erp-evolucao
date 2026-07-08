@@ -19,7 +19,8 @@
     "supabase:clean": "node scripts/clean-local-db.js",
     "supabase:migration:up": "supabase migration up",
     "supabase:migration:list": "supabase migration list",
-    "supabase:migration:push": "supabase db push --linked"
+    "supabase:migration:push": "supabase db push --linked",
+    "graphify:update": "graphify update ."
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",
