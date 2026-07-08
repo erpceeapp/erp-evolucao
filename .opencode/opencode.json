@@ -3,7 +3,8 @@
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
     "envsitter-guard", // https://github.com/boxpositron/envsitter-guard
-    "opencode-notify" // https://github.com/kdcokenny/opencode-notify
+    "opencode-notify", // https://github.com/kdcokenny/opencode-notify
+    ".opencode/plugins/graphify.js" // https://github.com/Graphify-Labs/graphify & https://www.youtube.com/watch?v=-L_faOE-H5g
     // ,"opencode-mem" // https://github.com/tickernelz/opencode-mem
     // opencode plugin @tarquinen/opencode-dcp@latest --global
   ],
@@ -12,4 +13,3 @@
     "lsp": "allow"
   }
 }
-
