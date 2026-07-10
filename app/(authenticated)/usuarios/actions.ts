@@ -200,18 +200,88 @@ export async function updateUser(
     }
   }
 
+  let professorMessage: string | null = null
+
   if (data.nome_completo || data.tipo_usuario) {
     const { error: rpcError } = await supabase.rpc("admin_update_user_profile", {
       p_user_id: userId,
       p_nome_completo: data.nome_completo || null,
       p_tipo_usuario: data.tipo_usuario || null,
+      p_telefone: null,
+      p_email: null,
     })
 
     if (rpcError) {
       return { error: `Erro ao atualizar perfil: ${rpcError.message}` }
     }
+
+    if (data.tipo_usuario) {
+      const admin = createAdminClient()
+
+      if (data.tipo_usuario === "professor") {
+        const { data: existingByUserId } = await admin
+          .from("professores")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle()
+
+        if (existingByUserId) {
+          await admin.from("professores").update({ ativo: true }).eq("id", existingByUserId.id)
+          professorMessage = "Registro de professor reativado com sucesso"
+        } else {
+          const { data: profile } = await admin
+            .from("profiles")
+            .select("nome_completo, email")
+            .eq("id", userId)
+            .single()
+
+          const email = profile?.email || ""
+
+          const { data: existingByEmail } = await admin
+            .from("professores")
+            .select("id, ativo")
+            .eq("email", email)
+            .maybeSingle()
+
+          if (existingByEmail) {
+            const { error: profError } = await admin
+              .from("professores")
+              .update({
+                user_id: userId,
+                nome_completo: data.nome_completo || profile?.nome_completo || "",
+                ativo: true,
+              })
+              .eq("id", existingByEmail.id)
+
+            if (profError) {
+              return { error: `Erro ao atualizar registro de professor: ${profError.message}` }
+            }
+
+            professorMessage = existingByEmail.ativo
+              ? "Registro de professor vinculado ao usuário"
+              : "Registro de professor reativado com sucesso"
+          } else {
+            const { error: profError } = await admin.from("professores").insert({
+              user_id: userId,
+              nome_completo: data.nome_completo || profile?.nome_completo || "",
+              email: email,
+              ativo: true,
+            })
+
+            if (profError) {
+              return { error: `Erro ao criar registro de professor: ${profError.message}` }
+            }
+
+            professorMessage = "Registro de professor criado com sucesso"
+          }
+        }
+      } else {
+        await admin.from("professores").update({ ativo: false }).eq("user_id", userId)
+        professorMessage = "Registro de professor desativado"
+      }
+    }
   }
 
   revalidatePath("/usuarios")
-  return { success: true }
+  return { success: true, message: professorMessage || undefined }
 }
