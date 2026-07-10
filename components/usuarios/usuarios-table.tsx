@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X } from "lucide-react"
+import { Search, Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X, Eye, EyeOff } from "lucide-react"
 import { DataPagination } from "@/components/ui/data-pagination"
 import { useRouter, useSearchParams } from "next/navigation"
 import { updateUser, deleteUser } from "@/app/(authenticated)/usuarios/actions"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { translateError } from "@/lib/error-messages"
 
 interface Profile {
@@ -102,6 +103,11 @@ function DeleteUserDialog({ user, onSuccess }: { user: Profile; onSuccess?: () =
           <DialogDescription>
             Esta ação é irreversível. Tem certeza que deseja excluir o usuário{" "}
             <strong>{user.nome_completo || user.email}</strong>?
+            {user.tipo_usuario === "professor" && (
+              <span className="mt-2 block text-orange-600 font-medium">
+                Este usuário é um professor e será removido também da tabela de professores.
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -123,8 +129,24 @@ function EditUserDialog({ user }: { user: Profile }) {
   const [email, setEmail] = useState(user.email || "")
   const [tipo, setTipo] = useState(user.tipo_usuario)
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+
+  function getPasswordStrength(pw: string) {
+    if (!pw) return null
+    let score = 0
+    if (pw.length >= 8) score++
+    if (/[a-z]/.test(pw)) score++
+    if (/[A-Z]/.test(pw)) score++
+    if (/[0-9]/.test(pw)) score++
+    if (/[^a-zA-Z0-9]/.test(pw)) score++
+    if (score <= 2) return { level: 33, label: "Fraca", color: "bg-red-500", textColor: "text-red-600" }
+    if (score <= 3) return { level: 66, label: "Média", color: "bg-yellow-500", textColor: "text-yellow-600" }
+    return { level: 100, label: "Forte", color: "bg-green-500", textColor: "text-green-600" }
+  }
+
+  const strength = getPasswordStrength(password)
 
   const handleSave = async () => {
     setSaving(true)
@@ -142,6 +164,10 @@ function EditUserDialog({ user }: { user: Profile }) {
     if (result.error) {
       setError(translateError(result.error))
       return
+    }
+
+    if (result.message) {
+      toast.success(result.message)
     }
 
     setOpen(false)
@@ -171,7 +197,35 @@ function EditUserDialog({ user }: { user: Profile }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-senha">Nova Senha (deixe em branco para manter)</Label>
-            <Input id="edit-senha" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div className="relative">
+              <Input
+                id="edit-senha"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+            {strength && (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${strength.color}`}
+                    style={{ width: `${strength.level}%` }}
+                  />
+                </div>
+                <p className={`text-xs ${strength.textColor}`}>{strength.label}</p>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-tipo">Tipo</Label>
