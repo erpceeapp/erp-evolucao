@@ -47,6 +47,7 @@ Before writing any code, go through the steps in order, stopping at the first on
 - Explicit typing in component props — mandatory (strict TypeScript project)
 - Edge case handling (loading, empty, error) — mandatory in ERP
 - No emojis in any output or file content — plain text only
+- **Never edit existing migration files** — the database is in production and cannot be reset. Always create a new migration (`.sql` in `supabase/migrations/`) for any schema/function/policy change.
 
 ## Commit protocol
 
