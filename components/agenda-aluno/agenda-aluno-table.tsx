@@ -33,6 +33,7 @@ interface AgendaAlunoTableProps {
   totalCount: number
   busca: string
   turmaFilter: string
+  isProfessor?: boolean
 }
 
 export function AgendaAlunoTable({
@@ -44,11 +45,16 @@ export function AgendaAlunoTable({
   totalCount,
   busca,
   turmaFilter,
+  isProfessor = false,
 }: AgendaAlunoTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(busca)
-  const [turmaSelect, setTurmaSelect] = useState(turmaFilter || "todos")
+  const [turmaSelect, setTurmaSelect] = useState(
+    isProfessor
+      ? (turmaFilter && turmaFilter !== "todos" ? turmaFilter : turmas[0]?.id || "")
+      : (turmaFilter || "todos")
+  )
 
   const handleSearch = () => {
     const params = new URLSearchParams(searchParams)
@@ -64,7 +70,9 @@ export function AgendaAlunoTable({
   const handleTurmaChange = (value: string) => {
     setTurmaSelect(value)
     const params = new URLSearchParams(searchParams)
-    if (value && value !== "todos") {
+    if (isProfessor) {
+      params.set("turma", value)
+    } else if (value && value !== "todos") {
       params.set("turma", value)
     } else {
       params.delete("turma")
@@ -75,8 +83,14 @@ export function AgendaAlunoTable({
 
   const handleClearFilters = () => {
     setSearchTerm("")
-    setTurmaSelect("todos")
     const params = new URLSearchParams()
+    if (isProfessor) {
+      const firstTurmaId = turmas[0]?.id || ""
+      setTurmaSelect(firstTurmaId)
+      if (firstTurmaId) params.set("turma", firstTurmaId)
+    } else {
+      setTurmaSelect("todos")
+    }
     params.set("page", "1")
     router.push(`/agenda-aluno?${params.toString()}`)
   }
@@ -111,8 +125,8 @@ export function AgendaAlunoTable({
         <SearchableSelect
           value={turmaSelect}
           onChange={handleTurmaChange}
-          placeholder="Turma"
-          allLabel="Todas as turmas"
+          placeholder={isProfessor ? "Selecione uma turma" : "Turma"}
+          allLabel={isProfessor ? undefined : "Todas as turmas"}
           options={turmas.map((t) => ({ value: t.id, label: t.nome }))}
         />
         <Button

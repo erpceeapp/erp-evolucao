@@ -11,7 +11,7 @@ interface SearchableSelectProps {
   value: string
   onChange: (value: string) => void
   placeholder: string
-  allLabel: string
+  allLabel?: string
   options: { value: string; label: string }[]
 }
 
@@ -36,7 +36,7 @@ export function SearchableSelect({ value, onChange, placeholder, allLabel, optio
           aria-expanded={open}
           className="w-full sm:w-48 justify-between overflow-hidden"
         >
-          <span className="truncate">{selectedLabel || allLabel}</span>
+          <span className="truncate">{selectedLabel || allLabel || placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -46,17 +46,19 @@ export function SearchableSelect({ value, onChange, placeholder, allLabel, optio
           <CommandList>
             <CommandEmpty>Nenhum resultado</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value="todos"
-                onSelect={() => {
-                  onChange("todos")
-                  setOpen(false)
-                  setSearch("")
-                }}
-              >
-                <Check className={cn("mr-2 h-4 w-4 shrink-0", value === "todos" || !value ? "opacity-100" : "opacity-0")} />
-                <span className="truncate">{allLabel}</span>
-              </CommandItem>
+              {allLabel && (
+                <CommandItem
+                  value="todos"
+                  onSelect={() => {
+                    onChange("todos")
+                    setOpen(false)
+                    setSearch("")
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === "todos" || !value ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{allLabel}</span>
+                </CommandItem>
+              )}
               {filtered.map((option) => (
                 <CommandItem
                   key={option.value}

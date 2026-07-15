@@ -148,6 +148,7 @@ export default async function AgendaAlunoPage({
             totalCount={totalCount}
             busca={busca}
             turmaFilter={turmaFilter}
+            isProfessor={filter.isProfessor}
           />
         </CardContent>
       </Card>
