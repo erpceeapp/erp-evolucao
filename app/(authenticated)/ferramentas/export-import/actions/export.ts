@@ -27,12 +27,6 @@ export async function exportUsuarios(): Promise<{ data?: string; error?: string 
   const authError = await checkAdminOrDirector()
   if (authError) return authError
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  console.log("[debug] URL:", supabaseUrl)
-  console.log("[debug] ENV key prefix:", supabaseKey?.substring(0, 10))
-  console.log("[debug] ENV key length:", supabaseKey?.length)
-
   const { data: profiles, error: profilesError } = await adminFetch<any[]>(
     "profiles?order=nome_completo"
   )
