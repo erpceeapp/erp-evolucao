@@ -39,7 +39,7 @@ function loadServiceRoleKey(): string {
   }
 
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (key && !key.startsWith("sb_")) return key
+  if (key) return key
 
   return loadServiceRoleKeyFromFile()
 }
