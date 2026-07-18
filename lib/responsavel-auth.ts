@@ -15,7 +15,6 @@ export interface ResponsavelSession {
   email_responsavel: string
   aluno_id: string
   aluno_nome: string
-  aluno_cpf: string
   turma_nome?: string
 }
 
@@ -60,7 +59,6 @@ export async function getResponsavelSession(): Promise<ResponsavelSession | null
       email_responsavel: payload.email_responsavel as string,
       aluno_id: payload.aluno_id as string,
       aluno_nome: payload.aluno_nome as string,
-      aluno_cpf: payload.aluno_cpf as string,
       turma_nome: payload.turma_nome as string | undefined,
     }
   } catch {
@@ -138,7 +136,6 @@ export async function verifyResponsavelToken(token: string): Promise<Responsavel
       email_responsavel: payload.email_responsavel as string,
       aluno_id: payload.aluno_id as string,
       aluno_nome: payload.aluno_nome as string,
-      aluno_cpf: payload.aluno_cpf as string,
       turma_nome: payload.turma_nome as string | undefined,
     }
   } catch {

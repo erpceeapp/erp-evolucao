@@ -2,6 +2,7 @@ import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { createResponsavelSession } from "@/lib/responsavel-auth"
 import { NextResponse } from "next/server"
 import { rateLimit } from "@/lib/rate-limit"
+import { validateRequestOrigin } from "@/lib/validate-params"
 
 type AlunoResponsavel = {
   id: string
@@ -12,8 +13,12 @@ type AlunoResponsavel = {
 
 export async function POST(request: Request) {
   try {
+    if (!validateRequestOrigin(request)) {
+      return NextResponse.json({ error: "Origem nao permitida" }, { status: 403 })
+    }
+
     const ip = request.headers.get("x-forwarded-for") ?? "anonymous"
-    const { success } = rateLimit(ip, 5, 60_000)
+    const { success } = await rateLimit(ip, 5, 60_000)
     if (!success) {
       return NextResponse.json(
         { error: "Muitas tentativas. Tente novamente em 1 minuto." },
@@ -73,7 +78,6 @@ export async function POST(request: Request) {
       email_responsavel: aluno.email_responsavel,
       aluno_id: aluno.id,
       aluno_nome: aluno.nome_completo,
-      aluno_cpf: aluno.cpf,
       turma_nome: turmaNome,
     })
 
@@ -84,10 +88,9 @@ export async function POST(request: Request) {
     })
 
     // Definir cookie na resposta (8 horas)
-    const isLocal = request.headers.get("host")?.includes("localhost") || request.headers.get("host")?.includes("127.0.0.1")
     response.cookies.set("responsavel-session", token, {
       httpOnly: true,
-      secure: !isLocal,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 8,
       path: "/",
