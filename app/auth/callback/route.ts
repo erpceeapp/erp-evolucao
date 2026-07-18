@@ -8,6 +8,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`)
   }
 
-  // Sempre redireciona pra página que faz o exchange no client-side
-  return NextResponse.redirect(`${origin}/auth/redefinir-senha?code=${code}`)
+  const response = NextResponse.redirect(`${origin}/auth/redefinir-senha`)
+
+  response.cookies.set("auth_code", code, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/auth/redefinir-senha",
+    maxAge: 60,
+  })
+
+  return response
 }
