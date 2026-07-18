@@ -53,6 +53,18 @@ function addSecurityHeaders(response: NextResponse) {
   response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-XSS-Protection", "0")
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' https://*.supabase.co data:",
+      "connect-src 'self' https://*.supabase.co",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; "),
+  )
 }
 
 export const config = {
