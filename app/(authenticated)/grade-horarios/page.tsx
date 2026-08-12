@@ -12,7 +12,7 @@ import { GradeGrid } from "@/components/grade-horarios/grade-grid"
 import { SlotModal } from "@/components/grade-horarios/slot-modal"
 import { SemProfessorList } from "@/components/grade-horarios/sem-professor-list"
 import { ExportGradePDF } from "@/components/grade-horarios/export-grade-pdf"
-import { listarGrade, listarTurmaDisciplinas } from "./actions"
+import { listarGrade, listarTurmaDisciplinas, listarTurmaDisciplinasPorProfessor } from "./actions"
 import type { GradeSlot, TurmaDisciplinaInfo } from "@/types/entities"
 import { CalendarRange } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -50,8 +50,9 @@ export default function GradeHorariosPage() {
         const { data: professor } = await supabase
           .from("professores")
           .select("id, nome_completo")
-          .eq("user_id", user.id)
-          .single()
+          .or(`user_id.eq.${user.id}${user.email ? `,email.eq.${user.email}` : ""}`)
+          .limit(1)
+          .maybeSingle()
         if (professor) {
           setIsProfessor(true)
           setProfessorNome(professor.nome_completo)
@@ -79,14 +80,12 @@ export default function GradeHorariosPage() {
     try {
       const [gradeData, discData] = await Promise.all([
         listarGrade(filtroTipo, filtroId),
-        filtroTipo === "turma" ? listarTurmaDisciplinas(filtroId) : Promise.resolve([]),
+        filtroTipo === "turma"
+          ? listarTurmaDisciplinas(filtroId)
+          : listarTurmaDisciplinasPorProfessor(filtroId),
       ])
       setSlots(gradeData)
-      if (filtroTipo === "turma") {
-        setDisciplinas(discData)
-      } else {
-        setDisciplinas([])
-      }
+      setDisciplinas(discData)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -107,7 +106,7 @@ export default function GradeHorariosPage() {
   }
 
   function handleCellClick(diaSemana: number, hora: string) {
-    if (filtroTipo !== "turma" || isProfessor) return
+    if (isProfessor) return
     setSelectedSlot(null)
     setModalDiaSemana(diaSemana)
     setModalHora(hora)
@@ -167,22 +166,30 @@ export default function GradeHorariosPage() {
           {filtroId && (
             <ExportGradePDF wrapperRef={gridWrapperRef} filtroTipo={filtroTipo} filtroNome={filtroNome} />
           )}
-          <Label htmlFor="duracao" className="text-sm text-muted-foreground whitespace-nowrap">
-            Duração padrão:
-          </Label>
-          <Input
-            id="duracao"
-            type="number"
-            min={1}
-            max={240}
-            value={duracaoDraft}
-            onChange={handleDuracaoChange}
-            className="w-20 h-8"
-          />
-          <Button variant="outline" size="sm" onClick={handleDuracaoApply}>
-            Aplicar
-          </Button>
-          <span className="text-sm text-muted-foreground">min</span>
+          {isProfessor ? (
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              Duração padrão: <span className="font-medium">{duracaoPadrao} min</span>
+            </span>
+          ) : (
+            <>
+              <Label htmlFor="duracao" className="text-sm text-muted-foreground whitespace-nowrap">
+                Duração padrão:
+              </Label>
+              <Input
+                id="duracao"
+                type="number"
+                min={1}
+                max={240}
+                value={duracaoDraft}
+                onChange={handleDuracaoChange}
+                className="w-20 h-8"
+              />
+              <Button variant="outline" size="sm" onClick={handleDuracaoApply}>
+                Aplicar
+              </Button>
+              <span className="text-sm text-muted-foreground">min</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -203,6 +210,7 @@ export default function GradeHorariosPage() {
               onCellClick={handleCellClick}
               onSlotClick={handleSlotClick}
               duracaoPadrao={duracaoPadrao}
+              readOnly={isProfessor}
             />
             {filtroTipo === "turma" && <SemProfessorList disciplinas={disciplinas} />}
           </div>

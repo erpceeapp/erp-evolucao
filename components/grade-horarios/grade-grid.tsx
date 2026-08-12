@@ -10,6 +10,7 @@ interface GradeGridProps {
   onCellClick: (diaSemana: number, hora: string) => void
   onSlotClick: (slot: GradeSlot) => void
   duracaoPadrao: number
+  readOnly?: boolean
 }
 
 const DIAS = [
@@ -53,7 +54,7 @@ function gerarHorarios(duracao: number): string[] {
   return horarios
 }
 
-export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracaoPadrao }: GradeGridProps) {
+export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracaoPadrao, readOnly = false }: GradeGridProps) {
   const HORARIOS = useMemo(() => gerarHorarios(duracaoPadrao), [duracaoPadrao])
   const slotMap = useMemo(() => {
     const map = new Map<string, GradeSlot[]>()
@@ -114,7 +115,7 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracao
                       key={dia.value}
                       className={cn(
                         "border-b border-r p-1 align-top",
-                        "cursor-pointer transition-colors hover:bg-muted/50",
+                        !readOnly && "cursor-pointer transition-colors hover:bg-muted/50",
                       )}
                       onClick={() => {
                         if (cellSlots.length === 0) onCellClick(dia.value, hora)
@@ -131,7 +132,8 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracao
                               <div
                                 key={slot.id}
                                 className={cn(
-                                  "rounded border px-2 py-1 text-xs cursor-pointer hover:opacity-80",
+                                  "rounded border px-2 py-1 text-xs",
+                                  !readOnly && "cursor-pointer hover:opacity-80",
                                   colorClass,
                                 )}
                                 style={{ minHeight: `${rowspan * 2.5}rem` }}
@@ -151,7 +153,7 @@ export function GradeGrid({ slots, filtroTipo, onCellClick, onSlotClick, duracao
                             )
                           })
                         : // empty cell
-                          filtroTipo === "turma" && <div className="h-8 cursor-pointer" />}
+                          <div className={cn("h-8", !readOnly && "cursor-pointer")} />}
                     </td>
                   )
                 })}

@@ -13,9 +13,10 @@ interface NotasTabProps {
   disciplinaId: string
   periodos: any[]
   anoLetivo: number
+  isProfessor?: boolean
 }
 
-export default function NotasTab({ matriculas, disciplinaId, periodos, anoLetivo }: NotasTabProps) {
+export default function NotasTab({ matriculas, disciplinaId, periodos, anoLetivo, isProfessor = false }: NotasTabProps) {
   const [showConfigModal, setShowConfigModal] = useState(false)
 
   return (
@@ -23,10 +24,12 @@ export default function NotasTab({ matriculas, disciplinaId, periodos, anoLetivo
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Configuração de Períodos</CardTitle>
-          <Button onClick={() => setShowConfigModal(true)} variant="outline">
-            <Settings className="h-4 w-4 mr-2" />
-            Configurar Períodos
-          </Button>
+          {!isProfessor && (
+            <Button onClick={() => setShowConfigModal(true)} variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Configurar Períodos
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {periodos.length > 0 ? (
@@ -55,10 +58,12 @@ export default function NotasTab({ matriculas, disciplinaId, periodos, anoLetivo
               <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum período configurado</h3>
               <p className="text-gray-600 mb-4">Configure os períodos/bimestres para começar a lançar notas.</p>
-              <Button onClick={() => setShowConfigModal(true)} className="bg-cyan-600 hover:bg-cyan-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Configurar Períodos
-              </Button>
+              {!isProfessor && (
+                <Button onClick={() => setShowConfigModal(true)} className="bg-cyan-600 hover:bg-cyan-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Configurar Períodos
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
@@ -93,12 +98,14 @@ export default function NotasTab({ matriculas, disciplinaId, periodos, anoLetivo
         </Card>
       )}
 
-      <ConfigurarPeriodosModal
-        open={showConfigModal}
-        onOpenChange={setShowConfigModal}
-        anoLetivo={anoLetivo}
-        periodosExistentes={periodos}
-      />
+      {!isProfessor && (
+        <ConfigurarPeriodosModal
+          open={showConfigModal}
+          onOpenChange={setShowConfigModal}
+          anoLetivo={anoLetivo}
+          periodosExistentes={periodos}
+        />
+      )}
     </div>
   )
 }
