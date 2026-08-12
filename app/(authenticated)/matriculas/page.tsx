@@ -54,7 +54,21 @@ export default async function MatriculasPage({
 
   // Aplicar filtros
   if (busca) {
-    query = query.or(`numero_matricula.ilike.%${busca}%`)
+    // Buscar alunos por nome ou CPF para filtrar as matrículas por aluno_id
+    const { data: alunosBusca } = await supabase
+      .from("alunos")
+      .select("id")
+      .or(`nome_completo.ilike.%${busca}%,cpf.ilike.%${busca}%`)
+
+    const alunoIds = (alunosBusca || []).map((a) => a.id)
+
+    if (alunoIds.length > 0) {
+      query = query.or(
+        `numero_matricula.ilike.%${busca}%,aluno_id.in.(${alunoIds.join(",")})`,
+      )
+    } else {
+      query = query.or(`numero_matricula.ilike.%${busca}%`)
+    }
   }
 
   if (status !== "todos") {
