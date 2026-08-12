@@ -11,15 +11,25 @@ import { NotasTable } from "@/components/notas/notas-table"
 async function getNotasData(turmaId: string, disciplinaId: string) {
   const supabase = await createServerClient()
 
-  const [turmaResult, disciplinaResult] = await Promise.all([
+  const [turmaResult, disciplinaResult, professorResult] = await Promise.all([
     supabase.from("turmas").select("id, nome, serie, ano_letivo").eq("id", turmaId).single(),
     supabase.from("disciplinas").select("id, nome").eq("id", disciplinaId).single(),
+    supabase
+      .from("turma_disciplinas")
+      .select("professor_id, professores!turma_disciplinas_professor_id_fkey(nome_completo)")
+      .eq("turma_id", turmaId)
+      .eq("disciplina_id", disciplinaId)
+      .maybeSingle(),
   ])
 
   if (turmaResult.error || disciplinaResult.error) {
     console.error("Erro ao buscar dados:", turmaResult.error || disciplinaResult.error)
     return null
   }
+
+  const professorNome =
+    (professorResult.data as unknown as { professores?: { nome_completo: string } | null } | null)
+      ?.professores?.nome_completo ?? null
 
   // Buscar matrículas sem embed
   const { data: matriculas, error: matriculasError } = await supabase
@@ -30,7 +40,7 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
 
   if (matriculasError) {
     console.error("Erro ao buscar matrículas:", matriculasError)
-    return { turma: turmaResult.data, disciplina: disciplinaResult.data, matriculas: [], notas: [] }
+    return { turma: turmaResult.data, disciplina: disciplinaResult.data, matriculas: [], notas: [], professorNome }
   }
 
   // Buscar alunos separadamente
@@ -56,7 +66,13 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
         alunos: aluno,
       }
     })
-    .filter(Boolean) as { id: string; aluno_id: string; numero_matricula: string; alunos: { id: string; nome_completo: string; matricula: string } }[]
+    .filter(Boolean)
+    .sort((a, b) => a!.alunos.nome_completo.localeCompare(b!.alunos.nome_completo, "pt-BR")) as {
+      id: string
+      aluno_id: string
+      numero_matricula: string
+      alunos: { id: string; nome_completo: string; matricula: string }
+    }[]
 
   const matriculaIds = matriculas?.map((m) => m.id) || []
   const { data: notas, error: notasError } = await supabase
@@ -74,6 +90,7 @@ async function getNotasData(turmaId: string, disciplinaId: string) {
     disciplina: disciplinaResult.data,
     matriculas: matriculasComAlunos || [],
     notas: notas || [],
+    professorNome,
   }
 }
 
@@ -132,6 +149,11 @@ export default async function NotasDetailPage({
         disciplinaId={disciplinaId}
         matriculas={data.matriculas}
         notasExistentes={data.notas}
+        disciplinaNome={data.disciplina.nome}
+        turmaNome={data.turma.nome}
+        turmaSerie={data.turma.serie}
+        anoLetivo={data.turma.ano_letivo}
+        professorNome={data.professorNome}
       />
     </>
   )

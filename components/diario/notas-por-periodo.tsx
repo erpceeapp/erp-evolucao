@@ -63,19 +63,11 @@ export default function NotasPorPeriodo({ matriculas, disciplinaId, periodo }: N
         return
       }
 
-      // Deletar notas existentes
-      await supabase
-        .from("notas")
-        .delete()
-        .in(
-          "matricula_id",
-          notasParaSalvar.map((n) => n.matricula_id)
-        )
-        .eq("disciplina_id", disciplinaId)
-        .eq("bimestre", periodo.numero_periodo)
-
-      // Inserir novas notas
-      const { error } = await supabase.from("notas").insert(notasParaSalvar)
+      // Upsert: atualiza existentes e insere novos (evita 409 de chave duplicada)
+      const { error } = await supabase.from("notas").upsert(notasParaSalvar, {
+        onConflict: "matricula_id,disciplina_id,bimestre",
+        ignoreDuplicates: false,
+      })
 
       if (error) throw error
 

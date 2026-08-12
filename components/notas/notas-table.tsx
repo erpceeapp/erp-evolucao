@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
-import { Save } from "lucide-react"
+import { Save, FileDown } from "lucide-react"
 import { translateError } from "@/lib/error-messages"
+import { generateNotasPDF, type NotaAlunoLinha } from "@/lib/notas-pdf-generator"
 
 type Matricula = {
   id: string
@@ -37,11 +38,21 @@ export function NotasTable({
   disciplinaId,
   matriculas,
   notasExistentes,
+  disciplinaNome,
+  turmaNome,
+  turmaSerie,
+  anoLetivo,
+  professorNome,
 }: {
   turmaId: string
   disciplinaId: string
   matriculas: Matricula[]
   notasExistentes: Nota[]
+  disciplinaNome: string
+  turmaNome: string
+  turmaSerie: string
+  anoLetivo: number
+  professorNome: string | null
 }) {
   const [notas, setNotas] = useState<Record<string, Record<number, string>>>(() => {
     const initialNotas: Record<string, Record<number, string>> = {}
@@ -168,15 +179,50 @@ export function NotasTable({
     return count > 0 ? (soma / count).toFixed(2) : "-"
   }
 
+  const handleExportarPDF = async () => {
+    const alunos: NotaAlunoLinha[] = matriculas.map((matricula) => {
+      const notasArray: (string | null)[] = []
+      for (let bimestre = 1; bimestre <= 4; bimestre++) {
+        const valor = notas[matricula.id]?.[bimestre]
+        notasArray.push(valor && valor !== "" ? valor : null)
+      }
+      return {
+        nome_completo: matricula.alunos.nome_completo,
+        matricula: matricula.alunos.matricula ?? null,
+        notas: notasArray,
+        media: calcularMedia(matricula.id),
+      }
+    })
+
+    try {
+      await generateNotasPDF({
+        disciplinaNome,
+        turmaNome,
+        turmaSerie,
+        anoLetivo,
+        professorNome,
+        alunos,
+      })
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar PDF")
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Notas dos Alunos</CardTitle>
-          <Button onClick={handleSalvar} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Salvando..." : "Salvar Notas"}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExportarPDF} variant="outline">
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button onClick={handleSalvar} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "Salvando..." : "Salvar Notas"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
