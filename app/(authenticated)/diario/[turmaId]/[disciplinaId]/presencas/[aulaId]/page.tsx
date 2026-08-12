@@ -1,7 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { Eye, Calendar, Clock, BookOpen, Users, Check, X, Edit, Save, XCircle } from "lucide-react"
+import { Eye, Calendar, Clock, BookOpen, Users, Check, X, Edit, Save, XCircle, ListChecks } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,12 +15,13 @@ import { useEffect, use } from "react"
 
 import { useState } from "react"
 import { salvarPresencas } from "./actions"
+import { generateListaPresencaPDF } from "@/lib/lista-presenca-pdf"
 
 async function getAulaDetalhes(aulaId: string, turmaId: string, disciplinaId: string) {
   const supabase = createClient()
 
   // Buscar aula
-  const { data: aula } = await supabase.from("aulas").select("data_aula, hora_inicio, hora_fim, conteudo_ministrado, observacoes").eq("id", aulaId).single()
+  const { data: aula } = await supabase.from("aulas").select("data_aula, hora_inicio, hora_fim, conteudo, observacoes").eq("id", aulaId).single()
 
   if (!aula) return null
 
@@ -145,6 +146,34 @@ export default function AulaDetalhePage({
     setPresencas((prev) => prev.map((p) => (p.id === presencaId ? { ...p, justificativa } : p)))
   }
 
+  async function gerarListaPresenca() {
+    if (!data) return
+
+    try {
+      await generateListaPresencaPDF({
+        disciplinaNome: data.disciplina?.nome || "",
+        turmaNome: data.turma?.nome || "",
+        turmaSerie: data.turma?.serie || "",
+        professorNome: data.professor?.nome_completo || null,
+        dataAula: data.aula?.data_aula
+          ? new Date(data.aula.data_aula + "T12:00:00").toLocaleDateString("pt-BR")
+          : "",
+        horario: data.aula?.hora_inicio && data.aula?.hora_fim
+          ? `${data.aula.hora_inicio} - ${data.aula.hora_fim}`
+          : data.aula?.hora_inicio || "-",
+        alunos: presencas
+          .map((p) => ({
+            nome_completo: p.aluno?.nome_completo || "",
+            matricula: p.numero_matricula || null,
+          }))
+          .filter((a) => a.nome_completo),
+      })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao gerar lista de presença"
+      toast.error(message)
+    }
+  }
+
   async function salvarAlteracoes() {
     setIsLoading(true)
 
@@ -192,10 +221,16 @@ export default function AulaDetalhePage({
         backHref={`/diario/${p.turmaId}/${p.disciplinaId}/presencas`}
       >
         {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar Presenças
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={gerarListaPresenca}>
+              <ListChecks className="h-4 w-4 mr-2" />
+              Lista de Presença
+            </Button>
+            <Button onClick={() => setIsEditing(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Presenças
+            </Button>
+          </div>
         ) : (
           <div className="flex gap-2">
             <Button onClick={salvarAlteracoes} disabled={isLoading}>
@@ -251,7 +286,7 @@ export default function AulaDetalhePage({
                   <div>
                     <p className="text-sm font-medium">Data</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(aula.data_aula).toLocaleDateString("pt-BR")}
+                      {new Date(aula.data_aula + "T12:00:00").toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -268,13 +303,13 @@ export default function AulaDetalhePage({
                 </div>
               </div>
 
-              {aula.conteudo_ministrado && (
+              {aula.conteudo && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <BookOpen className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Conteúdo Ministrado</p>
                   </div>
-                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.conteudo_ministrado }} />
+                  <div className="text-sm text-muted-foreground pl-6 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aula.conteudo }} />
                 </div>
               )}
               {aula.observacoes && (

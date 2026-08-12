@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Plus, Calendar, Clock, Eye, Pencil } from "lucide-react"
+import { BookOpen, Plus, Calendar, Clock, Eye, Pencil, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -30,12 +30,20 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Aulas Registradas</CardTitle>
-            <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
-              <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Aula
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline">
+                <Link href={`/diario/${turmaId}/${disciplinaId}/presencas`}>
+                  <History className="h-4 w-4 mr-2" />
+                  Histórico de Presenças
+                </Link>
+              </Button>
+              <Button asChild className="bg-cyan-600 hover:bg-cyan-700">
+                <Link href={`/diario/${turmaId}/${disciplinaId}/nova-aula`}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Aula
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {aulasOrdenadas.length > 0 ? (
@@ -59,7 +67,7 @@ export default function AulasTab({ aulas, turmaDisciplina, turmaId, disciplinaId
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-500" />
                           <span className="font-medium">
-                            {new Date(aula.data_aula + "T00:00:00").toLocaleDateString("pt-BR")}
+                            {new Date(aula.data_aula + "T12:00:00").toLocaleDateString("pt-BR")}
                           </span>
                         </div>
                       </TableCell>

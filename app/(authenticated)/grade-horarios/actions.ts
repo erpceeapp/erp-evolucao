@@ -43,6 +43,37 @@ export async function listarTurmaDisciplinas(turmaId: string): Promise<TurmaDisc
   }))
 }
 
+export async function listarTurmaDisciplinasPorProfessor(professorId: string): Promise<TurmaDisciplinaInfo[]> {
+  const supabase = await createClient()
+  const { data: userData, error: authError } = await supabase.auth.getUser()
+  if (authError || !userData?.user) throw new Error("Não autenticado")
+
+  const { data, error } = await supabase
+    .from("turma_disciplinas")
+    .select(`
+      id, turma_id, disciplina_id, professor_id,
+      turmas!turma_disciplinas_turma_id_fkey!inner(id, nome, serie),
+      disciplinas!turma_disciplinas_disciplina_id_fkey!inner(id, nome, codigo),
+      professores!turma_disciplinas_professor_id_fkey(id, nome_completo)
+    `)
+    .eq("professor_id", professorId)
+
+  if (error) throw new Error(`Erro ao carregar disciplinas do professor: ${translateError(error.message)}`)
+
+  return (data || []).map((td: any) => ({
+    id: td.id,
+    turma_id: td.turma_id,
+    disciplina_id: td.disciplina_id,
+    professor_id: td.professor_id,
+    turma_nome: td.turmas?.nome || "",
+    turma_serie: td.turmas?.serie || "",
+    disciplina_nome: td.disciplinas?.nome || "",
+    disciplina_codigo: td.disciplinas?.codigo || "",
+    professor_nome: td.professores?.nome_completo || null,
+    tem_professor: !!td.professor_id,
+  }))
+}
+
 export async function listarGrade(
   filtroTipo: "turma" | "professor",
   filtroId: string,

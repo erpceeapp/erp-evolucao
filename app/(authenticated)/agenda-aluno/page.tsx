@@ -78,6 +78,14 @@ export default async function AgendaAlunoPage({
     .eq("ativo", true)
     .eq("matriculas.status", "ativa")
 
+  if (filter.isProfessor) {
+    if (filter.turmaIds.length > 0) {
+      query = query.in("matriculas.turma_id", filter.turmaIds)
+    } else {
+      query = query.in("matriculas.turma_id", [])
+    }
+  }
+
   if (turmaFilter && turmaFilter !== "todos") {
     query = query.eq("matriculas.turma_id", turmaFilter)
   }

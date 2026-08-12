@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { createBrowserClient } from "@supabase/ssr"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { GraduationCap, Eye, EyeOff, Loader2, Check, X } from "lucide-react"
 import { toast, Toaster } from "sonner"
 import { translateError } from "@/lib/error-messages"
+import { getAuthCode } from "./actions"
 
 export default function RedefinirSenhaPage() {
   const [newPassword, setNewPassword] = useState("")
@@ -21,7 +22,7 @@ export default function RedefinirSenhaPage() {
   const [isProcessing, setIsProcessing] = useState(true)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const exchangedRef = useRef(false)
   // Criar cliente SEM detectSessionInUrl para evitar que
   // _initialize() consuma o codigo antes do exchange manual
   const supabase = createBrowserClient(
@@ -40,7 +41,10 @@ export default function RedefinirSenhaPage() {
   }, [])
 
   const exchangeCode = async () => {
-    const code = searchParams.get("code")
+    if (exchangedRef.current) return
+    exchangedRef.current = true
+
+    const code = await getAuthCode()
 
     if (!code) {
       setErrorMsg("Link invalido. Solicite um novo email de recuperacao.")

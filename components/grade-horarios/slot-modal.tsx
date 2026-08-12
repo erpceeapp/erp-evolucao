@@ -126,7 +126,7 @@ export function SlotModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{slot ? "Editar Horário" : "Adicionar Horário"}</DialogTitle>
           <DialogDescription>
@@ -138,7 +138,7 @@ export function SlotModal({
           <div className="grid gap-2">
             <Label htmlFor="disciplina">Disciplina</Label>
             <Select value={turmaDisciplinaId} onValueChange={setTurmaDisciplinaId} disabled={!!slot}>
-              <SelectTrigger id="disciplina">
+              <SelectTrigger id="disciplina" className="w-full min-w-0">
                 <SelectValue placeholder="Selecione uma disciplina" />
               </SelectTrigger>
               <SelectContent>

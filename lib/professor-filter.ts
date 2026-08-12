@@ -26,8 +26,9 @@ export async function getProfessorFilter(): Promise<ProfessorFilter> {
   const { data: professor } = await supabase
     .from("professores")
     .select("id")
-    .eq("user_id", user.id)
-    .single()
+    .or(`user_id.eq.${user.id}${user.email ? `,email.eq.${user.email}` : ""}`)
+    .limit(1)
+    .maybeSingle()
 
   if (!professor) return { professorId: null, isProfessor: true, turmaIds: [], disciplinaIds: [] }
 

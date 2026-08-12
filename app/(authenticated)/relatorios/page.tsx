@@ -66,6 +66,14 @@ export default async function RelatoriosPage() {
       color: "bg-indigo-100 text-indigo-600",
       href: "/relatorios/turmas",
     },
+    {
+      id: "alunos-por-turma",
+      titulo: "Relatório de Alunos por Turma",
+      descricao: "Lista de alunos matriculados em uma turma específica",
+      icon: Users,
+      color: "bg-rose-100 text-rose-600",
+      href: "/relatorios/alunos-por-turma",
+    },
   ]
 
   return (

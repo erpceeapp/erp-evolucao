@@ -98,6 +98,13 @@ export default async function DiarioDetalhePage({
     redirect("/auth/login")
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tipo_usuario")
+    .eq("id", user.id)
+    .single()
+  const isProfessor = profile?.tipo_usuario === "professor"
+
   const data = await getDiarioData(turmaId, disciplinaId)
 
   if (!data) {
@@ -158,6 +165,7 @@ export default async function DiarioDetalhePage({
             disciplinaId={disciplinaId}
             periodos={periodos}
             anoLetivo={turmaDisciplina.turmas.ano_letivo}
+            isProfessor={isProfessor}
           />
         </TabsContent>
       </Tabs>

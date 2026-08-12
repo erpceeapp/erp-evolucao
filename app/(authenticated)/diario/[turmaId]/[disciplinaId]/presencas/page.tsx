@@ -146,13 +146,13 @@ export default async function HistoricoPresencasPage({
               <TableBody>
                 {aulas.map((aula) => (
                   <TableRow key={aula.id}>
-                    <TableCell>{new Date(aula.data_aula).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell>{new Date(aula.data_aula + "T12:00:00").toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell>
                       {aula.hora_inicio && aula.hora_fim
                         ? `${aula.hora_inicio} - ${aula.hora_fim}`
                         : aula.hora_inicio || "-"}
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">{aula.conteudo || "-"}</TableCell>
+                    <TableCell className="max-w-xs truncate">{aula.conteudo ? aula.conteudo.replace(/<[^>]*>/g, "") : "-"}</TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{aula.totalAlunos}</Badge>
                     </TableCell>

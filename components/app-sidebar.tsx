@@ -63,7 +63,7 @@ const menuItems = [
     icon: Calendar,
     label: "Agenda Escolar",
     href: "/agenda",
-    roles: ["admin", "diretor", "coordenacao", "secretaria", "professor"],
+    roles: ["admin", "diretor", "coordenacao", "secretaria"],
   },
   {
     icon: BookUser,

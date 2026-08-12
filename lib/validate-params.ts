@@ -14,3 +14,20 @@ export function validateLimitParam(value: string | null | undefined, defaultVal 
   if (isNaN(num) || num < 1) return defaultVal
   return Math.min(num, 100)
 }
+
+export function validateRequestOrigin(request: Request): boolean {
+  if (process.env.NODE_ENV !== "production") return true
+
+  const origin = request.headers.get("origin")
+  const referer = request.headers.get("referer")
+  const source = origin || referer
+
+  if (!source) return false
+
+  try {
+    const sourceUrl = new URL(source)
+    return sourceUrl.host === request.headers.get("host")
+  } catch {
+    return false
+  }
+}

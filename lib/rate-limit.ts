@@ -1,35 +1,31 @@
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
+import { createClient } from "@supabase/supabase-js"
 
-const store = new Map<string, RateLimitEntry>()
-
-// Cleanup a cada 5 minutos para evitar memory leak
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of store) {
-    if (now > entry.resetAt) store.delete(key)
-  }
-}, 300_000)
-
-export function rateLimit(
+export async function rateLimit(
   ip: string,
   maxRequests: number,
   windowMs: number
-): { success: boolean; remaining: number } {
-  const now = Date.now()
-  const entry = store.get(ip)
+): Promise<{ success: boolean; remaining: number }> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!entry || now > entry.resetAt) {
-    store.set(ip, { count: 1, resetAt: now + windowMs })
-    return { success: true, remaining: maxRequests - 1 }
+  if (!supabaseUrl || !serviceKey) {
+    return { success: true, remaining: maxRequests }
   }
 
-  if (entry.count >= maxRequests) {
-    return { success: false, remaining: 0 }
+  const supabase = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  const { data, error } = await supabase.rpc("rate_limit_check", {
+    p_key: ip,
+    p_max_requests: maxRequests,
+    p_window_sec: Math.ceil(windowMs / 1000),
+  })
+
+  if (error || !data) {
+    return { success: true, remaining: maxRequests }
   }
 
-  entry.count++
-  return { success: true, remaining: maxRequests - entry.count }
+  const result = data as unknown as { success: boolean; remaining: number }
+  return result
 }
