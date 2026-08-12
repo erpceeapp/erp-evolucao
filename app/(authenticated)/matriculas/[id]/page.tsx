@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header"
 import { BreadcrumbNav } from "@/components/breadcrumb-nav"
 import { DeleteMatriculaButton } from "@/components/matriculas/delete-matricula-button"
 import { MatriculaHistorico } from "@/components/matriculas/matricula-historico"
+import { DeclaracaoMatriculaButton } from "@/components/matriculas/declaracao-matricula-button"
 
 export default async function MatriculaDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -51,6 +52,13 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
   if (matriculaError || !matricula) {
     notFound()
   }
+
+  // Buscar dados da escola para a declaração
+  const { data: escola } = await supabase
+    .from("escola")
+    .select("nome, cnpj, endereco, telefone, email")
+    .limit(1)
+    .maybeSingle()
 
   // Buscar histórico da matrícula
   const { data: historico } = await supabase
@@ -114,6 +122,27 @@ export default async function MatriculaDetalhePage({ params }: { params: Promise
         backHref="/matriculas"
         actions={
           <div className="flex gap-2">
+            <DeclaracaoMatriculaButton
+              escola={{
+                nome: escola?.nome ?? null,
+                cnpj: escola?.cnpj ?? null,
+                endereco: escola?.endereco ?? null,
+                telefone: escola?.telefone ?? null,
+                email: escola?.email ?? null,
+              }}
+              aluno={{
+                nome_completo: matricula.aluno.nome_completo,
+                cpf: matricula.aluno.cpf,
+                data_nascimento: matricula.aluno.data_nascimento,
+              }}
+              turma={{
+                nome: matricula.turma.nome,
+                serie: matricula.turma.serie,
+                turno: matricula.turma.turno,
+              }}
+              numero_matricula={matricula.numero_matricula}
+              ano_letivo={matricula.ano_letivo}
+            />
             {matricula.status === "ativa" && (
               <Button asChild>
                 <Link href={`/matriculas/${matricula.id}/transferir`}>
