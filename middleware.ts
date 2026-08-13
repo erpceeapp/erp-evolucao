@@ -49,6 +49,17 @@ export async function middleware(request: NextRequest) {
 }
 
 function addSecurityHeaders(response: NextResponse) {
+  const connectSources = ["'self'", "https://*.supabase.co"]
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+
+  if (supabaseUrl) {
+    try {
+      connectSources.push(new URL(supabaseUrl).origin)
+    } catch {
+      // Ignore invalid configuration here; the Supabase client reports it directly.
+    }
+  }
+
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-XSS-Protection", "0")
@@ -60,7 +71,7 @@ function addSecurityHeaders(response: NextResponse) {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' https://*.supabase.co data:",
-      "connect-src 'self' https://*.supabase.co",
+      `connect-src ${connectSources.join(" ")}`,
       "base-uri 'self'",
       "form-action 'self'",
     ].join("; "),
