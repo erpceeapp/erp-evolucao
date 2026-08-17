@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DataPagination } from "@/components/ui/data-pagination"
+import { jsPDF } from "jspdf"
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -116,6 +117,62 @@ export function AlunosRelatorioTable({ alunos }: AlunosRelatorioTableProps) {
     URL.revokeObjectURL(url)
   }
 
+  function exportPdf() {
+    const pdf = new jsPDF("landscape", "mm", "a4")
+    const headers = ["Matrícula", "Nome", "Email", "CPF", "Turma", "Status"]
+    const columns = [
+      { x: 14, width: 25 },
+      { x: 39, width: 65 },
+      { x: 104, width: 72 },
+      { x: 176, width: 34 },
+      { x: 210, width: 48 },
+      { x: 258, width: 25 },
+    ]
+    const rows = filteredAlunos.map((aluno) => {
+      const matriculaAtiva = aluno.matriculas.find((matricula) => matricula.status === "ativa")
+      return [
+        aluno.matricula || "-",
+        aluno.nome_completo,
+        aluno.email || "-",
+        aluno.cpf || "-",
+        matriculaAtiva?.turmas ? `${matriculaAtiva.turmas.nome} - ${matriculaAtiva.turmas.serie || ""}` : "-",
+        matriculaAtiva ? "Matriculado" : "Sem Matrícula",
+      ]
+    })
+
+    pdf.setFontSize(16)
+    pdf.text("Relatório de Alunos", 14, 15)
+    pdf.setFontSize(9)
+    pdf.text(`Total: ${filteredAlunos.length}`, 14, 22)
+
+    const drawHeader = (topY: number) => {
+      pdf.setFont("helvetica", "bold")
+      headers.forEach((header, index) => pdf.text(header, columns[index].x, topY))
+      pdf.setFont("helvetica", "normal")
+    }
+
+    let y = 32
+    drawHeader(y)
+    y += 6
+
+    rows.forEach((row) => {
+      const lines = row.map((value, index) => pdf.splitTextToSize(value, columns[index].width))
+      const rowHeight = Math.max(...lines.map((column) => column.length)) * 4 + 2
+
+      if (y + rowHeight > 190) {
+        pdf.addPage()
+        y = 18
+        drawHeader(y)
+        y += 6
+      }
+
+      lines.forEach((column, index) => pdf.text(column, columns[index].x, y))
+      y += rowHeight
+    })
+
+    pdf.save("relatorio-alunos.pdf")
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -124,9 +181,13 @@ export function AlunosRelatorioTable({ alunos }: AlunosRelatorioTableProps) {
             <Filter className="mr-2 h-4 w-4" />
             Filtros
           </Button>
-          <Button onClick={exportCsv}>
+          <Button variant="outline" onClick={exportCsv}>
             <Download className="mr-2 h-4 w-4" />
-            Exportar
+            Exportar CSV
+          </Button>
+          <Button onClick={exportPdf}>
+            <Download className="mr-2 h-4 w-4" />
+            Exportar PDF
           </Button>
         </div>
         <div className="relative w-full sm:w-64">
