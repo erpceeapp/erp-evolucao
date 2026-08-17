@@ -9,8 +9,16 @@ import { AlunosSemMatriculaCard } from "@/components/dashboard/alunos-sem-matric
 import { MatriculasPendentesCard } from "@/components/dashboard/matriculas-pendentes-card"
 import { PageHeader } from "@/components/page-header"
 import { BreadcrumbNav } from "@/components/breadcrumb-nav"
+import { createClient } from "@/lib/supabase/server"
 
 export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: userData } = await supabase.auth.getUser()
+  const { data: profile } = userData.user
+    ? await supabase.from("profiles").select("tipo_usuario").eq("id", userData.user.id).single()
+    : { data: null }
+  const isProfessor = profile?.tipo_usuario === "professor"
+
   const quickActions = [
     {
       title: "Novo Aluno",
@@ -58,28 +66,30 @@ export default async function DashboardPage() {
       <div className="space-y-8">
         <StatsCards />
 
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => {
-              const Icon = action.icon
-              return (
-                <Link key={action.href} href={action.href}>
-                  <Button
-                    className={`${action.color} w-full h-auto p-4 flex flex-col items-center space-y-2 text-white`}
-                    variant="default"
-                  >
-                    <Icon className="h-6 w-6" />
-                    <div className="text-center">
-                      <div className="font-medium">{action.title}</div>
-                      <div className="text-xs opacity-90">{action.description}</div>
-                    </div>
-                  </Button>
-                </Link>
-              )
-            })}
+        {!isProfessor && (
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickActions.map((action) => {
+                const Icon = action.icon
+                return (
+                  <Link key={action.href} href={action.href}>
+                    <Button
+                      className={`${action.color} w-full h-auto p-4 flex flex-col items-center space-y-2 text-white`}
+                      variant="default"
+                    >
+                      <Icon className="h-6 w-6" />
+                      <div className="text-center">
+                        <div className="font-medium">{action.title}</div>
+                        <div className="text-xs opacity-90">{action.description}</div>
+                      </div>
+                    </Button>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <LinksDocumentosCard />
 
