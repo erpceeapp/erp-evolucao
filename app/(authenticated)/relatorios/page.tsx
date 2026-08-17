@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { BarChart3, Download, FileText, Users, Calendar } from "lucide-react"
+import { BarChart3, FileText, Users, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
@@ -107,16 +107,13 @@ export default async function RelatoriosPage() {
               <CardContent>
                 <p className="text-gray-600 mb-4">{relatorio.descricao}</p>
                 <div className="flex gap-2">
-                  <Button asChild className="flex-1">
-                    <Link href={relatorio.href}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Visualizar
-                    </Link>
-                  </Button>
-                  <Button variant="outline">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
+                   <Button asChild variant="outline" className="flex-1">
+                     <Link href={relatorio.href}>
+                       <FileText className="h-4 w-4 mr-2" />
+                       Visualizar
+                     </Link>
+                   </Button>
+                 </div>
               </CardContent>
             </Card>
           ))}

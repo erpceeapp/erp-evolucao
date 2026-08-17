@@ -54,7 +54,8 @@ export default async function RelatorioFrequenciaPage() {
         ]}
         className="mt-2"
       />
-      <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button variant="outline">
               <Filter className="h-4 w-4 mr-2" />
@@ -126,6 +127,7 @@ export default async function RelatorioFrequenciaPage() {
             </Table>
           </CardContent>
         </Card>
+      </div>
     </>
   )
 }

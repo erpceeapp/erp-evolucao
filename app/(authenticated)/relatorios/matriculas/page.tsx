@@ -57,7 +57,8 @@ export default async function RelatorioMatriculasPage() {
         ]}
         className="mt-2"
       />
-      <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
@@ -135,6 +136,7 @@ export default async function RelatorioMatriculasPage() {
             </Table>
           </CardContent>
         </Card>
+      </div>
     </>
   )
 }
