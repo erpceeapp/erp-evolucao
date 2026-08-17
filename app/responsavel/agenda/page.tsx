@@ -145,7 +145,7 @@ export default function ResponsavelAgendaPage() {
                           </Badge>
                         </div>
                         {aviso.descricao && (
-                          <p className="text-sm text-gray-600 line-clamp-2">{aviso.descricao}</p>
+                          <div className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aviso.descricao }} />
                         )}
                         {aviso.hora_aviso && (
                           <span className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
@@ -189,7 +189,7 @@ export default function ResponsavelAgendaPage() {
                       </Badge>
                     </div>
                     {aviso.descricao && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{aviso.descricao}</p>
+                      <div className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aviso.descricao }} />
                     )}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
@@ -249,7 +249,7 @@ export default function ResponsavelAgendaPage() {
               {selectedAviso.descricao && (
                 <div>
                   <label className="text-sm font-medium text-gray-500">Descricao</label>
-                  <p className="mt-1 text-gray-700 whitespace-pre-wrap">{selectedAviso.descricao}</p>
+                  <div className="mt-1 prose prose-sm max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: selectedAviso.descricao }} />
                 </div>
               )}
             </div>

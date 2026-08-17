@@ -143,7 +143,7 @@ export default async function ResponsavelDashboard() {
                       </Badge>
                     </div>
                     {aviso.descricao && (
-                      <p className="text-sm text-gray-600 line-clamp-2">{aviso.descricao}</p>
+                      <div className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: aviso.descricao }} />
                     )}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
