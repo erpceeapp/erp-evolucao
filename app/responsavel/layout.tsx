@@ -1,20 +1,12 @@
 "use client"
 
-import { useRouter, usePathname } from "next/navigation"
-import { GraduationCap, LayoutDashboard, BookUser, BookOpen, LogOut } from "lucide-react"
+import { Suspense, useState } from "react"
+import { GraduationCap, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
 import Link from "next/link"
-
-const navItems = [
-  { href: "/responsavel/dashboard", icon: LayoutDashboard, label: "Inicio" },
-  { href: "/responsavel/agenda", icon: BookUser, label: "Agenda" },
-  { href: "/responsavel/notas", icon: BookOpen, label: "Notas" },
-]
+import { ResponsavelNav } from "@/components/responsavel/responsavel-nav"
 
 export default function ResponsavelLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
-  const pathname = usePathname()
   const [loggingOut, setLoggingOut] = useState(false)
 
   const handleLogout = async () => {
@@ -35,23 +27,9 @@ export default function ResponsavelLayout({ children }: { children: React.ReactN
             <span className="font-semibold text-gray-900">Portal do Responsavel</span>
           </Link>
 
-          {/* Nav desktop */}
-          <nav className="hidden sm:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <Suspense>
+            <ResponsavelNav />
+          </Suspense>
 
           <Button
             variant="ghost"
@@ -64,24 +42,6 @@ export default function ResponsavelLayout({ children }: { children: React.ReactN
             <span className="hidden sm:inline">Sair</span>
           </Button>
         </div>
-
-        {/* Nav mobile */}
-        <nav className="sm:hidden flex border-t">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors ${
-                pathname === item.href
-                  ? "text-blue-700 bg-blue-50"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
       </header>
 
       {/* Content */}

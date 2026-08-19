@@ -3,7 +3,7 @@ import { createResponsavelClient } from "@/lib/supabase/responsavel-client"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { User, BookUser, BookOpen, Calendar, Clock } from "lucide-react"
+import { User, BookUser, BookOpen, Calendar, Clock, School } from "lucide-react"
 import Link from "next/link"
 
 const categoriaCores: Record<string, string> = {
@@ -88,7 +88,7 @@ export default async function ResponsavelDashboard() {
       </Card>
 
       {/* Links rapidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link href="/responsavel/agenda">
           <Card className="cursor-pointer">
             <CardContent className="pt-6">
@@ -97,6 +97,19 @@ export default async function ResponsavelDashboard() {
                 <div>
                   <h3 className="font-semibold text-gray-900">Agenda do Aluno</h3>
                   <p className="text-sm text-gray-500">Avisos, reunioes e comunicados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/responsavel/agenda?tab=escola">
+          <Card className="cursor-pointer">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <School className="h-8 w-8 text-purple-500" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">Agenda Escolar</h3>
+                  <p className="text-sm text-gray-500">Feriados, reunioes e eventos</p>
                 </div>
               </div>
             </CardContent>

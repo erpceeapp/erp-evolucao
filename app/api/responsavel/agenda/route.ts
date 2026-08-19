@@ -32,5 +32,23 @@ export async function GET() {
     created_at: string
   }>
 
-  return NextResponse.json({ aluno, avisos })
+  // Buscar eventos escolares (agenda completa da escola)
+  const { data: eventosData } = await supabase
+    .from("eventos")
+    .select("id, titulo, descricao, data_inicio, data_fim, hora_inicio, hora_fim, tipo_evento, local")
+    .order("data_inicio", { ascending: true })
+
+  const eventos = (eventosData || []) as Array<{
+    id: string
+    titulo: string
+    descricao: string | null
+    data_inicio: string
+    data_fim: string | null
+    hora_inicio: string | null
+    hora_fim: string | null
+    tipo_evento: string
+    local: string | null
+  }>
+
+  return NextResponse.json({ aluno, avisos, eventos })
 }
