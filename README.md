@@ -1,10 +1,12 @@
 # Educational ERP
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/brunnolinkin-3640s-projects/v0-educational-erp-system)
+<!-- [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://cee-erp.vercel.app/) -->
+[![Deployed on Netlify](https://img.shields.io/badge/Deployed%20on-Netlify-00C7B7?style=for-the-badge&logo=netlify)](https://erpcee.netlify.app/)
 
 ## Deploy
 
-**[https://cee-erp.vercel.app/](https://cee-erp.vercel.app/)**
+<!-- - **Vercel**: [https://cee-erp.vercel.app/](https://cee-erp.vercel.app/)  -->
+- **Netlify**: [https://erpcee.netlify.app/](https://erpcee.netlify.app/)
 
 ## Stack
 
@@ -15,6 +17,10 @@
 - **Formulários**: Server Actions + Client Components
 - **Pacotes**: pnpm
 
+## Documentacao
+
+**[Funcionalidades do Sistema](docs/funcionalidades.md)** — Documentacao completa com todas as funcionalidades, rotas, permissoes por papeis, banco de dados e componentes.
+
 ## Banco de Dados
 
 ### Gerenciamento de Schema
@@ -22,7 +28,7 @@
 O schema do banco é versionado via **migrations** em `supabase/migrations/`.
 
 | Comando | Descrição |
-|---------|-----------|
+| --------- | ----------- |
 | `supabase migration new <nome>` | Cria uma nova migration |
 | `supabase db push --linked` | Aplica migrations pendentes no banco da nuvem |
 | `supabase db diff --linked -f <nome>` | Gera migration com diff entre shadow db local e nuvem |
