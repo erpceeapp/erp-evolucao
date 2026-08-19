@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { deleteProfessor } from "@/app/(authenticated)/professores/novo/actions"
+import { CreateAccessButton } from "@/components/professores/create-access-button"
 import { DataPagination } from "@/components/ui/data-pagination"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -28,6 +29,7 @@ import { translateError } from "@/lib/error-messages"
 
 interface Professor {
   id: string
+  user_id: string | null
   nome_completo: string
   cpf?: string
   email: string
@@ -190,6 +192,11 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
                           Incompleto
                         </Badge>
                       )}
+                      {!professor.user_id && (
+                        <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">
+                          Sem acesso
+                        </Badge>
+                      )}
                     </div>
                     <div>
                       {professor.telefone && <div className="text-sm text-gray-500">{professor.telefone}</div>}
@@ -221,6 +228,12 @@ export function ProfessoresTable({ professores, currentPage, totalPages, pageSiz
                           <Edit className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {!professor.user_id && ["admin", "diretor"].includes(currentUserTipo) && (
+                        <CreateAccessButton
+                          professorId={professor.id}
+                          professorName={professor.nome_completo}
+                        />
+                      )}
                       {["admin", "diretor"].includes(currentUserTipo) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

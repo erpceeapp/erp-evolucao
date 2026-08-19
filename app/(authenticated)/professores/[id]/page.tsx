@@ -3,11 +3,13 @@ import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { AtivoStatusBadge } from "@/components/ui/ativo-status-badge"
 import { Edit, ArrowLeft, User, Phone, MapPin, Calendar, GraduationCap, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { BreadcrumbNav } from "@/components/breadcrumb-nav"
+import { CreateAccessButton } from "@/components/professores/create-access-button"
 
 export default async function ProfessorDetalhePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -35,7 +37,7 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
   // Buscar dados do professor
   const { data: professor, error: professorError } = await supabase
     .from("professores")
-    .select("id, nome_completo, email, cpf, rg, data_nascimento, endereco, telefone, formacao, especializacao, registro_profissional, data_admissao, salario, ativo, created_at, updated_at")
+    .select("id, user_id, nome_completo, email, cpf, rg, data_nascimento, endereco, telefone, formacao, especializacao, registro_profissional, data_admissao, salario, ativo, created_at, updated_at")
     .eq("id", id)
     .single()
 
@@ -205,8 +207,25 @@ export default async function ProfessorDetalhePage({ params }: { params: Promise
               <CardHeader>
                 <CardTitle>Status</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <AtivoStatusBadge ativo={professor.ativo} className="text-sm" />
+                {professor.user_id ? (
+                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                    Acesso ao sistema
+                  </Badge>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">
+                      Sem acesso
+                    </Badge>
+                    {["admin", "diretor"].includes(profile?.tipo_usuario ?? "") && (
+                      <CreateAccessButton
+                        professorId={professor.id}
+                        professorName={professor.nome_completo}
+                      />
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
