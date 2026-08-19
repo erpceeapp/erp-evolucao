@@ -1,10 +1,12 @@
 # Educational ERP
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/brunnolinkin-3640s-projects/v0-educational-erp-system)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://cee-erp.vercel.app/)
+[![Deployed on Netlify](https://img.shields.io/badge/Deployed%20on-Netlify-00C7B7?style=for-the-badge&logo=netlify)](https://erpcee.netlify.app/)
 
 ## Deploy
 
-**[https://cee-erp.vercel.app/](https://cee-erp.vercel.app/)**
+- **Vercel**: [https://cee-erp.vercel.app/](https://cee-erp.vercel.app/)
+- **Netlify**: [https://erpcee.netlify.app/](https://erpcee.netlify.app/)
 
 ## Stack
 
