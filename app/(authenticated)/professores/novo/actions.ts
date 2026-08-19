@@ -105,6 +105,127 @@ export async function createProfessorUser(professorData: {
   }
 }
 
+export async function createProfessorAccess(professorId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: "Usuário não autenticado" }
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tipo_usuario")
+      .eq("id", user.id)
+      .single()
+
+    if (!profile || !["admin", "diretor"].includes(profile.tipo_usuario)) {
+      return { error: "Apenas administradores e diretores podem criar acesso" }
+    }
+
+    const supabaseAdmin = createAdminClient()
+
+    // Buscar o professor
+    const { data: professor, error: profError } = await supabaseAdmin
+      .from("professores")
+      .select("id, user_id, email, nome_completo, telefone")
+      .eq("id", professorId)
+      .single()
+
+    if (profError || !professor) {
+      return { error: "Professor não encontrado" }
+    }
+
+    if (professor.user_id) {
+      return { error: "Este professor já possui acesso ao sistema" }
+    }
+
+    if (!professor.email) {
+      return { error: "Professor não possui email cadastrado. Atualize o cadastro antes de criar acesso." }
+    }
+
+    // Senha temporária aleatória
+    const senhaTemporaria = crypto.randomUUID().replace(/-/g, "").substring(0, 12)
+
+    // Verificar se já existe um auth user com este email
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+    const existingUser = existingUsers?.users?.find(
+      (u) => u.email?.toLowerCase() === professor.email.toLowerCase()
+    )
+
+    let userId: string
+
+    if (existingUser) {
+      // Verificar se já tem profile
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("id", existingUser.id)
+        .single()
+
+      if (existingProfile) {
+        return { error: "Este email já está vinculado a outro usuário no sistema" }
+      }
+
+      // Reutilizar auth user existente (sem profile)
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+          password: senhaTemporaria,
+          email_confirm: true,
+          user_metadata: {
+            nome_completo: professor.nome_completo,
+            telefone: professor.telefone,
+            tipo_usuario: "professor",
+          },
+        }
+      )
+
+      if (updateError) {
+        return { error: updateError.message }
+      }
+
+      userId = existingUser.id
+    } else {
+      // Criar novo auth user
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: professor.email,
+        password: senhaTemporaria,
+        email_confirm: true,
+        user_metadata: {
+          nome_completo: professor.nome_completo,
+          telefone: professor.telefone,
+          tipo_usuario: "professor",
+        },
+      })
+
+      if (authError) {
+        return { error: authError.message }
+      }
+
+      userId = authData.user?.id!
+    }
+
+    // Vincular o professor ao auth user
+    const { error: linkError } = await supabaseAdmin
+      .from("professores")
+      .update({ user_id: userId })
+      .eq("id", professorId)
+
+    if (linkError) {
+      return { error: "Erro ao vincular professor ao usuário: " + linkError.message }
+    }
+
+    return {
+      success: true,
+      senhaTemporaria,
+    }
+  } catch (error: any) {
+    console.error("[createProfessorAccess] Erro:", error)
+    return { error: error.message || "Erro ao criar acesso" }
+  }
+}
+
 export async function deleteProfessor(professorId: string) {
   try {
     const supabase = await createClient()
