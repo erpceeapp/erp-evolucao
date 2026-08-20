@@ -48,7 +48,7 @@ export async function listarTurmaDisciplinasPorProfessor(professorId: string): P
   const { data: userData, error: authError } = await supabase.auth.getUser()
   if (authError || !userData?.user) throw new Error("Não autenticado")
 
-  const { data, error } = await supabase
+  const { data: directData, error: directError } = await supabase
     .from("turma_disciplinas")
     .select(`
       id, turma_id, disciplina_id, professor_id,
@@ -58,9 +58,41 @@ export async function listarTurmaDisciplinasPorProfessor(professorId: string): P
     `)
     .eq("professor_id", professorId)
 
-  if (error) throw new Error(`Erro ao carregar disciplinas do professor: ${translateError(error.message)}`)
+  if (directError) throw new Error(`Erro ao carregar disciplinas do professor: ${translateError(directError.message)}`)
 
-  return (data || []).map((td: any) => ({
+  const directIds = new Set((directData || []).map((td: any) => td.id))
+
+  const { data: disciplinasDoProfessor } = await supabase
+    .from("disciplinas")
+    .select("id")
+    .eq("professor_id", professorId)
+
+  const disciplinaIds = (disciplinasDoProfessor || []).map((d) => d.id)
+
+  let viaDisciplinaData: any[] = []
+  if (disciplinaIds.length > 0) {
+    const { data, error: viaDisciplinaError } = await supabase
+      .from("turma_disciplinas")
+      .select(`
+        id, turma_id, disciplina_id, professor_id,
+        turmas!turma_disciplinas_turma_id_fkey!inner(id, nome, serie),
+        disciplinas!turma_disciplinas_disciplina_id_fkey!inner(id, nome, codigo),
+        professores!turma_disciplinas_professor_id_fkey(id, nome_completo)
+      `)
+      .in("disciplina_id", disciplinaIds)
+
+    if (viaDisciplinaError) throw new Error(`Erro ao carregar disciplinas do professor: ${translateError(viaDisciplinaError.message)}`)
+    viaDisciplinaData = data || []
+  }
+
+  const allData = [...(directData || [])]
+  for (const td of viaDisciplinaData) {
+    if (!directIds.has(td.id)) {
+      allData.push(td)
+    }
+  }
+
+  return allData.map((td: any) => ({
     id: td.id,
     turma_id: td.turma_id,
     disciplina_id: td.disciplina_id,
